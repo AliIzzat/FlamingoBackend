@@ -5,3 +5,17 @@ logs/
 .DS_Store
 .vscode/
 .idea/
+# uploads / runtime
+public/uploads/
+public/uploads/**
+
+# backups
+logos_Back up/
+*.bak
+
+# OS
+Thumbs.db
+
+# optional: build output (if you ever add)
+dist/
+build/
