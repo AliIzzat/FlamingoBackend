@@ -1,8 +1,7 @@
-node_modules
+﻿node_modules/
 .env
+logs/
 *.log
-/dist
 .DS_Store
-
-public/uploads
-public/uploads/*
+.vscode/
+.idea/
