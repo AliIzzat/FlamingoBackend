@@ -1,0 +1,27 @@
+[
+  {
+    "image": "slide1.jpg",
+    "text": "Flower Arrangements",
+    "link": "/restaurant"
+  },
+  {
+    "image": "slide2.jpg",
+    "text": "Grocery Discounts",
+    "link": "/restaurant"
+  },
+  {
+    "image": "slide3.jpg",
+    "text": "Pharmacy Services",
+    "link": "/restaurant"
+  },
+  {
+    "image": "slide4.jpg",
+    "text": "Delivered to Your Door",
+    "link": "/restaurant"
+  },
+  {
+    "image": "slide5.jpg",
+    "text": "Special Offers",
+    "link": "/restaurant"
+  }
+]

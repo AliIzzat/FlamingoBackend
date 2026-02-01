@@ -1,0 +1,278 @@
+<div style="margin-bottom: 16px; display:flex; gap:10px;">
+  <a href="/admin/dashboard" class="admin-btn admin-btn-secondary">
+    ← Return to Dashboard
+  </a>
+</div>
+
+
+<h1>Stores</h1>
+<section style="margin: 1px 0; padding: 2px; border: 1px solid #ddd; border-radius: 10px;">
+  <h3>Add Store</h3>
+  <form action="/admin/stores/create" method="POST" enctype="multipart/form-data"
+        style="display:grid; gap:5px; max-width: 800px;">
+     <input type="hidden" name="returnTo" value="/admin/stores?page={{page}}&{{queryBase}}">   
+    <label>Type (Category Key)</label>
+    <select name="type" style="height: 30px;" required>
+      {{#each categories}}
+        <option value="{{key}}">{{key}} — {{name_en}}</option>
+      {{/each}}
+    </select>
+    <label>Name (EN)</label>
+    <input name="name" style="height: 30px;" required />
+    <label>Name (AR)</label>
+    <input name="name_ar" style="height: 30px;"/>
+    <label>Address</label>
+    <input name="address" style="height: 30px;"/>
+    <label>Logo (upload)</label>
+    <input type="file" name="logo" />
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+      <div>
+        <label>Latitude (optional)</label>
+        <input name="lat"  style="height: 20px;" placeholder="25.285" />
+      </div>
+      <div>
+        <label>Longitude (optional)</label>
+        <input name="lng" style="height: 20px;" placeholder="51.531" />
+      </div>
+    </div>
+    <label>Active</label>
+    <select name="isActive" style="height: 30px;">
+      <option value="true" selected>Yes</option>
+      <option value="false">No</option>
+    </select>
+    <button type="submit" style="padding:10px; border-radius:8px;width: 120px;margin-left: 335px;">Create</button>
+  <button type="submit" name="next" value="stores" class="admin-btn admin-btn-primary" style="width:160px;margin-left: 310px;">
+      💾 Save Store
+  </button>
+  <button type="submit" name="next" value="products" class="admin-btn admin-btn-info" style="width:215px;margin-left: 280px">
+      ➕ Save & Add Products
+  </button>
+ </form>
+</section>
+<hr />
+{{!-- add filter controls --}}
+<form method="GET" action="/admin/stores" class="filters-row" id="storeFiltersForm">
+  <div class="filters-grid">
+    <div>
+      <label>Category</label>
+      <select name="type" id="typeFilter">
+        <option value="">All</option>
+        {{#each categories}}
+          <option value="{{key}}" {{#if (eq ../selectedType key)}}selected{{/if}}>
+            {{key}} — {{name_en}}
+          </option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div>
+      <label>Store Name</label>
+      <select name="storeId" id="storeIdFilter">
+        <option value="">All</option>
+        {{#each allStores}}
+          <option value="{{_id}}" {{#if (eq _id ../selectedStoreId)}}selected{{/if}}>
+            {{name}} ({{type}})
+          </option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div>
+      <label>Search Store</label>
+      <input
+        type="text"
+        name="q"
+        id="storeSearch" style="height: 32px;"
+        value="{{searchQuery}}"
+        placeholder="Type store name..."
+        autocomplete="off"
+      />
+    </div>
+
+    <div class="filters-actions">
+      <button type="submit" class="pager-btn">Filter</button>
+      <a class="btn-reset" href="/admin/stores">Reset</a>
+    </div>
+  </div>
+</form>
+
+
+<h3>Existing Stores</h3>
+ <table class="dashboard-table">
+  <thead>
+    <tr>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Type</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Name</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Name (AR)</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Address</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Lat</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Lng</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Active</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+  {{#each stores}}
+    <tr>
+      {{!-- Create the form once (valid HTML) --}}
+      <td style="padding:2px;">
+        <form id="updateForm-{{_id}}" action="/admin/stores/update/{{_id}}" method="POST" enctype="multipart/form-data">
+         <input type="hidden" name="returnTo" value="/admin/stores?page={{../page}}&{{../queryBase}}">
+        </form>
+
+
+
+        <select name="type" form="updateForm-{{_id}}" style="height:30px; width:140px;">
+          {{#each ../categories}}
+            <option value="{{key}}" {{#if (eq key ../type)}}selected{{/if}}>{{key}}</option>
+          {{/each}}
+        </select>
+      </td>
+
+      <td style="padding:2px;">
+        <input name="name" value="{{name}}" required form="updateForm-{{_id}}"
+               style="width:280px; height:30px;" />
+      </td>
+
+      <td style="padding:2px;">
+        <input name="name_ar" value="{{name_ar}}" form="updateForm-{{_id}}"
+               style="width:170px; height:30px;" />
+      </td>
+
+      <td style="padding:2px;">
+        <input name="address" value="{{address}}" form="updateForm-{{_id}}"
+               style="width:240px; height:30px;" />
+      </td>
+
+      <td style="padding:2px;">
+        <input name="lat" value="{{location.coordinates.[1]}}" form="updateForm-{{_id}}"
+               style="width:110px; height:30px;" />
+      </td>
+
+      <td style="padding:2px;">
+        <input name="lng" value="{{location.coordinates.[0]}}" form="updateForm-{{_id}}"
+               style="width:110px; height:30px;" />
+      </td>
+
+      <td style="padding:2px;">
+        <select name="isActive" form="updateForm-{{_id}}" style="height:30px;">
+          <option value="true"  {{#if isActive}}selected{{/if}}>Yes</option>
+          <option value="false" {{#unless isActive}}selected{{/unless}}>No</option>
+        </select>
+      </td>
+
+      <td style="padding:8px; display:flex; gap:8px;">
+        <button type="submit" form="updateForm-{{_id}}" style="height:30px;">Save</button>
+
+        <form action="/admin/stores/toggle/{{_id}}" method="POST" style="margin:0;">
+         <input type="hidden" name="returnTo" value="/admin/stores?page={{../page}}&{{../queryBase}}">
+          <button type="submit" style="height:30px;">
+           {{#if isActive}}Disable{{else}}Enable{{/if}}
+          </button>
+        </form>
+      </td>
+
+    </tr>
+  {{/each}}
+</tbody>
+</table>
+{{!-- Pagination Bar --}}
+<div style="display:flex; gap:10px; align-items:center; justify-content:space-between; margin:12px 0;">
+
+  <div>
+    Showing <b>{{stores.length}}</b> of <b>{{totalCount}}</b>
+    (Page <b>{{page}}</b> of <b>{{totalPages}}</b>)
+  </div>
+
+  <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+    {{#if hasPrev}}
+      <a class="pager-btn" href="/admin/stores?page={{prevPage}}&{{queryBase}}">Prev</a>
+    {{else}}
+      <span class="pager-btn disabled">Prev</span>
+    {{/if}}
+
+    {{#each pages}}
+      {{#if isCurrent}}
+        <span class="pager-btn active">{{n}}</span>
+      {{else}}
+        <a class="pager-btn" href="/admin/stores?page={{n}}&{{../queryBase}}">{{n}}</a>
+      {{/if}}
+    {{/each}}
+
+    {{#if hasNext}}
+      <a class="pager-btn" href="/admin/stores?page={{nextPage}}&{{queryBase}}">Next</a>
+    {{else}}
+      <span class="pager-btn disabled">Next</span>
+    {{/if}}
+  </div>
+</div>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("storeFiltersForm");
+    const typeSelect = document.getElementById("typeFilter");
+    const storeIdSelect = document.getElementById("storeIdFilter");
+    const searchInput = document.getElementById("storeSearch");
+
+    if (!form || !typeSelect || !storeIdSelect || !searchInput) return;
+
+    let timer;
+
+    function go(delayMs) {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const params = new URLSearchParams();
+        if (typeSelect.value) params.set("type", typeSelect.value);
+        if (storeIdSelect.value) params.set("storeId", storeIdSelect.value);
+        if (searchInput.value.trim()) params.set("q", searchInput.value.trim());
+
+        window.location.href = "/admin/stores" + (params.toString() ? "?" + params.toString() : "");
+      }, delayMs);
+    }
+
+    searchInput.addEventListener("input", () => go(350));
+    typeSelect.addEventListener("change", () => go(0));
+    storeIdSelect.addEventListener("change", () => go(0));
+  });
+</script>
+
+
+<style>
+ .dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+}
+.dashboard-table th,
+.dashboard-table td {
+  border: 1px solid #ff4b2b;;
+  padding: 0.75rem;
+  text-align: left;
+}
+.dashboard-table th {
+  background-color: #ff4b2b;
+}
+  .pager-btn,
+  .btn-reset {
+    padding:6px 10px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    text-decoration:none;
+    color:#000;
+    background:#f7f7f7;
+    font-size:14px;
+  }
+  .btn-reset.active,
+  .pager-btn.active{
+    background:#ff4b2b;
+    border-color:#ff4b2b;
+    color:#fff;
+    font-weight:700;
+  }
+  .pager-btn.disabled,
+  .btn-reset.disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+  }
+</style>

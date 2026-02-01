@@ -1,0 +1,68 @@
+<h1 style="margin:0 0 14px;">Order Details</h1>
+
+<div style="display:flex; gap:10px; margin-bottom:14px;">
+  <a href="/admin/orders?filter=unpicked" style="text-decoration:none; padding:8px 12px; border:1px solid #ddd; border-radius:10px;">
+    Back to Orders
+  </a>
+</div>
+
+<div style="background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:14px;">
+  <div style="font-weight:800; margin-bottom:10px;">Order ID: {{order._id}}</div>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+    <div>
+      <h3 style="margin:0 0 6px;">Customer</h3>
+      <div>{{order.customer.name}}</div>
+      <div style="color:#6b7280;">{{order.customer.phone}}</div>
+      <div style="color:#6b7280;">{{order.customer.addressText}}</div>
+    </div>
+
+    <div>
+      <h3 style="margin:0 0 6px;">Delivery</h3>
+      <div>Status: <b>{{order.delivery.status}}</b></div>
+      <div>Driver:
+        <b>
+          {{#if order.delivery.assignedDriverId}}
+            {{#if order.delivery.assignedDriverId.name}}{{order.delivery.assignedDriverId.name}}{{else}}{{order.delivery.assignedDriverId.username}}{{/if}}
+          {{else}}
+            -
+          {{/if}}
+        </b>
+      </div>
+    </div>
+  </div>
+
+  <hr style="margin:14px 0; border:none; border-top:1px solid #e5e7eb;" />
+
+  <h3 style="margin:0 0 8px;">Items</h3>
+  <table style="width:100%; border-collapse:collapse;">
+    <thead>
+      <tr style="background:#f9fafb;">
+        <th style="text-align:left; padding:8px; border:1px solid #e5e7eb;">Name</th>
+        <th style="text-align:left; padding:8px; border:1px solid #e5e7eb;">Qty</th>
+        <th style="text-align:left; padding:8px; border:1px solid #e5e7eb;">Price</th>
+        <th style="text-align:left; padding:8px; border:1px solid #e5e7eb;">Line Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each order.items}}
+        <tr>
+          <td style="padding:8px; border:1px solid #e5e7eb;">{{name_snapshot}}</td>
+          <td style="padding:8px; border:1px solid #e5e7eb;">{{qty}}</td>
+          <td style="padding:8px; border:1px solid #e5e7eb;">QAR {{price_snapshot}}</td>
+          <td style="padding:8px; border:1px solid #e5e7eb;">QAR {{multiply qty price_snapshot}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <hr style="margin:14px 0; border:none; border-top:1px solid #e5e7eb;" />
+
+  <div style="display:flex; justify-content:flex-end; gap:18px;">
+    <td>QAR {{money price_snapshot}}</td>
+    <td>QAR {{money (multiply qty price_snapshot)}}</td>    
+    <div>Subtotal: <b>QAR {{order.totals.subtotal}}</b></div>
+    <div>Delivery: <b>QAR {{order.totals.deliveryFee}}</b></div>
+    <div>Total: <b>QAR {{order.totals.total}}</b></div>
+  </div>
+</div>

@@ -1,0 +1,55 @@
+<h1>{{title}}</h1>
+
+<form method="GET" action="/admin/disputes" style="margin: 10px 0;">
+  <label>Status:</label>
+  <select name="status">
+    <option value="Open" {{#if (eq selectedStatus "Open")}}selected{{/if}}>Open</option>
+    <option value="UnderReview" {{#if (eq selectedStatus "UnderReview")}}selected{{/if}}>Under Review</option>
+    <option value="ApprovedRefund" {{#if (eq selectedStatus "ApprovedRefund")}}selected{{/if}}>Approved Refund</option>
+    <option value="Rejected" {{#if (eq selectedStatus "Rejected")}}selected{{/if}}>Rejected</option>
+    <option value="Resolved" {{#if (eq selectedStatus "Resolved")}}selected{{/if}}>Resolved</option>
+    <option value="All" {{#if (eq selectedStatus "All")}}selected{{/if}}>All</option>
+  </select>
+  <button type="submit">Filter</button>
+</form>
+
+<table style="width:100%; border-collapse:collapse;" border="1" cellpadding="6">
+  <thead>
+    <tr>
+      <th>Order</th>
+      <th>Customer</th>
+      <th>Delivery</th>
+      <th>Dispute</th>
+      <th>Reason</th>
+      <th>Customer Notes</th>
+      <th>Admin Action</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {{#each orders}}
+      <tr>
+        <td>{{_id}}</td>
+        <td>{{customer.name}}<br/>{{customer.phone}}</td>
+        <td>{{delivery.status}}</td>
+        <td>{{dispute.status}}</td>
+        <td>{{dispute.reason}}</td>
+        <td>{{dispute.notesCustomer}}</td>
+
+        <td>
+          <form method="POST" action="/admin/disputes/{{_id}}/update">
+            <select name="status" required>
+              <option value="UnderReview">UnderReview</option>
+              <option value="ApprovedRefund">ApprovedRefund</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+            <input name="refundAmount" placeholder="Refund QAR" style="width:110px;" />
+            <input name="notesAdmin" placeholder="Admin notes" style="width:220px;" />
+            <button type="submit">Update</button>
+          </form>
+        </td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>

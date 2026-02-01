@@ -1,0 +1,103 @@
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<aside class="backend-sidebar">
+    <div class="brand-title" style="text-align:center; font-size:larger;">
+      <h2>DashBoard Management</h2>
+    </div>
+<hr class="custom-hr">
+<div class="backend-cats-row">
+    <a class="admin-btn admin-btn-primary" href="/admin/products/category/restaurant">
+    <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">🍽️</span>Restaurants</a>
+    <a class="admin-btn admin-btn-success" href="/admin/products/category/grocery">
+    <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">🛒</span>Grocery</a>
+    <a class="admin-btn admin-btn-info" href="/admin/products/category/pharmacy">
+    <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">💊</span>Pharmacy</a>
+    <a class="admin-btn admin-btn-pink" href="/admin/products/category/flower">
+    <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">🌸</span>Flower</a>
+    <a class="admin-btn admin-btn-warning" href="/admin/products/category/child_care">
+    <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">🧸</span>Child Care</a>
+    <a class="admin-btn admin-btn-purple" href="/admin/products/category/nutrition">
+    <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">🥗</span>Nutrition</a>
+    <a class="admin-btn admin-btn-secondary" href="/admin/products/category/electronics">
+    <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">💻</span>Electronics</a>
+  
+</div>
+  <hr class="custom-hr"> 
+
+  <nav class="nav">
+<div class="admin-toolbar">
+    <div class="admin-actions">
+  <a href="/admin/categories" class="admin-btn admin-btn-primary">
+    <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">📂</span> 
+    Categories
+  </a>
+  <a href="/admin/stores" class="admin-btn admin-btn-success">
+  <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">🏬</span> 
+  Stores
+  </a>
+  <a href="/admin/products" class="admin-btn admin-btn-info">
+  <span style="font-size: 20px; margin-right: 6px;font-weight:bolder"></span>📦</span>
+  Products
+  </a>
+  <a href="/admin/orders?filter=unpicked" class="admin-btn admin-btn-pink">
+  <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">🚚</span> 
+  Orders
+  </a>
+  <a href="/admin/disputes" class="admin-btn admin-btn-warning">
+  <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">⚠️</span> 
+  Disputes
+  </a>
+  <a href="/backend/reports/driver-meals" class="admin-btn admin-btn-purple">
+  <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">📊</span>
+  Drivers Rpt
+  </a>
+  <a href="/auth/logout" class="admin-btn admin-btn-secondary">
+  <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">↩️</span> 
+  Logout
+ </a>
+  </div>
+</div>
+<hr class="custom-hr">
+    {{#if (eq user.role "admin")}}
+      <hr />
+    {{/if}}
+ </nav>
+</aside>
+</body>
+<style>
+  .backend-cats-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  padding:10px 10px 14px 10px;
+  margin-bottom:10px;
+}
+
+/* If you don’t already have these classes globally, add basic styling */
+.admin-btn{
+  align-items:center;
+  width: 160px;
+  height: 50px;
+  gap:6px;
+  padding:10px 14px;
+  border-radius:10px;
+  text-decoration:none;
+  font-weight:700;
+  color:#fff;
+}
+
+/* Color variants (match your existing style names if different) */
+.admin-btn-primary{ background:#1e63ff; }
+.admin-btn-success{ background:#14a44d; }
+.admin-btn-info{ background:#0dcaf0; color:#003b46; }
+.admin-btn-warning{ background:#f59e0b; }
+.admin-btn-secondary{ background:#6699c7; }
+.admin-btn-pink{ background:#e83e8c; }
+.admin-btn-purple{background: #9400d3;}
+.admin-btn:hover{ filter:brightness(0.95); }
+</style>

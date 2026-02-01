@@ -1,0 +1,245 @@
+<a href="/admin/dashboard" class="admin-btn admin-btn-secondary">
+    ← Return to Dashboard
+</a>
+<body>
+<div class="pc-wrap">
+  <div class="pc-top">
+    <h1 class="pc-title">{{pageTitle}}</h1>
+
+    <div class="pc-controls">
+      <form method="GET" action="/admin/products/category/{{categoryKey}}">
+        <div class="pc-field">
+          <div class="pc-label">Store</div>
+          <select class="pc-select" name="storeId" onchange="this.form.submit()">
+            <option value="">-- Choose store --</option>
+            {{#each stores}}
+              <option value="{{_id}}" {{#if (eq _id ../selectedStoreId)}}selected{{/if}}>
+                {{name}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+      </form>
+
+      {{#if selectedStoreId}}
+             <a class="pc-btn" href="/admin/products/create?storeId={{selectedStoreId}}">➕ Add Product</a>
+      {{else}}
+             <a class="pc-btn" href="#" style="opacity:.5; pointer-events:none;">➕ Add Product</a>
+      {{/if}}
+    </div>
+  </div>
+</div>
+
+<div class="products-grid">
+  {{#each products}}
+    <div class="product-card" >
+      <div class="store-logo" >
+          <img class="img-wrap" style="border:2px red"
+                src="{{this.storeSnapshot.logo}}"
+                alt="{{this.storeSnapshot.name}}"
+                 onerror="this.onerror=null; this.src='/img/store-placeholder.png';" />
+
+          {{#if this.offer}}
+            <span class="badge-offer">OFFER</span>
+          {{/if}}
+      </div>
+     <div class="product-image">
+        <img class="product-preview"
+           src="{{this.image}}"
+           alt="{{this.name}}"
+           onerror="this.onerror=null; this.src='/img/product-placeholder.png';">
+      </div>
+      <div class="card-body">
+        <div class="name-en">{{this.name}}</div>
+        {{#if this.name_ar}}<div class="name-ar">{{this.name_ar}}</div>{{/if}}
+
+        <div class="price">QAR {{this.price}}</div>
+
+        {{#if this.details}}
+          <div class="meta"><b>Details:</b> {{this.details}}</div>
+        {{/if}}
+        <div class="actions">
+          <!-- ✅ Edit: go to the admin table page filtered by storeId (where Save works) -->
+           <a class="btn-small btn-edit" href="/admin/products?storeId={{this.storeId}}">
+           Edit</a>
+
+       <!-- ✅ Delete: must be POST -->
+        <form action="/admin/products/delete/{{this._id}}" method="POST" style="display:inline;">
+          <button class="btn-small btn-delete" type="submit"
+           onclick="return confirm('Delete this product?');"> Delete
+          </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  {{/each}}
+</div>
+</body>
+<script>
+  const fileInput = document.getElementById('imageFile');
+  const preview = document.getElementById('preview');
+
+  fileInput?.addEventListener('change', () => {
+    const f = fileInput.files?.[0];
+    if (!f) return;
+
+    const url = URL.createObjectURL(f);
+    preview.src = url;
+    preview.style.display = 'block';
+  });
+</script>
+
+<style>
+  .pc-wrap {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.04);
+  }
+  .pc-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .pc-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 900;
+    color: #111827;
+  }
+  .pc-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .pc-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 220px;
+  }
+  .pc-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: #6b7280;
+  }
+.pc-select {
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    outline: none;
+    background: #fff;
+    font-weight: 700;
+  }
+  .pc-select:focus {
+    border-color: #1e66ff;
+    box-shadow: 0 0 0 3px rgba(30,102,255,.15);
+  }
+.pc-btn {
+  margin-top: 20px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #1e66ff;
+  background: #1e66ff;
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+ }
+.pc-btn:hover { filter: brightness(.95); }
+.pc-hint {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #6b7280;
+ }
+ .products-grid{
+   display:grid;
+   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+   gap:14px;
+ }
+ .product-card{
+   background:#fff;
+   border-radius:12px;
+   overflow:hidden;
+   box-shadow: 0 2px 10px rgba(0,0,0,.04);
+   border: 2px solid blue;
+ }
+.logo-only {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 1px;
+}
+.img-wrap{
+  position:fixed;
+  max-width: 38px;
+  max-height: 38px;
+  border-radius: 50%;
+  object-fit:fill;
+  z-index: 10;
+}
+
+/* Offer badge top-right */
+ .badge-offer{
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  left: auto !important;
+  padding: 2px 2px;
+  font-size: 11px;
+  border-radius: 999px;
+  background: #e11d48;
+  color: #fff;
+  font-weight: 700;
+}
+.card-body{ padding:12px; }
+  .name-en{ font-weight:900; }
+  .name-ar{ direction:rtl; text-align:right; opacity:.9; }
+  .price{ margin:8px 0; font-weight:900; }
+  .meta{ font-size:12px; margin:4px 0; opacity:.85; }
+.actions{
+  margin-top:12px;
+   display:flex;
+   gap:8px;
+   align-items:center;
+ }
+.btn-small{
+  padding:2px 6px;
+  border-radius:10px;
+  font-weight:500;
+  border:none;
+  cursor:pointer;
+  text-decoration:none;
+  display:inline-block;
+ }
+  .btn-edit{ background:#1e66ff; color:#fff; }
+  .btn-delete{ background:#ff3b30; color:#fff; }
+.product-image{
+  width:100%;
+  height: 150px;
+  box-sizing: border-box;
+  display:inline-flex;
+  z-index: 1; 
+  border: 2px solid red;
+  position:relative;
+  overflow: hidden;
+}
+.product-image img{
+  width: 100%;
+  height: 150px;            /* 100%; */
+  object-fit:fill;   /* 🔥 THIS is the key */
+  display:ruby;
+}
+</style>

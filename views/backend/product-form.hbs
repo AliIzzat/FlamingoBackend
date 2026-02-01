@@ -1,0 +1,100 @@
+<button
+  type="button"
+  class="prod-btn" 
+  onclick="window.location.href='{{returnTo}}'">
+ Back
+</button>
+<h1 style="margin:10px 0;">{{title}}</h1>
+
+<div style="padding:12px;border:1px solid #eee;border-radius:12px;max-width:900px;background:#fff;">
+  <div style="margin-bottom:10px;">
+    <strong>Store:</strong> {{store.name}} ({{store.type}})
+    <div style="color:#666;font-size:13px;">{{store.address}}</div>
+  </div>
+
+  <form method="POST" action="/admin/products/create" enctype="multipart/form-data">
+    <input type="hidden" name="storeId" value="{{selectedStoreId}}">
+    <input type="hidden" name="returnTo" value="{{returnTo}}">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <label>Name (EN)</label>
+        <input name="name" required style="width:100%;padding:10px;">
+      </div>
+      <div>
+        <label>Name (AR)</label>
+        <input name="name_ar" style="width:100%;padding:10px;">
+      </div>
+
+      <div>
+        <label>Price (QAR)</label>
+        <input name="price" type="number" step="0.01" required style="width:100%;padding:10px;">
+      </div>
+      <div>
+        <label>Image URL</label>
+        <input name="image" placeholder="/logos/..." style="width:100%;padding:10px;">
+      </div>
+
+      <label>Product Image</label>
+      <input type="file" name="imageFile" accept="image/*">
+
+      {{#if product.image}}
+         <img src="{{product.image}}" style="max-width:220px; margin-top:10px; border:1px solid #ddd; border-radius:10px;">
+      {{/if}}
+
+
+      <div style="grid-column:1 / -1;">
+        <label>Details (EN)</label>
+        <textarea name="details" rows="3" style="width:100%;padding:10px;"></textarea>
+      </div>
+
+      <div style="grid-column:1 / -1;">
+        <label>Details (AR)</label>
+        <textarea name="details_ar" rows="3" style="width:100%;padding:10px;"></textarea>
+      </div>
+
+      <div>
+        <label>Stock Qty</label>
+        <input name="stockQty" type="number" style="width:100%;padding:10px;">
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-top:22px;">
+        <input type="checkbox" id="offer" name="offer" value="1">
+        <label for="offer" style="margin:0;">Offer</label>
+      </div>
+
+      <div>
+        <label>Offer Price</label>
+        <input name="offerPrice" type="number" step="0.01" style="width:100%;padding:10px;">
+      </div>
+
+      <div>
+        <label>Offer Ends At (optional)</label>
+        <input name="offerEndsAt" type="date" style="width:100%;padding:10px;">
+      </div>
+    </div>
+
+    <div style="margin-top:14px;display:flex;gap:10px;">
+      <button type="submit" class="prod-btn">Save</button>
+      <button type="button" class="prod-btn"
+        onclick="window.location.href='{{returnTo}}'">
+        Cancel
+      </button>
+    </div>
+  </form>
+</div>
+
+<style>
+ .prod-btn{
+    margin:10px 0 0 20px;
+    height: 30px;
+    width: 80px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid #1e66ff;
+    background: #1e66ff;
+    color: #fff;
+    font-weight: 900;
+    cursor: pointer;
+ }
+</style>

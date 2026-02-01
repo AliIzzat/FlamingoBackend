@@ -1,0 +1,10 @@
+<div id="carousel"> 
+ <div id="carouselTrack">
+    {{#each carouselItems}}
+      <div class="carousel-item">
+          <img src="/carousel/{{this.image}}" alt="{{this.text}}">
+          <div class="carousel-caption">{{this.text}}</div>
+      </div>
+    {{/each}}
+  </div>
+</div>

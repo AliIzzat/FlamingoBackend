@@ -1,0 +1,100 @@
+<h1>Categories</h1>
+<section style="margin: 16px 0; padding: 12px; border: 1px solid #ddd; border-radius: 10px;">
+  <h3>Add Category</h3>
+  <form action="/admin/categories/create" method="POST" class="two-col-form">
+  <div class="form-grid">
+    <label>Key</label>
+      <input
+       name="key" required
+        placeholder="e.g. money_exchange"
+      />
+
+
+    <label>Name (EN)</label>
+    <input name="name_en" required />
+
+    <label>Name (AR)</label>
+    <input name="name_ar" />
+
+    <label>Icon (name or image path)</label>
+    <input
+      name="icon"
+      placeholder="e.g. shopping-basket OR /icons/grocery.png"
+    />
+
+    <label>Sort Order</label>
+    <input name="sortOrder" type="number" value="0" />
+
+    <label>Active</label>
+    <select name="isActive">
+      <option value="true" selected>Yes</option>
+      <option value="false">No</option>
+    </select>
+  </div>
+
+  <button type="submit" class="full-width-btn">Create</button>
+</form>
+
+</section>
+<hr />
+<h3>Existing Categories</h3>
+<table style="width:100%; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:8px;">Key</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:8px;">Name (EN)</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:8px;">Name (AR)</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:8px;">Icon</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:8px;">Sort</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:8px;">Active</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:8px;">Actions</th>
+    </tr>
+  </thead>
+ <tbody>
+  {{#each categories}}
+   <tr
+       data-active="{{#if isActive}}true{{else}}false{{/if}}"
+        style="{{#unless @last}}border-bottom:1px solid #f0f0f0;{{/unless}}"
+   >
+      <td style="padding:8px;">
+        <form id="catUpdate-{{_id}}" action="/admin/categories/update/{{_id}}" method="POST"></form>
+        <strong>{{key}}</strong>
+      </td>
+
+      <td style="padding:8px;">
+        <input name="name_en" value="{{name_en}}" required style="width:180px;" form="catUpdate-{{_id}}" />
+      </td>
+
+      <td style="padding:8px;">
+        <input name="name_ar" value="{{name_ar}}" style="width:180px;" form="catUpdate-{{_id}}" />
+      </td>
+
+      <td style="padding:8px;">
+        <input name="icon" value="{{icon}}" style="width:220px;" form="catUpdate-{{_id}}" />
+      </td>
+
+      <td style="padding:8px;">
+        <input name="sortOrder" type="number" value="{{sortOrder}}" style="width:80px;" form="catUpdate-{{_id}}" />
+      </td>
+
+      <td style="padding:8px;">
+        <select name="isActive" form="catUpdate-{{_id}}">
+          <option value="true" {{#if isActive}}selected{{/if}}>Yes</option>
+          <option value="false" {{#unless isActive}}selected{{/unless}}>No</option>
+        </select>
+      </td>
+
+      <td style="padding:8px; display:flex; gap:8px;">
+        <button type="submit" form="catUpdate-{{_id}}">Save</button>
+
+        <form action="/admin/categories/toggle/{{_id}}" method="POST" style="margin:0;">
+          <button type="submit">
+            {{#if isActive}}Disable{{else}}Enable{{/if}}
+          </button>
+        </form>
+      </td>
+
+    </tr>
+  {{/each}}
+</tbody>
+</table>
