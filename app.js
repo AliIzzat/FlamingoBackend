@@ -37,6 +37,12 @@ const flag = (name, fallback = "false") =>
 const ENABLE_ADMIN = flag("ENABLE_ADMIN", "false");
 const ENABLE_WEB = flag("ENABLE_WEB", "true");
 
+// Hard block admin routes when ENABLE_ADMIN is false (extra safety)
+if (!ENABLE_ADMIN) {
+  const blocked = ["/admin", "/auth", "/delivery", "/backend"];
+  app.use(blocked, (_req, res) => res.status(404).json({ error: "Not Found" }));
+}
+
 if (isProd) app.set("trust proxy", 1);
 
 // Middleware
