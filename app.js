@@ -9,24 +9,14 @@ const cors = require("cors");
 const exphbs = require("express-handlebars");
 const Handlebars = require("handlebars");
 
-// Routers (API)
+// API Routers (these exist and are needed on Railway)
 const customerApiRouter = require("./routes/api/customer");
 const driverApi = require("./routes/api/driver");
 const customerDisputes = require("./routes/api/customerDisputes");
 const mobileApi = require("./routes/api/mobile");
 
-// Routers (Web / Payment pages)
+// Web / Payment pages (only if ENABLE_WEB)
 const orderRoutes = require("./routes/frontend/order");
-
-// Routers (Admin)
-const authRoutes = require("./routes/backend/auth");
-const adminDashboard = require("./routes/backend/adminDashboard");
-const adminStores = require("./routes/backend/adminStores");
-const adminProducts = require("./routes/backend/adminProducts");
-const adminCategories = require("./routes/backend/adminCategories");
-const adminDisputes = require("./routes/backend/adminDisputes");
-const adminOrdersRoutes = require("./routes/backend/adminOrders");
-const reportsRouter = require("./routes/backend/reports");
 
 // Helpers
 const distanceHelper = require("./utils/distance");
@@ -44,13 +34,15 @@ const app = express();
 const flag = (name, fallback = "false") =>
   String(process.env[name] ?? fallback).toLowerCase() === "true";
 
-const ENABLE_ADMIN = flag("ENABLE_ADMIN", "true");
+const ENABLE_ADMIN = flag("ENABLE_ADMIN", "false");
 const ENABLE_WEB = flag("ENABLE_WEB", "true");
 
 if (isProd) app.set("trust proxy", 1);
 
 // Middleware
-app.use(cors());
+//app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
+
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -59,7 +51,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public"), { maxAge: isProd ? "1d" : 0 }));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
-// Sessions
+// Sessions (needed for admin + web flows; harmless for API)
+if (ENABLE_WEB || ENABLE_ADMIN) {
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "fallbackSecretKey",
@@ -71,14 +64,14 @@ app.use(
     }),
     name: "sid",
     cookie: {
-      secure: isProd,          // ✅ true on Railway (HTTPS)
+      secure: isProd, // OK on Railway if NODE_ENV=production and trust proxy=1
       httpOnly: true,
       sameSite: "lax",
       maxAge: 30 * 60 * 1000,
     },
   })
 );
-
+}
 // Locals
 app.use((req, res, next) => {
   res.locals.GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || "";
@@ -86,7 +79,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// View engine (needed for admin)
+// View engine (only really needed if you render pages)
 app.engine(
   "hbs",
   exphbs.engine({
@@ -109,15 +102,15 @@ app.engine(
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
-// Root
+// Root (do NOT redirect to /auth/login if admin disabled)
 app.get("/", (req, res) => {
-  const role = req.session?.userRole || req.session?.user?.role;
-  if (role === "admin" || role === "support") return res.redirect("/admin");
-  return res.redirect("/auth/login");
+  if (ENABLE_ADMIN) return res.redirect("/auth/login");
+  return res.json({ ok: true, message: "FlamingoBackend API running" });
 });
 
 // Health
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
+app.get("/api/ping", (_req, res) => res.type("text/plain").send("pong"));
 
 // APIs
 app.use("/api/customer", customerApiRouter);
@@ -130,10 +123,20 @@ if (ENABLE_WEB) {
   app.use("/order", orderRoutes);
 }
 
-// Admin routes
+// Admin routes (LAZY REQUIRE so disabled means not loaded at all)
 if (ENABLE_ADMIN) {
+  const authRoutes = require("./routes/backend/auth");
+  const deliveryRoutes = require("./routes/backend/delivery");
+  const adminDashboard = require("./routes/backend/adminDashboard");
+  const adminStores = require("./routes/backend/adminStores");
+  const adminProducts = require("./routes/backend/adminProducts");
+  const adminCategories = require("./routes/backend/adminCategories");
+  const adminDisputes = require("./routes/backend/adminDisputes");
+  const adminOrdersRoutes = require("./routes/backend/adminOrders");
+  const reportsRouter = require("./routes/backend/reports");
+
   app.use("/auth", authRoutes);
-  app.use("/delivery", require("./routes/backend/delivery"));
+  app.use("/delivery", deliveryRoutes);
 
   app.use("/admin/stores", adminStores);
   app.use("/admin/products", adminProducts);
@@ -146,11 +149,21 @@ if (ENABLE_ADMIN) {
   app.use("/backend/reports", reportsRouter);
 }
 
-// 404
+// 404 (safe for API + HTML)
 app.use((req, res) => {
   res.status(404);
-  if (req.accepts("html")) return res.render("frontend/404", { layout: "main" });
+  if (req.accepts("html")) {
+    return res.render("frontend/404", { layout: false });
+  }
   return res.json({ error: "Not Found" });
+});
+
+
+// Error handler (always keep this LAST)
+app.use((err, req, res, _next) => {
+  console.error("🌋 Unhandled error:", err);
+  if (req.accepts("json")) return res.status(500).json({ error: "Server error" });
+  return res.status(500).type("text").send("Server error");
 });
 
 // Start
@@ -168,3 +181,4 @@ app.use((req, res) => {
     process.exit(1);
   }
 })();
+
