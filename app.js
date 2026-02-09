@@ -9,11 +9,14 @@ const cors = require("cors");
 const exphbs = require("express-handlebars");
 const Handlebars = require("handlebars");
 
+
 // API Routers (these exist and are needed on Railway)
 const customerApiRouter = require("./routes/api/customer");
 const driverApi = require("./routes/api/driver");
 const customerDisputes = require("./routes/api/customerDisputes");
 const mobileApi = require("./routes/api/mobile");
+const mealsRouter = require("./routes/api/meals");
+
 
 // Web / Payment pages (only if ENABLE_WEB)
 const orderRoutes = require("./routes/frontend/order");
