@@ -16,6 +16,7 @@ const driverApi = require("./routes/api/driver");
 const customerDisputes = require("./routes/api/customerDisputes");
 const mobileApi = require("./routes/api/mobile");
 const mealsRouter = require("./routes/api/meals");
+const storesRouter = require("./routes/api/stores");
 
 
 // Web / Payment pages (only if ENABLE_WEB)
@@ -132,6 +133,7 @@ app.use("/api/driver", driverApi);
 app.use("/api/mobile", mobileApi);
 app.use("/api/customer/disputes", customerDisputes);
 app.use("/api/meals", mealsRouter);
+app.use("/api/stores", storesRouter);
 
 
 // Web routes (payment callbacks/pages)
@@ -164,6 +166,14 @@ if (ENABLE_ADMIN) {
 
   app.use("/backend/reports", reportsRouter);
 }
+//--------------------debug try Temp-----------
+app.get("/api/_debug/db", (req, res) => {
+  res.json({
+    host: mongoose.connection.host,
+    name: mongoose.connection.name,
+    readyState: mongoose.connection.readyState, // 1 = connected
+  });
+});
 
 // 404 (safe for API + HTML)
 
