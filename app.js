@@ -22,10 +22,16 @@ const orderRoutes = require("./routes/frontend/order");
 const distanceHelper = require("./utils/distance");
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
+
 const MONGODB_URI =
-  process.env.MONGO_URI ||
   process.env.MONGODB_URI ||
-  "mongodb://127.0.0.1:27017/flamingosDB";
+  process.env.MONGO_URL ||
+  process.env.MONGO_URI;
+
+if (!MONGODB_URI) {
+  console.error("❌ Missing MongoDB URI. Set MONGODB_URI in Railway Variables.");
+  process.exit(1);
+}
 
 const isProd = process.env.NODE_ENV === "production";
 const app = express();
@@ -117,12 +123,13 @@ app.get("/", (req, res) => {
 // Health
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 app.get("/api/ping", (_req, res) => res.type("text/plain").send("pong"));
-
 // APIs
 app.use("/api/customer", customerApiRouter);
 app.use("/api/driver", driverApi);
 app.use("/api/mobile", mobileApi);
 app.use("/api/customer/disputes", customerDisputes);
+app.use("/api/meals", mealsRouter);
+
 
 // Web routes (payment callbacks/pages)
 if (ENABLE_WEB) {
@@ -156,21 +163,41 @@ if (ENABLE_ADMIN) {
 }
 
 // 404 (safe for API + HTML)
+
 app.use((req, res) => {
-  res.status(404);
-  if (req.accepts("html")) {
-    return res.render("frontend/404", { layout: false });
+  // If it's an API call, return JSON instead of rendering a page
+  if (req.originalUrl.startsWith("/api")) {
+    return res.status(404).json({ error: "Not found", path: req.originalUrl });
   }
-  return res.json({ error: "Not Found" });
+
+  // Otherwise render web 404 if you have it
+  return res.status(404).send("Not found");
 });
+
+app.use((err, req, res, next) => {
+  console.error("🌋 Unhandled error:", err);
+  if (req.originalUrl.startsWith("/api")) {
+    return res.status(500).json({ error: "Server error" });
+  }
+  return res.status(500).send("Server error");
+});
+
+
+// app.use((req, res) => {
+//   res.status(404);
+//   if (req.accepts("html")) {
+//     return res.render("frontend/404", { layout: false });
+//   }
+//   return res.json({ error: "Not Found" });
+// });
 
 
 // Error handler (always keep this LAST)
-app.use((err, req, res, _next) => {
-  console.error("🌋 Unhandled error:", err);
-  if (req.accepts("json")) return res.status(500).json({ error: "Server error" });
-  return res.status(500).type("text").send("Server error");
-});
+// app.use((err, req, res, _next) => {
+//   console.error("🌋 Unhandled error:", err);
+//   if (req.accepts("json")) return res.status(500).json({ error: "Server error" });
+//   return res.status(500).type("text").send("Server error");
+// });
 
 // Start
 (async () => {
@@ -187,4 +214,8 @@ app.use((err, req, res, _next) => {
     process.exit(1);
   }
 })();
+app.get("/api/meals", (req, res) => {
+  res.json({ ok: true, note: "api/meals route is alive (temporary)" });
+});
+
 
