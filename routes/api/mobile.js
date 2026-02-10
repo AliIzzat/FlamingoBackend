@@ -56,10 +56,18 @@ router.get("/stores", async (req, res) => {
       return res.status(400).json({ ok: false, message: "category is required" });
     }
 
-    const stores = await Store.find({ type: category, isActive: true })
-      .select("name name_ar type logo address latitude longitude location isActive")
-      .sort({ name: 1 })
-      .lean();
+    // const stores = await Store.find({ type: category, isActive: true })
+    //   .select("name name_ar type logo address latitude longitude location isActive")
+    //   .sort({ name: 1 })
+    //   .lean();
+     
+    const stores = await Store.find({
+      type: { $regex: new RegExp(`^${category}$`, "i") }, // case-insensitive exact match
+      $or: [{ isActive: true }, { isActive: { $exists: false } }],
+    })
+  .select("name name_ar type logo address latitude longitude location isActive")
+  .sort({ name: 1 })
+  .lean();
 
     res.json({ ok: true, stores });
   } catch (e) {
@@ -69,32 +77,11 @@ router.get("/stores", async (req, res) => {
 });
 
 // -----------------------------
-// GET /api/mobile/products?storeId=...
-// -----------------------------
-router.get("/products", async (req, res) => {
-  try {
-    const storeId = String(req.query.storeId || "").trim();
-    if (!isValidObjectId(storeId)) {
-      return res.status(400).json({ ok: false, message: "Valid storeId is required" });
-    }
-
-    const products = await Product.find({ storeId, isActive: true })
-      .select("name name_ar price image offer offerPrice details details_ar storeId category storeSnapshot")
-      .sort({ createdAt: -1 })
-      .lean();
-
-    res.json({ ok: true, products });
-  } catch (e) {
-    console.error("❌ mobile products:", e);
-    res.status(500).json({ ok: false, message: "Failed to load products" });
-  }
-});
-
-// -----------------------------
 router.post("/checkout", async (req, res) => {
   try {
-    const { storeId, items, customer, source } = req.body;
+    const { storeId, items, customer } = req.body;
 
+    // ✅ Validate
     if (!isValidObjectId(storeId)) {
       return res.status(400).json({ ok: false, message: "Valid storeId is required" });
     }
@@ -103,82 +90,104 @@ router.post("/checkout", async (req, res) => {
       return res.status(400).json({ ok: false, message: "Cart is empty" });
     }
 
-    const store = await Store.findById(storeId).select("name type isActive").lean();
+    const name = String(customer?.name || "").trim();
+    const phone = String(customer?.phone || "").trim();
+    const addressText = String(customer?.addressText || "").trim();
+
+    if (!name) return res.status(400).json({ ok: false, message: "Customer name is required" });
+    if (!phone) return res.status(400).json({ ok: false, message: "Customer phone is required" });
+    if (!addressText) return res.status(400).json({ ok: false, message: "Customer address is required" });
+
+    // ✅ Store
+    const store = await Store.findById(storeId)
+      .select("name type isActive address latitude longitude location")
+      .lean();
+
     if (!store || !store.isActive) {
       return res.status(404).json({ ok: false, message: "Store not found / inactive" });
     }
 
-    // 1) Load product prices from DB (server is source of truth)
+    // ✅ Load products from DB (source of truth)
     const productIds = items
-      .map((i) => i.productId || i.mealId)
-      .filter(Boolean)
-      .map(String);
+      .map((i) => String(i.productId || i.mealId || ""))
+      .filter((id) => isValidObjectId(id));
 
-    const validObjectIds = productIds.filter(isValidObjectId);
-    if (validObjectIds.length === 0) {
+    if (productIds.length === 0) {
       return res.status(400).json({ ok: false, message: "No valid productIds" });
     }
 
     const dbProducts = await Product.find({
-      _id: { $in: validObjectIds },
+      _id: { $in: productIds },
       storeId,
       isActive: true,
     })
-      .select("_id name name_ar price offer offerPrice image")
+      .select("_id name price offer offerPrice image storeId storeSnapshot category")
       .lean();
 
     const dbMap = new Map(dbProducts.map((p) => [String(p._id), p]));
 
-    // 2) Build order items + compute total
-    let totalAmount = 0;
+    // ✅ Build order.items snapshots + subtotal
+    let subtotal = 0;
     const orderItems = [];
 
     for (const i of items) {
       const id = String(i.productId || i.mealId || "");
-      const qty = Math.max(Number(i.quantity || 1), 1);
-
       const p = dbMap.get(id);
       if (!p) {
         return res.status(400).json({ ok: false, message: `Invalid product in cart: ${id}` });
       }
 
-      const unitPrice =
-        p.offer && Number.isFinite(Number(p.offerPrice)) && Number(p.offerPrice) > 0
-          ? Number(p.offerPrice)
-          : Number(p.price);
+      const qty = Math.max(Number(i.qty ?? i.quantity ?? 1), 1);
 
-      totalAmount += unitPrice * qty;
+      const unitPrice =
+        p.offer && Number(p.offerPrice) > 0 ? Number(p.offerPrice) : Number(p.price);
+
+      subtotal += unitPrice * qty;
 
       orderItems.push({
         productId: p._id,
-        name: p.name,
-        price: unitPrice,
-        quantity: qty,
+        storeId: p.storeId ?? storeId,
+        category: store.type, // ✅ always store.type (single source of truth)
+        name_snapshot: p.name,
+        price_snapshot: unitPrice,
+        qty,
+        image_snapshot: p.image || "",
       });
     }
 
-    totalAmount = Math.round(totalAmount * 100) / 100;
-
-    if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
-      return res.status(400).json({ ok: false, message: "Invalid total" });
+    subtotal = Math.round(subtotal * 100) / 100;
+    if (!Number.isFinite(subtotal) || subtotal <= 0) {
+      return res.status(400).json({ ok: false, message: "Invalid subtotal" });
     }
 
-    // 3) Create order first
+    // ✅ Pickup coords from Store (support both styles)
+    const pickupLng = store.location?.coordinates?.[0] ?? store.longitude ?? null;
+    const pickupLat = store.location?.coordinates?.[1] ?? store.latitude ?? null;
+
+    // ✅ Create Order (matches your schema)
     const order = await Order.create({
-      storeId,
-      storeType: store.type, // only if your schema supports it
+      customer: {
+        name,
+        phone,
+        addressText,
+        location: {
+          lat: customer?.lat ?? null,
+          lng: customer?.lng ?? null,
+        },
+      },
+      pickup: {
+        storeId,
+        addressText: store.address || "",
+        location: { lat: pickupLat, lng: pickupLng },
+      },
       items: orderItems,
-      customerName: customer?.name || "",
-      customerPhone: customer?.phone || "",
-      customerAddress: customer?.address || "",
-      customerLat: customer?.lat ?? null,
-      customerLng: customer?.lng ?? null,
-      totalAmount,
-      status: "PendingPayment",
-      source: source || "mobile",
+      totals: { subtotal }, // deliveryFee + total computed in pre-save
+      payment: { method: "myfatoorah", status: "unpaid" },
+      delivery: { status: "Pending", assignedDriverId: null },
+      dispute: { status: "None" },
     });
 
-    // 4) MyFatoorah
+    // ✅ MyFatoorah config
     if (!MYFATOORAH_API_KEY) {
       return res.status(500).json({ ok: false, message: "MyFatoorah API key missing" });
     }
@@ -186,13 +195,16 @@ router.post("/checkout", async (req, res) => {
       return res.status(500).json({ ok: false, message: "MyFatoorah callback URLs missing" });
     }
 
+    // IMPORTANT: InvoiceValue should be the FINAL total (subtotal + delivery fee)
+    const invoiceValue = Number(order.totals?.total || subtotal);
+
     const mfPayload = {
-      InvoiceValue: totalAmount,
-      CustomerName: customer?.name || "Customer",
-      CustomerMobile: customer?.phone || "",
+      InvoiceValue: invoiceValue,
+      CustomerName: name,
+      CustomerMobile: phone,
       CallBackUrl: SUCCESS_URL,
       ErrorUrl: ERROR_URL,
-      UserDefinedField: String(order._id),
+      UserDefinedField: String(order._id), // ✅ orderId lives here
       DisplayCurrencyIso: "QAR",
     };
 
@@ -209,19 +221,19 @@ router.post("/checkout", async (req, res) => {
     if (!mfData?.IsSuccess) {
       console.error("❌ MyFatoorah failed:", mfData);
       await Order.findByIdAndUpdate(order._id, {
-        $set: { status: "PaymentFailed", paymentError: mfData },
+        $set: { "payment.status": "failed" },
       });
       return res.status(500).json({ ok: false, message: "Failed to create payment" });
     }
 
     const paymentUrl = mfData.Data?.InvoiceURL || mfData.Data?.PaymentURL;
-    const invoiceId = mfData.Data?.InvoiceId ?? null;
+    const invoiceId = String(mfData.Data?.InvoiceId || "");
+    const paymentId = String(mfData.Data?.PaymentId || "");
 
     await Order.findByIdAndUpdate(order._id, {
       $set: {
-        invoiceId,
-        paymentUrl,
-        status: "PendingPayment",
+        "payment.invoiceId": invoiceId,
+        "payment.paymentId": paymentId,
       },
     });
 
@@ -236,46 +248,39 @@ router.post("/checkout", async (req, res) => {
     return res.status(500).json({ ok: false, message: "Checkout error" });
   }
 });
+
+// MyFatoorah success callback
 router.get("/payment/success", async (req, res) => {
   try {
-    const orderId = String(
-      req.query.orderId ||
-      req.query.UserDefinedField ||
-      req.query.InvoiceId || ""
-    );
-
+    // ✅ orderId was stored in UserDefinedField
+    const orderId = String(req.query.UserDefinedField || req.query.orderId || "");
     if (isValidObjectId(orderId)) {
       await Order.findByIdAndUpdate(orderId, {
-        $set: { status: "Paid" },
+        $set: { "payment.status": "paid" },
       });
     }
 
-    // redirect back to CUSTOMER app
-    return res.redirect("flamingdelivery://payment-success");
+    return res.redirect("FlamingDeliverySys://payment-success");
   } catch (e) {
     console.error("❌ payment success callback:", e);
-    return res.redirect("flamingdelivery://payment-failed");
+    return res.redirect("FlamingDeliverySys://payment-failed");
   }
 });
 
+// MyFatoorah error callback
 router.get("/payment/error", async (req, res) => {
   try {
-    const orderId = String(
-      req.query.orderId ||
-      req.query.UserDefinedField ||
-      req.query.InvoiceId || ""
-    );
-
+    const orderId = String(req.query.UserDefinedField || req.query.orderId || "");
     if (isValidObjectId(orderId)) {
       await Order.findByIdAndUpdate(orderId, {
-        $set: { status: "PaymentFailed" },
+        $set: { "payment.status": "failed" },
       });
     }
 
-    return res.redirect("flamingdelivery://payment-failed");
+    return res.redirect("FlamingDeliverySys://payment-failed");
   } catch (e) {
     console.error("❌ payment error callback:", e);
-    return res.redirect("flamingdelivery://payment-failed");
+    return res.redirect("FlamingDeliverySys://payment-failed");
   }
 });
 
