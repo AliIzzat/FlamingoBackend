@@ -63,6 +63,11 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ✅ Health check (safe, no conflict)
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true, service: "FlamingoBackend", time: new Date().toISOString() });
+});
+
 // Static
 app.use(express.static(path.join(__dirname, "public"), { maxAge: isProd ? "1d" : 0 }));
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
@@ -128,13 +133,12 @@ app.get("/", (req, res) => {
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 app.get("/api/ping", (_req, res) => res.type("text/plain").send("pong"));
 // APIs
-app.use("/api/customer", customerApiRouter);
-app.use("/api/driver", driverApi);
 app.use("/api/mobile", mobileApi);
-app.use("/api/customer/disputes", customerDisputes);
 app.use("/api/meals", mealsRouter);
 app.use("/api/stores", storesRouter);
-
+app.use("/api/customer", customerApiRouter);
+app.use("/api/driver", driverApi);
+app.use("/api/customer/disputes", customerDisputes);
 
 // Web routes (payment callbacks/pages)
 if (ENABLE_WEB) {
@@ -175,8 +179,8 @@ app.get("/api/_debug/db", (req, res) => {
   });
 });
 
-app.get("/api/meals", (req, res) => {
-  res.json({ ok: true, note: "api/meals route is alive (temporary)" });
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true, service: "FlamingoBackend" });
 });
 
 // 404 (safe for API + HTML)
