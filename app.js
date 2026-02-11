@@ -175,6 +175,10 @@ app.get("/api/_debug/db", (req, res) => {
   });
 });
 
+app.get("/api/meals", (req, res) => {
+  res.json({ ok: true, note: "api/meals route is alive (temporary)" });
+});
+
 // 404 (safe for API + HTML)
 
 app.use((req, res) => {
@@ -195,23 +199,6 @@ app.use((err, req, res, next) => {
   return res.status(500).send("Server error");
 });
 
-
-// app.use((req, res) => {
-//   res.status(404);
-//   if (req.accepts("html")) {
-//     return res.render("frontend/404", { layout: false });
-//   }
-//   return res.json({ error: "Not Found" });
-// });
-
-
-// Error handler (always keep this LAST)
-// app.use((err, req, res, _next) => {
-//   console.error("🌋 Unhandled error:", err);
-//   if (req.accepts("json")) return res.status(500).json({ error: "Server error" });
-//   return res.status(500).type("text").send("Server error");
-// });
-
 // Start
 (async () => {
   try {
@@ -227,6 +214,3 @@ app.use((err, req, res, next) => {
     process.exit(1);
   }
 })();
-app.get("/api/meals", (req, res) => {
-  res.json({ ok: true, note: "api/meals route is alive (temporary)" });
-});
