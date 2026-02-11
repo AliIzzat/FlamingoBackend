@@ -1,0 +1,95 @@
+<h1>{{title}}</h1>
+<form method="GET" action="/backend/reports/driver-meals" style="margin:12px 0; display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+  <div>
+    <label>From</label><br/>
+    <input type="date" name="from" value="{{filters.from}}">
+  </div>
+
+  <div>
+    <label>To</label><br/>
+    <input type="date" name="to" value="{{filters.to}}">
+  </div>
+
+  <div>
+    <label>Mode</label><br/>
+    <select name="mode">
+      <option value="created" {{#if (eq filters.mode "created")}}selected{{/if}}>Order Created</option>
+      <option value="delivered" {{#if (eq filters.mode "delivered")}}selected{{/if}}>Delivered At</option>
+    </select>
+  </div>
+
+  <div>
+      <label>Driver</label><br/>
+      <select name="driverId" style="width:260px;">
+        <option value="">All Drivers</option>
+        {{#each driversList}}
+          <option value="{{_id}}" {{#if (eq _id ../filters.driverId)}}selected{{/if}}>
+            {{username}}
+          </option>
+        {{/each}}
+      </select>
+    </div>
+
+
+  <button type="submit">Filter</button>
+</form>
+
+<hr/>
+
+{{#if drivers.length}}
+
+  <p><strong>Grand Total (Line Items):</strong> {{grandLineTotal}}</p>
+  <p><strong>Grand Total (Orders):</strong> {{grandOrderTotal}}</p>
+  <hr />
+
+  {{#each drivers}}
+    <h2>Driver: {{driverName}}</h2>
+
+    <p>
+      <strong>Driver Total (Line Items):</strong> {{driverLineTotal}}
+      &nbsp; | &nbsp;
+      <strong>Driver Total (Orders):</strong> {{driverOrderTotal}}
+    </p>
+
+    <table style="width:100%; border-collapse:collapse;" border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>Address</th>
+          <th>Meal</th>
+          <th>Qty</th>
+          <th>Price</th>
+          <th>Line Total</th>
+          <th>Order Total</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {{#each orders}}
+          <tr>
+            <td>{{orderId}}</td>
+            <td>{{status}}</td>
+            <td>{{createdAt}}</td>
+            <td>{{customerName}}</td>
+            <td>{{customerMobile}}</td>
+            <td>{{customerAddress}}</td>
+            <td>{{mealName}}</td>
+            <td style="text-align:right;">{{quantity}}</td>
+            <td style="text-align:right;">{{price}}</td>
+            <td style="text-align:right;"><strong>{{lineTotal}}</strong></td>
+            <td style="text-align:right;">{{totalAmount}}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <hr />
+  {{/each}}
+
+{{else}}
+  <p>No driver orders found.</p>
+{{/if}}

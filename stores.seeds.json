@@ -1,0 +1,638 @@
+[
+  {
+    "name": "Doha Grill House",
+    "type": "restaurant",
+    "address": "West Bay, Doha",
+    "logo": "/logos/restaurant-1.png",
+    "latitude": 25.3241,
+    "longitude": 51.5293,
+    "location": { "type": "Point", "coordinates": [51.5293, 25.3241] }
+  },
+  {
+    "name": "Pearl Taste Kitchen",
+    "type": "restaurant",
+    "address": "The Pearl Qatar, Doha",
+    "logo": "/logos/restaurant-2.png",
+    "latitude": 25.3685,
+    "longitude": 51.5510,
+    "location": { "type": "Point", "coordinates": [51.551, 25.3685] }
+  },
+  {
+    "name": "Souq Spice Corner",
+    "type": "restaurant",
+    "address": "Souq Waqif, Doha",
+    "logo": "/logos/restaurant-3.png",
+    "latitude": 25.2867,
+    "longitude": 51.5331,
+    "location": { "type": "Point", "coordinates": [51.5331, 25.2867] }
+  },
+  {
+    "name": "Corniche Bites",
+    "type": "restaurant",
+    "address": "Doha Corniche, Doha",
+    "logo": "/logos/restaurant-4.png",
+    "latitude": 25.3028,
+    "longitude": 51.5369,
+    "location": { "type": "Point", "coordinates": [51.5369, 25.3028] }
+  },
+  {
+    "name": "Al Sadd Shawarma",
+    "type": "restaurant",
+    "address": "Al Sadd, Doha",
+    "logo": "/logos/restaurant-5.png",
+    "latitude": 25.2764,
+    "longitude": 51.4989,
+    "location": { "type": "Point", "coordinates": [51.4989, 25.2764] }
+  },
+  {
+    "name": "Katara Seafood House",
+    "type": "restaurant",
+    "address": "Katara Cultural Village, Doha",
+    "logo": "/logos/restaurant-6.png",
+    "latitude": 25.3561,
+    "longitude": 51.5226,
+    "location": { "type": "Point", "coordinates": [51.5226, 25.3561] }
+  },
+  {
+    "name": "Lusail Lake Diner",
+    "type": "restaurant",
+    "address": "Lusail Marina, Doha",
+    "logo": "/logos/restaurant-7.png",
+    "latitude": 25.3868,
+    "longitude": 51.5482,
+    "location": { "type": "Point", "coordinates": [51.5482, 25.3868] }
+  },
+  {
+    "name": "Msheireb Cafe & Grill",
+    "type": "restaurant",
+    "address": "Msheireb Downtown, Doha",
+    "logo": "/logos/restaurant-8.png",
+    "latitude": 25.2862,
+    "longitude": 51.5319,
+    "location": { "type": "Point", "coordinates": [51.5319, 25.2862] }
+  },
+  {
+    "name": "Najma Noodles",
+    "type": "restaurant",
+    "address": "Najma, Doha",
+    "logo": "/logos/restaurant-9.png",
+    "latitude": 25.2729,
+    "longitude": 51.5453,
+    "location": { "type": "Point", "coordinates": [51.5453, 25.2729] }
+  },
+  {
+    "name": "Al Wakra Street Eats",
+    "type": "restaurant",
+    "address": "Old Airport Area, Doha",
+    "logo": "/logos/restaurant-10.png",
+    "latitude": 25.2577,
+    "longitude": 51.5592,
+    "location": { "type": "Point", "coordinates": [51.5592, 25.2577] }
+  },
+
+  {
+    "name": "Fresh Basket Market",
+    "type": "grocery",
+    "address": "Al Sadd, Doha",
+    "logo": "/logos/grocery-1.png",
+    "latitude": 25.2756,
+    "longitude": 51.4968,
+    "location": { "type": "Point", "coordinates": [51.4968, 25.2756] }
+  },
+  {
+    "name": "West Bay Fresh Mart",
+    "type": "grocery",
+    "address": "West Bay, Doha",
+    "logo": "/logos/grocery-2.png",
+    "latitude": 25.3294,
+    "longitude": 51.5281,
+    "location": { "type": "Point", "coordinates": [51.5281, 25.3294] }
+  },
+  {
+    "name": "Pearl Daily Grocery",
+    "type": "grocery",
+    "address": "The Pearl Qatar, Doha",
+    "logo": "/logos/grocery-3.png",
+    "latitude": 25.3642,
+    "longitude": 51.5487,
+    "location": { "type": "Point", "coordinates": [51.5487, 25.3642] }
+  },
+  {
+    "name": "Lusail Super Store",
+    "type": "grocery",
+    "address": "Lusail City, Doha",
+    "logo": "/logos/grocery-4.png",
+    "latitude": 25.3921,
+    "longitude": 51.5364,
+    "location": { "type": "Point", "coordinates": [51.5364, 25.3921] }
+  },
+  {
+    "name": "Bin Mahmoud Grocers",
+    "type": "grocery",
+    "address": "Bin Mahmoud, Doha",
+    "logo": "/logos/grocery-5.png",
+    "latitude": 25.2961,
+    "longitude": 51.5129,
+    "location": { "type": "Point", "coordinates": [51.5129, 25.2961] }
+  },
+  {
+    "name": "Airport Road Mini Mart",
+    "type": "grocery",
+    "address": "Old Airport Road, Doha",
+    "logo": "/logos/grocery-6.png",
+    "latitude": 25.2529,
+    "longitude": 51.5538,
+    "location": { "type": "Point", "coordinates": [51.5538, 25.2529] }
+  },
+  {
+    "name": "Al Waab Family Market",
+    "type": "grocery",
+    "address": "Al Waab, Doha",
+    "logo": "/logos/grocery-7.png",
+    "latitude": 25.2431,
+    "longitude": 51.4907,
+    "location": { "type": "Point", "coordinates": [51.4907, 25.2431] }
+  },
+  {
+    "name": "Katara Corner Grocery",
+    "type": "grocery",
+    "address": "Katara, Doha",
+    "logo": "/logos/grocery-8.png",
+    "latitude": 25.3554,
+    "longitude": 51.5248,
+    "location": { "type": "Point", "coordinates": [51.5248, 25.3554] }
+  },
+  {
+    "name": "Al Dafna Quick Picks",
+    "type": "grocery",
+    "address": "Al Dafna, Doha",
+    "logo": "/logos/grocery-9.png",
+    "latitude": 25.3212,
+    "longitude": 51.5156,
+    "location": { "type": "Point", "coordinates": [51.5156, 25.3212] }
+  },
+  {
+    "name": "Souq Waqif Pantry",
+    "type": "grocery",
+    "address": "Near Souq Waqif, Doha",
+    "logo": "/logos/grocery-10.png",
+    "latitude": 25.2891,
+    "longitude": 51.5347,
+    "location": { "type": "Point", "coordinates": [51.5347, 25.2891] }
+  },
+
+  {
+    "name": "Care Plus Pharmacy",
+    "type": "pharmacy",
+    "address": "Bin Mahmoud, Doha",
+    "logo": "/logos/pharmacy-1.png",
+    "latitude": 25.2964,
+    "longitude": 51.5152,
+    "location": { "type": "Point", "coordinates": [51.5152, 25.2964] }
+  },
+  {
+    "name": "West Bay MedPoint",
+    "type": "pharmacy",
+    "address": "West Bay, Doha",
+    "logo": "/logos/pharmacy-2.png",
+    "latitude": 25.3317,
+    "longitude": 51.5262,
+    "location": { "type": "Point", "coordinates": [51.5262, 25.3317] }
+  },
+  {
+    "name": "Pearl Health Pharmacy",
+    "type": "pharmacy",
+    "address": "The Pearl Qatar, Doha",
+    "logo": "/logos/pharmacy-3.png",
+    "latitude": 25.3672,
+    "longitude": 51.5536,
+    "location": { "type": "Point", "coordinates": [51.5536, 25.3672] }
+  },
+  {
+    "name": "Lusail Wellness Pharmacy",
+    "type": "pharmacy",
+    "address": "Lusail City, Doha",
+    "logo": "/logos/pharmacy-4.png",
+    "latitude": 25.3954,
+    "longitude": 51.5413,
+    "location": { "type": "Point", "coordinates": [51.5413, 25.3954] }
+  },
+  {
+    "name": "Al Sadd LifeCare",
+    "type": "pharmacy",
+    "address": "Al Sadd, Doha",
+    "logo": "/logos/pharmacy-5.png",
+    "latitude": 25.2792,
+    "longitude": 51.5026,
+    "location": { "type": "Point", "coordinates": [51.5026, 25.2792] }
+  },
+  {
+    "name": "Najma City Pharmacy",
+    "type": "pharmacy",
+    "address": "Najma, Doha",
+    "logo": "/logos/pharmacy-6.png",
+    "latitude": 25.2746,
+    "longitude": 51.5442,
+    "location": { "type": "Point", "coordinates": [51.5442, 25.2746] }
+  },
+  {
+    "name": "Msheireb Meds",
+    "type": "pharmacy",
+    "address": "Msheireb Downtown, Doha",
+    "logo": "/logos/pharmacy-7.png",
+    "latitude": 25.2875,
+    "longitude": 51.5302,
+    "location": { "type": "Point", "coordinates": [51.5302, 25.2875] }
+  },
+  {
+    "name": "Katara Family Pharmacy",
+    "type": "pharmacy",
+    "address": "Katara, Doha",
+    "logo": "/logos/pharmacy-8.png",
+    "latitude": 25.3541,
+    "longitude": 51.5212,
+    "location": { "type": "Point", "coordinates": [51.5212, 25.3541] }
+  },
+  {
+    "name": "Old Airport Pharmacy",
+    "type": "pharmacy",
+    "address": "Old Airport Area, Doha",
+    "logo": "/logos/pharmacy-9.png",
+    "latitude": 25.2495,
+    "longitude": 51.5597,
+    "location": { "type": "Point", "coordinates": [51.5597, 25.2495] }
+  },
+  {
+    "name": "Al Waab Health Hub",
+    "type": "pharmacy",
+    "address": "Al Waab, Doha",
+    "logo": "/logos/pharmacy-10.png",
+    "latitude": 25.2418,
+    "longitude": 51.4949,
+    "location": { "type": "Point", "coordinates": [51.4949, 25.2418] }
+  },
+
+  {
+    "name": "Bloom Doha Flowers",
+    "type": "flower",
+    "address": "Msheireb Downtown, Doha",
+    "logo": "/logos/flower-1.png",
+    "latitude": 25.2860,
+    "longitude": 51.5315,
+    "location": { "type": "Point", "coordinates": [51.5315, 25.286] }
+  },
+  {
+    "name": "Pearl Petals",
+    "type": "flower",
+    "address": "The Pearl Qatar, Doha",
+    "logo": "/logos/flower-2.png",
+    "latitude": 25.3635,
+    "longitude": 51.5564,
+    "location": { "type": "Point", "coordinates": [51.5564, 25.3635] }
+  },
+  {
+    "name": "West Bay Bouquet Studio",
+    "type": "flower",
+    "address": "West Bay, Doha",
+    "logo": "/logos/flower-3.png",
+    "latitude": 25.3279,
+    "longitude": 51.5272,
+    "location": { "type": "Point", "coordinates": [51.5272, 25.3279] }
+  },
+  {
+    "name": "Lusail Bloom Market",
+    "type": "flower",
+    "address": "Lusail City, Doha",
+    "logo": "/logos/flower-4.png",
+    "latitude": 25.3928,
+    "longitude": 51.5521,
+    "location": { "type": "Point", "coordinates": [51.5521, 25.3928] }
+  },
+  {
+    "name": "Corniche Florist",
+    "type": "flower",
+    "address": "Doha Corniche, Doha",
+    "logo": "/logos/flower-5.png",
+    "latitude": 25.3044,
+    "longitude": 51.5408,
+    "location": { "type": "Point", "coordinates": [51.5408, 25.3044] }
+  },
+  {
+    "name": "Al Sadd Rose House",
+    "type": "flower",
+    "address": "Al Sadd, Doha",
+    "logo": "/logos/flower-6.png",
+    "latitude": 25.2771,
+    "longitude": 51.5007,
+    "location": { "type": "Point", "coordinates": [51.5007, 25.2771] }
+  },
+  {
+    "name": "Katara Garden Flowers",
+    "type": "flower",
+    "address": "Katara, Doha",
+    "logo": "/logos/flower-7.png",
+    "latitude": 25.3572,
+    "longitude": 51.5201,
+    "location": { "type": "Point", "coordinates": [51.5201, 25.3572] }
+  },
+  {
+    "name": "Najma Flower Corner",
+    "type": "flower",
+    "address": "Najma, Doha",
+    "logo": "/logos/flower-8.png",
+    "latitude": 25.2714,
+    "longitude": 51.5488,
+    "location": { "type": "Point", "coordinates": [51.5488, 25.2714] }
+  },
+  {
+    "name": "Bin Mahmoud Blossoms",
+    "type": "flower",
+    "address": "Bin Mahmoud, Doha",
+    "logo": "/logos/flower-9.png",
+    "latitude": 25.2952,
+    "longitude": 51.5136,
+    "location": { "type": "Point", "coordinates": [51.5136, 25.2952] }
+  },
+  {
+    "name": "Old Airport Flower Shop",
+    "type": "flower",
+    "address": "Old Airport Area, Doha",
+    "logo": "/logos/flower-10.png",
+    "latitude": 25.2469,
+    "longitude": 51.5581,
+    "location": { "type": "Point", "coordinates": [51.5581, 25.2469] }
+  },
+
+  {
+    "name": "Little Steps Kids",
+    "type": "childcare",
+    "address": "Al Waab, Doha",
+    "logo": "/logos/childcare-1.png",
+    "latitude": 25.2452,
+    "longitude": 51.5009,
+    "location": { "type": "Point", "coordinates": [51.5009, 25.2452] }
+  },
+  {
+    "name": "Pearl Kids Corner",
+    "type": "childcare",
+    "address": "The Pearl Qatar, Doha",
+    "logo": "/logos/childcare-2.png",
+    "latitude": 25.3691,
+    "longitude": 51.5479,
+    "location": { "type": "Point", "coordinates": [51.5479, 25.3691] }
+  },
+  {
+    "name": "West Bay Baby World",
+    "type": "childcare",
+    "address": "West Bay, Doha",
+    "logo": "/logos/childcare-3.png",
+    "latitude": 25.3338,
+    "longitude": 51.5249,
+    "location": { "type": "Point", "coordinates": [51.5249, 25.3338] }
+  },
+  {
+    "name": "Lusail Little Learners",
+    "type": "childcare",
+    "address": "Lusail City, Doha",
+    "logo": "/logos/childcare-4.png",
+    "latitude": 25.3946,
+    "longitude": 51.5438,
+    "location": { "type": "Point", "coordinates": [51.5438, 25.3946] }
+  },
+  {
+    "name": "Msheireb Kids Store",
+    "type": "childcare",
+    "address": "Msheireb Downtown, Doha",
+    "logo": "/logos/childcare-5.png",
+    "latitude": 25.2854,
+    "longitude": 51.5297,
+    "location": { "type": "Point", "coordinates": [51.5297, 25.2854] }
+  },
+  {
+    "name": "Najma Toy & Care",
+    "type": "childcare",
+    "address": "Najma, Doha",
+    "logo": "/logos/childcare-6.png",
+    "latitude": 25.2702,
+    "longitude": 51.5461,
+    "location": { "type": "Point", "coordinates": [51.5461, 25.2702] }
+  },
+  {
+    "name": "Al Sadd Nursery Supply",
+    "type": "childcare",
+    "address": "Al Sadd, Doha",
+    "logo": "/logos/childcare-7.png",
+    "latitude": 25.2788,
+    "longitude": 51.5018,
+    "location": { "type": "Point", "coordinates": [51.5018, 25.2788] }
+  },
+  {
+    "name": "Katara Kids Boutique",
+    "type": "childcare",
+    "address": "Katara, Doha",
+    "logo": "/logos/childcare-8.png",
+    "latitude": 25.3558,
+    "longitude": 51.5194,
+    "location": { "type": "Point", "coordinates": [51.5194, 25.3558] }
+  },
+  {
+    "name": "Bin Mahmoud Baby Care",
+    "type": "childcare",
+    "address": "Bin Mahmoud, Doha",
+    "logo": "/logos/childcare-9.png",
+    "latitude": 25.2974,
+    "longitude": 51.5111,
+    "location": { "type": "Point", "coordinates": [51.5111, 25.2974] }
+  },
+  {
+    "name": "Old Airport Kids Mart",
+    "type": "childcare",
+    "address": "Old Airport Area, Doha",
+    "logo": "/logos/childcare-10.png",
+    "latitude": 25.2481,
+    "longitude": 51.5569,
+    "location": { "type": "Point", "coordinates": [51.5569, 25.2481] }
+  },
+
+  {
+    "name": "Healthy Life Nutrition",
+    "type": "nutrition",
+    "address": "West Bay Lagoon, Doha",
+    "logo": "/logos/nutrition-1.png",
+    "latitude": 25.3542,
+    "longitude": 51.5473,
+    "location": { "type": "Point", "coordinates": [51.5473, 25.3542] }
+  },
+  {
+    "name": "Pearl Fit Supplements",
+    "type": "nutrition",
+    "address": "The Pearl Qatar, Doha",
+    "logo": "/logos/nutrition-2.png",
+    "latitude": 25.3658,
+    "longitude": 51.5509,
+    "location": { "type": "Point", "coordinates": [51.5509, 25.3658] }
+  },
+  {
+    "name": "Lusail Protein Hub",
+    "type": "nutrition",
+    "address": "Lusail City, Doha",
+    "logo": "/logos/nutrition-3.png",
+    "latitude": 25.3897,
+    "longitude": 51.5456,
+    "location": { "type": "Point", "coordinates": [51.5456, 25.3897] }
+  },
+  {
+    "name": "Al Sadd Wellness Store",
+    "type": "nutrition",
+    "address": "Al Sadd, Doha",
+    "logo": "/logos/nutrition-4.png",
+    "latitude": 25.2749,
+    "longitude": 51.5002,
+    "location": { "type": "Point", "coordinates": [51.5002, 25.2749] }
+  },
+  {
+    "name": "Msheireb Nutrition Corner",
+    "type": "nutrition",
+    "address": "Msheireb Downtown, Doha",
+    "logo": "/logos/nutrition-5.png",
+    "latitude": 25.2848,
+    "longitude": 51.5327,
+    "location": { "type": "Point", "coordinates": [51.5327, 25.2848] }
+  },
+  {
+    "name": "Najma Healthy Market",
+    "type": "nutrition",
+    "address": "Najma, Doha",
+    "logo": "/logos/nutrition-6.png",
+    "latitude": 25.2736,
+    "longitude": 51.5477,
+    "location": { "type": "Point", "coordinates": [51.5477, 25.2736] }
+  },
+  {
+    "name": "Bin Mahmoud Organic Shop",
+    "type": "nutrition",
+    "address": "Bin Mahmoud, Doha",
+    "logo": "/logos/nutrition-7.png",
+    "latitude": 25.2988,
+    "longitude": 51.5144,
+    "location": { "type": "Point", "coordinates": [51.5144, 25.2988] }
+  },
+  {
+    "name": "Katara Health Foods",
+    "type": "nutrition",
+    "address": "Katara, Doha",
+    "logo": "/logos/nutrition-8.png",
+    "latitude": 25.3537,
+    "longitude": 51.5234,
+    "location": { "type": "Point", "coordinates": [51.5234, 25.3537] }
+  },
+  {
+    "name": "Old Airport Nutrition Mart",
+    "type": "nutrition",
+    "address": "Old Airport Area, Doha",
+    "logo": "/logos/nutrition-9.png",
+    "latitude": 25.2516,
+    "longitude": 51.5576,
+    "location": { "type": "Point", "coordinates": [51.5576, 25.2516] }
+  },
+  {
+    "name": "Corniche Clean Eats",
+    "type": "nutrition",
+    "address": "Doha Corniche, Doha",
+    "logo": "/logos/nutrition-10.png",
+    "latitude": 25.3013,
+    "longitude": 51.5388,
+    "location": { "type": "Point", "coordinates": [51.5388, 25.3013] }
+  },
+
+  {
+    "name": "TechZone Doha",
+    "type": "electronics",
+    "address": "Najma, Doha",
+    "logo": "/logos/electronics-1.png",
+    "latitude": 25.2728,
+    "longitude": 51.5451,
+    "location": { "type": "Point", "coordinates": [51.5451, 25.2728] }
+  },
+  {
+    "name": "West Bay Gadgets",
+    "type": "electronics",
+    "address": "West Bay, Doha",
+    "logo": "/logos/electronics-2.png",
+    "latitude": 25.3302,
+    "longitude": 51.5258,
+    "location": { "type": "Point", "coordinates": [51.5258, 25.3302] }
+  },
+  {
+    "name": "Pearl Digital Store",
+    "type": "electronics",
+    "address": "The Pearl Qatar, Doha",
+    "logo": "/logos/electronics-3.png",
+    "latitude": 25.3629,
+    "longitude": 51.5528,
+    "location": { "type": "Point", "coordinates": [51.5528, 25.3629] }
+  },
+  {
+    "name": "Lusail Electronics Hub",
+    "type": "electronics",
+    "address": "Lusail City, Doha",
+    "logo": "/logos/electronics-4.png",
+    "latitude": 25.3949,
+    "longitude": 51.5491,
+    "location": { "type": "Point", "coordinates": [51.5491, 25.3949] }
+  },
+  {
+    "name": "Al Sadd Smart Home",
+    "type": "electronics",
+    "address": "Al Sadd, Doha",
+    "logo": "/logos/electronics-5.png",
+    "latitude": 25.2779,
+    "longitude": 51.4994,
+    "location": { "type": "Point", "coordinates": [51.4994, 25.2779] }
+  },
+  {
+    "name": "Msheireb Mobile Market",
+    "type": "electronics",
+    "address": "Msheireb Downtown, Doha",
+    "logo": "/logos/electronics-6.png",
+    "latitude": 25.2872,
+    "longitude": 51.5336,
+    "location": { "type": "Point", "coordinates": [51.5336, 25.2872] }
+  },
+  {
+    "name": "Bin Mahmoud Computer Center",
+    "type": "electronics",
+    "address": "Bin Mahmoud, Doha",
+    "logo": "/logos/electronics-7.png",
+    "latitude": 25.2947,
+    "longitude": 51.5131,
+    "location": { "type": "Point", "coordinates": [51.5131, 25.2947] }
+  },
+  {
+    "name": "Katara AV Store",
+    "type": "electronics",
+    "address": "Katara, Doha",
+    "logo": "/logos/electronics-8.png",
+    "latitude": 25.3566,
+    "longitude": 51.5218,
+    "location": { "type": "Point", "coordinates": [51.5218, 25.3566] }
+  },
+  {
+    "name": "Old Airport Tech Mart",
+    "type": "electronics",
+    "address": "Old Airport Area, Doha",
+    "logo": "/logos/electronics-9.png",
+    "latitude": 25.2508,
+    "longitude": 51.5562,
+    "location": { "type": "Point", "coordinates": [51.5562, 25.2508] }
+  },
+  {
+    "name": "Corniche Device Shop",
+    "type": "electronics",
+    "address": "Doha Corniche, Doha",
+    "logo": "/logos/electronics-10.png",
+    "latitude": 25.3031,
+    "longitude": 51.5394,
+    "location": { "type": "Point", "coordinates": [51.5394, 25.3031] }
+  }
+]

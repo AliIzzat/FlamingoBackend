@@ -1,0 +1,201 @@
+<style>
+  :root{
+    --bg: #fbf3c4;
+    --card: #ffffff;
+    --danger-bg: #fee2e2;
+    --danger-text: #991b1b;
+    --danger-border: #fecaca;
+    --primary: #ff4d6d;
+    --primary-hover: #e63950;
+    --text: #111827;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+  }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    font-family: Arial, sans-serif;
+    color: var(--text);
+  }
+
+  /* ✅ Center vertically + horizontally */
+  .page{
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .card{
+    width: 360px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.10);
+    padding: 22px;
+  }
+
+  .title{
+    text-align:center;
+    margin: 0 0 16px;
+    color: #dc2626;
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .field{
+    margin-bottom: 14px;
+  }
+
+  .label{
+    display:block;
+    margin-bottom: 6px;
+    color: #dc2626;
+    font-weight: 700;
+  }
+
+  /* ✅ input with icon */
+  .input-wrap{
+    position: relative;
+  }
+
+  .icon{
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    opacity: 0.85;
+  }
+
+  input{
+    width: 100%;
+    height: 38px;
+    padding: 0 12px 0 38px; /* space for icon */
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    font-size: 14px;
+  }
+
+  input:focus{
+    border-color: #c7c7ff;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+  }
+
+  .btn{
+    width: 120px;
+    display: block;
+    margin: 8px auto 0;
+    padding: 9px 16px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  .btn:hover{
+    background: var(--primary-hover);
+  }
+
+  /* ✅ Error message styling */
+  .login-error{
+    margin-top: 14px;
+    padding: 14px;
+    background: var(--danger-bg);
+    color: var(--danger-text);
+    border: 1px solid var(--danger-border);
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 18px; /* change size here */
+    line-height: 1.5;
+    text-align: center;
+
+    /* fade-in */
+    animation: fadeIn 220ms ease-out;
+  }
+
+  /* ✅ Shake animation (applied via JS) */
+  .shake{
+    animation: shake 420ms ease-in-out;
+  }
+
+  /* ✅ Hide animation (applied via JS) */
+  .fade-out{
+    animation: fadeOut 380ms ease-in forwards;
+  }
+
+  @keyframes fadeIn{
+    from{ opacity: 0; transform: translateY(-6px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeOut{
+    from{ opacity: 1; transform: translateY(0); }
+    to{ opacity: 0; transform: translateY(-6px); }
+  }
+
+  @keyframes shake{
+    0%{ transform: translateX(0); }
+    20%{ transform: translateX(-8px); }
+    40%{ transform: translateX(8px); }
+    60%{ transform: translateX(-6px); }
+    80%{ transform: translateX(6px); }
+    100%{ transform: translateX(0); }
+  }
+</style>
+
+<div class="page">
+  <div class="card">
+    <h1 class="title">Login</h1>
+
+    <form method="POST" action="/auth/login">
+      <div class="field">
+        <label class="label">Username</label>
+        <div class="input-wrap">
+          <span class="icon">👤</span>
+          <input name="username" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Password</label>
+        <div class="input-wrap">
+          <span class="icon">🔒</span>
+          <input type="password" name="password" required />
+        </div>
+      </div>
+
+      <button class="btn" type="submit">Login</button>
+
+      {{#if error}}
+        <div id="loginError" class="login-error">{{error}}</div>
+      {{/if}}
+    </form>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var el = document.getElementById("loginError");
+    if (!el) return;
+
+    // ✅ shake on show
+    el.classList.add("shake");
+    setTimeout(function () {
+      el.classList.remove("shake");
+    }, 500);
+
+    // ✅ auto-hide after 5 seconds (fade out then remove)
+    setTimeout(function () {
+      el.classList.add("fade-out");
+      setTimeout(function () {
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      }, 420);
+    }, 5000);
+  })();
+</script>

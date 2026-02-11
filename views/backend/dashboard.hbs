@@ -1,0 +1,48 @@
+<div class="backend-shell">
+    {{> backend-sidebar}}
+<div class="notifications-card">
+  <div class="notifications-header">
+    <h2 class="notifications-title">Notifications</h2>
+
+    <div class="notifications-meta">
+      <span id="lastUpdated">Last updated: --</span>
+      <span class="refresh-indicator">
+        <span id="refreshDot" class="dot"></span>
+        <span id="refreshText">Live</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="notifications-wrapper">
+    <table class="notifications-table">
+      <thead>
+        <tr>
+          <th class="col-message">Message</th>
+          <th class="col-status">Status</th>
+          <th class="col-date">Date</th>
+        </tr>
+      </thead>
+
+      <tbody id="notificationsBody">
+        {{#each notifications}}
+          <tr data-id="{{_id}}">
+            <td class="msg">{{message}}</td>
+
+            <td>
+              {{!-- badge mapping --}}
+              {{#if (eq status "picked")}}
+                <span class="badge badge-picked">Picked</span>
+              {{else if (eq status "delivered")}}
+                <span class="badge badge-delivered">Delivered</span>
+              {{else}}
+                <span class="badge badge-pending">{{status}}</span>
+              {{/if}}
+            </td>
+
+            <td>{{createdAt}}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,22 @@
+<nav class="menu">
+  <a href="/">Home</a>
+  <a href="/cart/view">Cart</a>
+
+  {{#if user}}
+    {{!-- Driver quick links --}}
+    {{#if (eq user.role "driver")}}
+      <a href="/driver/available">Available</a>
+      <a href="/driver/my-orders">My Orders</a>
+    {{/if}}
+
+    {{!-- Backend quick link for admin/support/data_entry --}}
+    {{#if (or (eq user.role "admin") (eq user.role "support") (eq user.role "data_entry"))}}
+      <a href="/backend/dashboard">Backend</a>
+    {{/if}}
+
+    <a href="/auth/logout">Logout</a>
+  {{else}}
+    <a href="/auth/login">Login</a>
+    <a href="/auth/register">Register</a>
+  {{/if}}
+</nav>

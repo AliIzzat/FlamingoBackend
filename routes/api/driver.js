@@ -1,25 +1,61 @@
+// routes/api/driver.js
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-const Order = require("../../models/Order");
+const jwt = require("jsonwebtoken");
 
-/**
- * Temporary auth (testing)
- * Header: x-driver-id: <User ObjectId>
- * Replace later with session/JWT middleware.
- */
-function requireDriver(req, res, next) {
-  const driverId = req.header("x-driver-id");
-  if (!driverId) {
-    return res.status(401).json({ ok: false, error: "Missing x-driver-id" });
-  }
-  if (!mongoose.Types.ObjectId.isValid(driverId)) {
-    return res.status(400).json({ ok: false, error: "Invalid driver id" });
-  }
-  req.driverObjectId = new mongoose.Types.ObjectId(driverId);
-  next();
+const Order = require("../../models/Order");
+const User = require("../../models/User");
+
+// --------------------
+// JWT helpers
+// --------------------
+function mustEnv(name) {
+  const v = process.env[name];
+  if (!v) throw new Error(`${name} is missing in environment`);
+  return v;
 }
 
+function signDriverToken(driver) {
+  const secret = mustEnv("JWT_SECRET");
+  const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
+  return jwt.sign(
+    { userId: String(driver._id), role: "driver" },
+    secret,
+    { expiresIn }
+  );
+}
+
+function requireDriverJWT(req, res, next) {
+  try {
+    const auth = req.header("authorization") || "";
+    const [type, token] = auth.split(" ");
+
+    if (type !== "Bearer" || !token) {
+      return res.status(401).json({ ok: false, error: "Missing Bearer token" });
+    }
+
+    const secret = mustEnv("JWT_SECRET");
+    const payload = jwt.verify(token, secret);
+
+    if (payload?.role !== "driver") {
+      return res.status(403).json({ ok: false, error: "Not a driver token" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(payload?.userId)) {
+      return res.status(401).json({ ok: false, error: "Invalid token user" });
+    }
+
+    req.driverObjectId = new mongoose.Types.ObjectId(payload.userId);
+    next();
+  } catch (e) {
+    return res.status(401).json({ ok: false, error: "Invalid/expired token" });
+  }
+}
+
+// --------------------
+// Status enum
+// --------------------
 const STATUS = {
   Pending: "Pending",
   Claimed: "Claimed",
@@ -36,8 +72,40 @@ function attachCoords(order) {
   return order;
 }
 
+// --------------------
+// POST /api/driver/login
+// Body: { username, password }
+// --------------------
+router.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+      return res.status(400).json({ ok: false, error: "username and password are required" });
+    }
+
+    const driver = await User.findOne({
+      username,
+      password,          // TODO: replace with bcrypt later
+      role: "driver",
+    }).lean();
+
+    if (!driver) return res.status(401).json({ ok: false, error: "Invalid login" });
+
+    const token = signDriverToken(driver);
+    return res.json({
+      ok: true,
+      token,
+      //driver: { id: driver._id, name: driver.name || driver.username },
+      driver: { id: String(driver._id), name: driver.name || driver.username }
+    });
+  } catch (e) {
+    console.error("❌ driver login:", e);
+    return res.status(500).json({ ok: false, error: "Server error" });
+  }
+});
+
 // ✅ GET /api/driver/orders/available
-router.get("/orders/available", requireDriver, async (_req, res) => {
+router.get("/orders/available", requireDriverJWT, async (_req, res) => {
   try {
     const orders = await Order.find({
       "delivery.status": STATUS.Pending,
@@ -47,7 +115,6 @@ router.get("/orders/available", requireDriver, async (_req, res) => {
       .lean();
 
     orders.forEach(attachCoords);
-
     return res.json({ ok: true, orders });
   } catch (e) {
     console.error("❌ driver available:", e);
@@ -56,7 +123,7 @@ router.get("/orders/available", requireDriver, async (_req, res) => {
 });
 
 // ✅ POST /api/driver/orders/:id/claim (atomic)
-router.post("/orders/:id/claim", requireDriver, async (req, res) => {
+router.post("/orders/:id/claim", requireDriverJWT, async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -80,10 +147,7 @@ router.post("/orders/:id/claim", requireDriver, async (req, res) => {
     ).lean();
 
     if (!updated) {
-      return res.status(409).json({
-        ok: false,
-        error: "Order already claimed (or not pending).",
-      });
+      return res.status(409).json({ ok: false, error: "Order already claimed (or not pending)." });
     }
 
     return res.json({ ok: true, order: attachCoords(updated) });
@@ -94,7 +158,7 @@ router.post("/orders/:id/claim", requireDriver, async (req, res) => {
 });
 
 // ✅ GET /api/driver/orders/my
-router.get("/orders/my", requireDriver, async (req, res) => {
+router.get("/orders/my", requireDriverJWT, async (req, res) => {
   try {
     const orders = await Order.find({
       "delivery.assignedDriverId": req.driverObjectId,
@@ -104,7 +168,6 @@ router.get("/orders/my", requireDriver, async (req, res) => {
       .lean();
 
     orders.forEach(attachCoords);
-
     return res.json({ ok: true, orders });
   } catch (e) {
     console.error("❌ driver my:", e);
@@ -113,10 +176,10 @@ router.get("/orders/my", requireDriver, async (req, res) => {
 });
 
 // ✅ POST /api/driver/orders/:id/status
-router.post("/orders/:id/status", requireDriver, async (req, res) => {
+router.post("/orders/:id/status", requireDriverJWT, async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status } = req.body || {};
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ ok: false, error: "Invalid order id" });
@@ -155,6 +218,17 @@ router.post("/orders/:id/status", requireDriver, async (req, res) => {
     console.error("❌ driver status:", e);
     return res.status(500).json({ ok: false, error: "Server error" });
   }
+});
+
+router.post("/push-token", requireDriverJWT, async (req, res) => {
+  const { expoPushToken } = req.body || {};
+  if (!expoPushToken) return res.status(400).json({ ok: false, error: "Missing token" });
+
+  await User.findByIdAndUpdate(req.driverObjectId, {
+    $set: { expoPushToken },
+  });
+
+  return res.json({ ok: true });
 });
 
 module.exports = router;

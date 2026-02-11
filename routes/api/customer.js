@@ -1,52 +1,113 @@
+// routes/api/customer.js
 const express = require("express");
 const router = express.Router();
-const { Types } = require("mongoose");
-const Product = require("../../models/Product");
+const jwt = require("jsonwebtoken");
+const User = require("../../models/User");
 
-router.get("/products", async (req, res) => {
+function signToken(user) {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is missing in .env");
+  }
+  return jwt.sign(
+    { userId: String(user._id), role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+}
+
+// POST /api/customer/login
+router.post("/login", async (req, res) => {
   try {
-    const { category, storeId } = req.query;
+    // accept both keys: phone OR mobile (so Postman and mobile app both work)
+    const mobileRaw = req.body.mobile ?? req.body.phone;
 
-    console.log("Incoming query:", { category, storeId });
-    console.log("Collection:", Product.collection.name);
-
-    // 1) count everything
-    const total = await Product.countDocuments({});
-    console.log("Total products:", total);
-
-    // 2) count by category
-    const catCount = category ? await Product.countDocuments({ category }) : null;
-    console.log("Category count:", catCount);
-
-    // 3) count by storeId (both styles)
-    let storeCount = null;
-    if (storeId) {
-      const or = [{ storeId }];
-      if (Types.ObjectId.isValid(storeId)) or.push({ storeId: new Types.ObjectId(storeId) });
-
-      storeCount = await Product.countDocuments({ $or: or });
-      console.log("StoreId count:", storeCount);
+    const mobile = String(mobileRaw || "").trim();
+    if (!mobile) {
+      return res.status(400).json({ ok: false, error: "Mobile is required" });
     }
 
-    // 4) final filter
-    const filter = {};
-    if (category) filter.category = category;
-     if (storeId) {
-      filter.$or = [{ storeId: storeId }];
-      if (Types.ObjectId.isValid(storeId)) {
-        filter.$or.push({ storeId: new Types.ObjectId(storeId) });
-      }
+    const customer = await User.findOne({
+      mobile,
+      role: "customer",
+      // remove isActive unless you add it to schema
+    }).lean();
+
+    if (!customer) {
+      return res.status(401).json({ ok: false, error: "Invalid login" });
     }
 
-    console.log("Final filter:", JSON.stringify(filter));
-    const sample = await Product.findOne({ category: "meal" }).lean();
-    console.log("Sample meal product:", sample);
+    const token = signToken(customer);
 
-    const products = await Product.find(filter).lean();
-    return res.json({ ok: true, total, catCount, storeCount, filter, products });
+    return res.json({
+      ok: true,
+      token,
+      user: {
+        id: customer._id,
+        name: customer.name,
+        role: customer.role,
+      },
+    });
   } catch (err) {
-    console.error("GET /products error:", err);
+    console.error("❌ customer login:", err);
     return res.status(500).json({ ok: false, error: "Server error" });
   }
 });
+
 module.exports = router;
+
+
+
+
+
+
+// const express = require("express");
+// const router = express.Router();
+// const jwt = require("jsonwebtoken");
+// const User = require("../../models/User");
+
+// function signToken(user) {
+//   return jwt.sign(
+//     { userId: String(user._id), role: user.role },
+//     process.env.JWT_SECRET,
+//     { expiresIn: "7d" }
+//   );
+// }
+
+// // POST /api/customer/login
+// router.post("/login", async (req, res) => {
+//   try {
+//     const { phone } = req.body;
+
+//     if (!phone) {
+//       return res.status(400).json({ ok: false, error: "Phone is required" });
+//     }
+
+//     const customer = await User.findOne({
+//       phone,
+//       role: "customer",
+//       isActive: true,
+//     });
+
+//     if (!customer) {
+//       return res.status(401).json({ ok: false, error: "Invalid login" });
+//     }
+
+//     const token = signToken(customer);
+
+//     return res.json({
+//       ok: true,
+//       token,
+//       user: {
+//         id: customer._id,
+//         name: customer.name,
+//         role: customer.role,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("❌ customer login:", err);
+//     return res.status(500).json({ ok: false, error: "Server error" });
+//   }
+// });
+
+// module.exports = router;
+

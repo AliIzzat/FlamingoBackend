@@ -3,15 +3,13 @@ const express = require("express");
 const axios = require("axios");
 const mongoose = require("mongoose");
 const router = express.Router();
+const Meal = require("../../models/Meals");      // mapped to collection "foods"
 
 const Category = require("../../models/Category");
 const Store = require("../../models/Store");
 const Product = require("../../models/Product");
 const Order = require("../../models/Order");
-
-// -----------------------------
-// Env
-// -----------------------------
+// -------Env-------------------
 const MYFATOORAH_API_KEY = process.env.MYFATOORAH_API_KEY;
 const MYFATOORAH_BASE = process.env.MYFATOORAH_API_BASE || "https://apitest.myfatoorah.com";
 const SUCCESS_URL = process.env.MYFATOORAH_SUCCESS_URL;
@@ -20,17 +18,69 @@ const ERROR_URL = process.env.MYFATOORAH_ERROR_URL;
 function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(String(id || ""));
 }
-
-// -----------------------------
-// Health check
-// -----------------------------
+//----------- Health check---------
 router.get("/ping", (_req, res) => {
   res.json({ ok: true, message: "Mobile API alive" });
 });
 
-// -----------------------------
-// GET /api/mobile/categories
-// -----------------------------
+// GET /api/mobile/offers?limit=30
+router.get("/offers", async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit || 30), 100);
+
+    // pull offers from both collections
+    const [mealOffers, productOffers] = await Promise.all([
+      Meal.find({ offer: true })
+        .select("name price offer offerPrice image restaurant storeId")
+        .sort({ updatedAt: -1, createdAt: -1 })
+        .limit(limit)
+        .lean(),
+
+      Product.find({ offer: true, isActive: true })
+        .select("name price offer offerPrice image storeId category")
+        .sort({ updatedAt: -1, createdAt: -1 })
+        .limit(limit)
+        .lean(),
+    ]);
+
+    // normalize into one shape for the mobile app
+    const normalizedMeals = mealOffers.map((m) => ({
+      _id: m._id,
+      kind: "meal",
+      name: m.name,
+      price: m.price,
+      offer: !!m.offer,
+      offerPrice: m.offerPrice ?? null,
+      image: m.image || "",
+      restaurant: m.restaurant ?? null,
+      storeId: m.storeId ?? null,
+    }));
+
+    const normalizedProducts = productOffers.map((p) => ({
+      _id: p._id,
+      kind: "product",
+      name: p.name,
+      price: p.price,
+      offer: !!p.offer,
+      offerPrice: p.offerPrice ?? null,
+      image: p.image || "",
+      storeId: p.storeId ?? null,
+      category: p.category ?? null,
+    }));
+
+    // merge + shuffle/sort (simple: newest first)
+    const combined = [...normalizedMeals, ...normalizedProducts]
+      .sort((a, b) => String(b._id).localeCompare(String(a._id)))
+      .slice(0, limit);
+
+    return res.json({ ok: true, offers: combined });
+  } catch (e) {
+    console.error("❌ mobile offers:", e);
+    return res.status(500).json({ ok: false, message: "Failed to load offers" });
+  }
+});
+
+// ---------GET /api/mobile/categories--------
 router.get("/categories", async (_req, res) => {
   try {
     const categories = await Category.find({ isActive: true })
@@ -44,23 +94,65 @@ router.get("/categories", async (_req, res) => {
     res.status(500).json({ ok: false, message: "Failed to load categories" });
   }
 });
+// -----------------------------
+// GET /api/mobile/meals?limit=30&offer=true
+// Meals = Products where category = "restaurant"
+// -----------------------------
+router.get("/meals", async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit || "30", 10), 100);
+    const offer = String(req.query.offer || "").toLowerCase() === "true";
+
+    const filter = { category: "restaurant", isActive: true };
+    if (offer) filter.offer = true;
+
+    const meals = await Product.find(filter)
+      .select("storeId storeSnapshot name name_ar price image offer offerPrice details details_ar")
+      .sort({ offer: -1, updatedAt: -1 })
+      .limit(limit)
+      .lean();
+
+    return res.json({ ok: true, meals });
+  } catch (e) {
+    console.error("❌ mobile meals:", e);
+    return res.status(500).json({ ok: false, message: "Failed to load meals" });
+  }
+});
 
 // -----------------------------
-// GET /api/mobile/stores?category=flower
-// category == Store.type
+// GET /api/mobile/offers?limit=30&category=restaurant
+// Offers = Products where offer=true (optionally filter by category)
 // -----------------------------
+router.get("/offers", async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit || "30", 10), 100);
+    const category = String(req.query.category || "").trim().toLowerCase();
+
+    const filter = { offer: true, isActive: true };
+    if (category) filter.category = category;
+
+    const offers = await Product.find(filter)
+      .select("category storeId storeSnapshot name name_ar price image offer offerPrice")
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .lean();
+
+    return res.json({ ok: true, offers });
+  } catch (e) {
+    console.error("❌ mobile offers:", e);
+    return res.status(500).json({ ok: false, message: "Failed to load offers" });
+  }
+});
+
+
+// --GET /api/mobile/stores?category=flower--
+// -----------category == Store.type----------
 router.get("/stores", async (req, res) => {
   try {
     const category = String(req.query.category || "").trim().toLowerCase();
     if (!category) {
       return res.status(400).json({ ok: false, message: "category is required" });
     }
-
-    // const stores = await Store.find({ type: category, isActive: true })
-    //   .select("name name_ar type logo address latitude longitude location isActive")
-    //   .sort({ name: 1 })
-    //   .lean();
-     
     const stores = await Store.find({
       type: { $regex: new RegExp(`^${category}$`, "i") }, // case-insensitive exact match
       $or: [{ isActive: true }, { isActive: { $exists: false } }],
@@ -75,7 +167,6 @@ router.get("/stores", async (req, res) => {
     res.status(500).json({ ok: false, message: "Failed to load stores" });
   }
 });
-
 // -----------------------------
 router.post("/checkout", async (req, res) => {
   try {
@@ -140,8 +231,7 @@ router.post("/checkout", async (req, res) => {
       const qty = Math.max(Number(i.qty ?? i.quantity ?? 1), 1);
 
       const unitPrice =
-        p.offer && Number(p.offerPrice) > 0 ? Number(p.offerPrice) : Number(p.price);
-
+      p.offer && Number(p.offerPrice) > 0 ? Number(p.offerPrice) : Number(p.price);
       subtotal += unitPrice * qty;
 
       orderItems.push({
@@ -225,7 +315,6 @@ router.post("/checkout", async (req, res) => {
       });
       return res.status(500).json({ ok: false, message: "Failed to create payment" });
     }
-
     const paymentUrl = mfData.Data?.InvoiceURL || mfData.Data?.PaymentURL;
     const invoiceId = String(mfData.Data?.InvoiceId || "");
     const paymentId = String(mfData.Data?.PaymentId || "");

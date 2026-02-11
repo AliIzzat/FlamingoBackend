@@ -5,7 +5,11 @@ async function connectDB() {
   const uri =
     process.env.MONGODB_URI ||
     process.env.MONGO_URL ||
-    "mongodb://127.0.0.1:27017/flamingosDB";
+    process.env.MONGO_URI;
+
+  if (!uri) {
+    throw new Error("Missing MongoDB URI. Set MONGODB_URI in Railway Variables.");
+  }
 
   mongoose.set("strictQuery", true);
 

@@ -2,10 +2,7 @@ const express = require("express");
 const router = express.Router();
 const fs = require("fs");
 const path = require("path");
-
-//const Food = require("../../models/Meal");
 const Food = require("../../models/Product");
-//const Restaurant = require("../../models/Restaurant");
 const Restaurant = require("../../models/Store");
 // Load JSON data
 const groceries = require("../../data/groceries.json");
@@ -57,38 +54,38 @@ router.get("/home", async (req, res) => {
       }
     }
 
-    return res.render("frontend/home", {
-      layout: "main",          // ✅ use views/layouts/main.hbs
-      title: "Home",
-      showMiniCart: true,      // ✅ enables your mini cart in main.hbs
+//     return res.render("frontend/home", {
+//       layout: "main",          // ✅ use views/layouts/main.hbs
+//       title: "Home",
+//       showMiniCart: true,      // ✅ enables your mini cart in main.hbs
 
-      // User/session context (optional but useful)
-      user: req.session.user || null,
-      cartCount,
+//       // User/session context (optional but useful)
+//       user: req.session.user || null,
+//       cartCount,
 
-      // Data for page
-      allMeals: mealsWithFav,
-      meals: mealsWithFav,     // ✅ support templates expecting "meals"
-      favorites,               // keep original favorites array too
+//       // Data for page
+//       allMeals: mealsWithFav,
+//       meals: mealsWithFav,     // ✅ support templates expecting "meals"
+//       favorites,               // keep original favorites array too
 
-      restaurants: allRestaurants,
-      carouselItems,
+//       restaurants: allRestaurants,
+//       carouselItems,
 
-      groceries,
-      childCareStores,
-      pharmacies,
-      flowerShops,
-      nutrition,
-      electronics,
-    });
-  } catch (err) {
-    console.error("❌ Error in /home route:", err);
-    return res.status(500).render("frontend/500", {
-      layout: "main",
-      title: "Server Error",
-      showMiniCart: false,
-    });
-  }
-});
+//       groceries,
+//       childCareStores,
+//       pharmacies,
+//       flowerShops,
+//       nutrition,
+//       electronics,
+//     });
+//   } catch (err) {
+//     console.error("❌ Error in /home route:", err);
+//     return res.status(500).render("frontend/500", {
+//       layout: "main",
+//       title: "Server Error",
+//       showMiniCart: false,
+//     });
+//   }
+ });
 
 module.exports = router;
