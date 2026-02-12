@@ -7,7 +7,6 @@ const Meal = require("../../models/Meals");      // mapped to collection "foods"
 
 const Category = require("../../models/Category");
 const Store = require("../../models/Store");
-const Product = require("../../models/Product");
 const Order = require("../../models/Order");
 // -------Env-------------------
 const MYFATOORAH_API_KEY = process.env.MYFATOORAH_API_KEY;
@@ -94,31 +93,59 @@ router.get("/categories", async (_req, res) => {
     res.status(500).json({ ok: false, message: "Failed to load categories" });
   }
 });
+
 // -----------------------------
-// GET /api/mobile/meals?limit=30&offer=true
-// Meals = Products where category = "restaurant"
+// GET /api/mobile/meals?category=restaurant&offer=true&limit=30&storeId=...
+// meals are Products where category="restaurant"
 // -----------------------------
+
+// GET /api/mobile/meals?limit=30
+// GET /api/mobile/meals?offer=true&limit=30
 router.get("/meals", async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit || "30", 10), 100);
+    const Product = require("../../models/Product");
+
+    const limit = Math.min(Number(req.query.limit) || 30, 100);
     const offer = String(req.query.offer || "").toLowerCase() === "true";
 
-    const filter = { category: "restaurant", isActive: true };
-    if (offer) filter.offer = true;
+    const q = {
+      isActive: true,
+      "storeSnapshot.type": "restaurant",
+    };
+    if (offer) q.offer = true;
 
-    const meals = await Product.find(filter)
-      .select("storeId storeSnapshot name name_ar price image offer offerPrice details details_ar")
-      .sort({ offer: -1, updatedAt: -1 })
+    const meals = await Product.find(q)
+      .sort({ createdAt: -1 })
       .limit(limit)
       .lean();
 
     return res.json({ ok: true, meals });
-  } catch (e) {
-    console.error("❌ mobile meals:", e);
-    return res.status(500).json({ ok: false, message: "Failed to load meals" });
+  } catch (err) {
+    console.error("❌ GET /api/mobile/meals:", err);
+    return res.status(500).json({ ok: false, error: "Server error" });
   }
 });
 
+
+// routes/api/mobile.js  (or routes/api/mobile/meals.js)
+// router.get("/meals", async (req, res) => {
+//   const limit = Math.min(Number(req.query.limit) || 30, 100);
+//   const offer = String(req.query.offer || "").toLowerCase() === "true";
+
+//   const q = {
+//     isActive: true,
+//     "storeSnapshot.type": "restaurant",
+//   };
+
+//   if (offer) q.offer = true;
+
+//   const meals = await Product.find(q)
+//     .sort({ createdAt: -1 })
+//     .limit(limit)
+//     .lean();
+
+//   return res.json({ ok: true, meals });
+// });
 // -----------------------------
 // GET /api/mobile/offers?limit=30&category=restaurant
 // Offers = Products where offer=true (optionally filter by category)
@@ -372,5 +399,6 @@ router.get("/payment/error", async (req, res) => {
     return res.redirect("FlamingDeliverySys://payment-failed");
   }
 });
+
 
 module.exports = router;

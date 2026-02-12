@@ -8,7 +8,7 @@ const MongoStore = require("connect-mongo");
 const cors = require("cors");
 const exphbs = require("express-handlebars");
 const Handlebars = require("handlebars");
-
+const Product = require("./models/Product");
 
 // API Routers (these exist and are needed on Railway)
 const customerApiRouter = require("./routes/api/customer");
@@ -62,6 +62,10 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Static files (logos / uploads)
+app.use("/logos", express.static(path.join(__dirname, "public/logos")));
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 // ✅ Health check (safe, no conflict)
 app.get("/api/health", (_req, res) => {
@@ -183,8 +187,44 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "FlamingoBackend" });
 });
 
-// 404 (safe for API + HTML)
+app.get("/api/_debug/products-count", async (req, res) => {
+  const Product = require("./models/Product");
 
+  const total = await Product.countDocuments({});
+  const active = await Product.countDocuments({ isActive: true });
+
+  const restaurantBySnapshot = await Product.countDocuments({
+    isActive: true,
+    "storeSnapshot.type": "restaurant",
+  });
+
+  const offerRestaurantBySnapshot = await Product.countDocuments({
+    isActive: true,
+    offer: true,
+    "storeSnapshot.type": "restaurant",
+  });
+
+  const restaurantByCategory = await Product.countDocuments({
+    isActive: true,
+    category: "restaurant",
+  });
+
+  const offerRestaurantByCategory = await Product.countDocuments({
+    isActive: true,
+    offer: true,
+    category: "restaurant",
+  });
+
+  return res.json({
+    total,
+    active,
+    restaurantBySnapshot,
+    offerRestaurantBySnapshot,
+    restaurantByCategory,
+    offerRestaurantByCategory,
+  });
+});
+// 404 (safe for API + HTML)
 app.use((req, res) => {
   // If it's an API call, return JSON instead of rendering a page
   if (req.originalUrl.startsWith("/api")) {
