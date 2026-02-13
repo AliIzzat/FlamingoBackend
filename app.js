@@ -17,7 +17,7 @@ const customerDisputes = require("./routes/api/customerDisputes");
 const mobileApi = require("./routes/api/mobile");
 const mealsRouter = require("./routes/api/meals");
 const storesRouter = require("./routes/api/stores");
-
+const mobileProducts = require("./routes/api/mobileProducts");
 
 // Web / Payment pages (only if ENABLE_WEB)
 const orderRoutes = require("./routes/frontend/order");
@@ -143,6 +143,8 @@ app.use("/api/stores", storesRouter);
 app.use("/api/customer", customerApiRouter);
 app.use("/api/driver", driverApi);
 app.use("/api/customer/disputes", customerDisputes);
+app.use("/api/mobile/products", mobileProducts);
+
 
 // Web routes (payment callbacks/pages)
 if (ENABLE_WEB) {
