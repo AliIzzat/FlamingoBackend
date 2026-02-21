@@ -1,0 +1,251 @@
+<head>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+</head>
+<body>
+  <div class="cart-section">
+    <h3>
+      <span style="color: rgb(243, 7, 7); font-size:x-large;">Your </span>
+      <span style="color: blueviolet; font-size:x-large;">Cart</span>
+    </h3>
+  </div>
+  <div style="display: flex; align-items: center; gap: 1rem; margin: 0;">
+    {{! Start here     }}
+    <form action="/home#restaurant" method="GET">
+      <button
+        type="submit"
+        class="back-button_out"
+        style="font-weight: bold; padding: 5px 10px;
+        margin-top:10px;"
+      >
+        <span style="font-size: 0.8rem;">👀 Browse Restaurants</span>
+      </button>
+    </form>
+    {{! End here }}
+  </div>
+  <form method="POST">
+    <ul style="list-style-type: none; padding: 0; line-height: 1.5;">
+      {{#each cart}}
+        <li style="margin-bottom: 5px;">
+          <div
+            style="display: flex; align-items: left; gap: 8px; flex-wrap: wrap"
+          >
+            <label
+              style="display: flex; align-items: center; gap:5px; margin: 0"
+            >
+              <input
+                type="checkbox"
+                name="selectedMeals"
+                value="{{this.itemId}}"
+              />
+              <strong>{{this.name}}</strong>– QR
+              {{this.price}}
+            </label>
+
+            <div class="quantity-wrapper" data-index="{{@index}}">
+              <button
+                type="button"
+                class="decrement"
+                style="margin-right: 0px;"
+              >−</button>
+              <input
+                type="number"
+                name="quantities[{{@index}}]"
+                value="{{this.quantity}}"
+                min="1"
+                max="100"
+                class="quantity-input"
+                data-item-id="{{this.itemId}}"
+                data-type="{{this.type}}"
+                style="width: 25px;color:red;font-weight:bold; text-align:center;margin:0px;padding:0px;border:none;background-color:transparent;font-size:14px"
+              />
+              <button
+                type="button"
+                class="increment"
+                style="margin-left: 0px;"
+              >+</button>
+            </div>
+          </div>
+        </li>
+      {{/each}}
+    </ul>
+
+    <div style="display: flex; gap: 1rem;">
+      <button
+        type="submit"
+        formaction="/cart/update-quantities"
+        class="back-button_out"
+        style="font-weight: bold; font-size:14px;"
+      >
+        Update Cart
+        <span style="font-size: 16px;">🔄</span>
+      </button>
+
+      <button
+        type="submit"
+        formaction="/cart/remove-selected"
+        class="back-button_out"
+        style="font-weight: bold; font-size:14px;"
+      >
+        Delete Selected
+        <span style="font-size: 16px;">🗑️</span>
+      </button>
+    </div>
+  </form>
+
+  {{#if cart.length}}
+    <!-- ✅ Checkout Form -->
+    <div
+      class="checkout-row"
+      style="display: flex; align-items: center; gap: 1rem; margin-top: 2rem;"
+    >
+      <h3 style="margin: 0;">Total: QR {{total}}</h3>
+
+      <form action="/order/confirm" method="GET" style="margin: 0;">
+        <input type="hidden" name="customerName" value="Any User" />
+        <input type="hidden" name="location" value="Any City" />
+        <input type="hidden" name="latitude" id="latitude" />
+        <input type="hidden" name="longitude" id="longitude" />
+        <button
+          type="submit"
+          class="back-button_out"
+          style="font-weight: bold;font-size:14px"
+        >Checkout <span style="font-size: 16px;">✅</span> </button>
+      </form>
+    </div>
+
+    <!-- ✅ Favorite Meals Section -->
+    <br /><br />
+    <div style="margin-top: 2rem;">
+      <h3>
+        <span style="color: rgb(243, 7, 7); font-size: larger;">Favorite
+        </span>
+        <span style="color: blueviolet; font-size: larger;">Meals</span>
+      </h3>
+    </div>
+
+    {{#if favoriteMeals.length}}
+      <form action="/order/favorite-selection" method="POST">
+        <ul style="list-style-type: none; padding: 0px;margin:0px">
+          {{#each favoriteMeals}}
+            <li>
+              <label>
+                <input
+                  type="checkbox"
+                  name="selectedFavorites[]"
+                  value="{{this._id}}"
+                />
+                {{this.name}}
+                – QR
+                {{this.price}}
+              </label>
+            </li>
+          {{/each}}
+        </ul>
+        <button
+          type="submit"
+          class="back-button_out"
+          style="font-weight: bold;"
+        >Add to Cart
+          <span style="font-size: 18px;font-weight:bold">🛒➕</span></button>
+      </form>
+    {{else}}
+      <p>No favorites selected.</p>
+    {{/if}}
+  {{else}}
+    <p>Your cart is empty.</p>
+  {{/if}}
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.quantity-input').forEach(input => {
+    input.addEventListener('input', () => { const itemId = input.dataset.id;
+    const quantity = parseInt(input.value) || 1;
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".quantity-wrapper").forEach(wrapper => { const
+    input = wrapper.querySelector(".quantity-input"); const incrementBtn =
+    wrapper.querySelector(".increment"); const decrementBtn =
+    wrapper.querySelector(".decrement"); incrementBtn.addEventListener("click",
+    () => { let current = parseInt(input.value) || 1; if (current < 100)
+    input.value = current + 1; }); decrementBtn.addEventListener("click", () =>
+    { let current = parseInt(input.value) || 1; if (current > 1) input.value =
+    current - 1; }); }); });
+  </script>
+
+  <script>
+    let navigationType = null; // Detect type of navigation after the page loads
+    window.addEventListener("load", () => { const nav =
+    performance.getEntriesByType("navigation")[0]; if (nav?.type === "reload") {
+    navigationType = "refresh"; } else if (nav?.type === "navigate") {
+    navigationType = "navigation"; } else { navigationType = "initial-load"; }
+    }); // Detect user clicking internal links (navigating within the site)
+    document.addEventListener("click", function (e) { if (e.target.tagName ===
+    'A' && e.target.origin === location.origin) { navigationType = "navigation";
+    } }); // Final trigger before leaving page
+    window.addEventListener("beforeunload", function () { if (navigationType ===
+    "refresh") { console.log("🔄 Refreshing cart page"); // 👉 Optional: send
+    activity ping or skip } else if (navigationType === "navigation") {
+    console.log("➡️ Navigating away from cart"); // 👉 Optional: nothing to do,
+    or save cart timestamp } else { console.log("❌ Closing tab/browser on cart
+    page"); navigator.sendBeacon("/session/clear-cart"); } });
+  </script>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const totalEl = document.querySelector(".checkout-row h3"); // "Total: QR ..."
+    
+    async function updateOne(input) {
+      const itemId = input.dataset.itemId;
+      const type = input.dataset.type || "meal";
+      const quantity = parseInt(input.value, 10) || 1;
+
+      const res = await fetch("/cart/update-one", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId, type, quantity })
+      });
+
+      if (!res.ok) {
+        console.error("❌ Failed to update quantity");
+        return;
+      }
+
+      const json = await res.json();
+      if (json?.success && totalEl) {
+        totalEl.textContent = `Total: QR ${json.total}`;
+      }
+    }
+
+    document.querySelectorAll(".quantity-wrapper").forEach(wrapper => {
+      const input = wrapper.querySelector(".quantity-input");
+      const inc = wrapper.querySelector(".increment");
+      const dec = wrapper.querySelector(".decrement");
+
+      inc.addEventListener("click", async () => {
+        let v = parseInt(input.value, 10) || 1;
+        if (v < 100) input.value = v + 1;
+        await updateOne(input);
+      });
+
+      dec.addEventListener("click", async () => {
+        let v = parseInt(input.value, 10) || 1;
+        if (v > 1) input.value = v - 1;
+        await updateOne(input);
+      });
+
+      input.addEventListener("change", async () => {
+        let v = parseInt(input.value, 10) || 1;
+        if (v < 1) v = 1;
+        if (v > 100) v = 100;
+        input.value = v;
+        await updateOne(input);
+      });
+    });
+  });
+</script>
+
+</body>

@@ -18,10 +18,11 @@ const mobileApi = require("./routes/api/mobile");
 const mealsRouter = require("./routes/api/meals");
 const storesRouter = require("./routes/api/stores");
 const mobileProducts = require("./routes/api/mobileProducts");
-
+const paymentsRoutes = require("./routes/api/mobile/payments");
 // Web / Payment pages (only if ENABLE_WEB)
 const orderRoutes = require("./routes/frontend/order");
-
+//const mobileOrdersRoutes = require("./routes/api/mobile/orders");
+const mobileOrders = require("./routes/api/mobile/orders");
 // Helpers
 const distanceHelper = require("./utils/distance");
 
@@ -56,7 +57,6 @@ if (!ENABLE_ADMIN) {
 if (isProd) app.set("trust proxy", 1);
 
 // Middleware
-//app.use(cors());
 app.use(cors({ origin: true, credentials: true }));
 
 app.use(compression());
@@ -104,6 +104,7 @@ app.use((req, res, next) => {
   next();
 });
 
+
 // View engine (only really needed if you render pages)
 app.engine(
   "hbs",
@@ -144,8 +145,8 @@ app.use("/api/customer", customerApiRouter);
 app.use("/api/driver", driverApi);
 app.use("/api/customer/disputes", customerDisputes);
 app.use("/api/mobile/products", mobileProducts);
-
-
+app.use("/api/mobile/payments", paymentsRoutes);
+app.use("/api/mobile/orders", mobileOrders);
 // Web routes (payment callbacks/pages)
 if (ENABLE_WEB) {
   app.use("/order", orderRoutes);
