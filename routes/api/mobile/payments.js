@@ -93,6 +93,7 @@ router.post("/myfatoorah/initiate", async (req, res) => {
 });
 
 router.get("/myfatoorah/callback", async (req, res) => {
+    console.log("✅✅ CALLBACK HIT ✅✅", new Date().toISOString(), req.query);
   try {
     const orderId = req.query.orderId;
     const paymentId = req.query.paymentId || req.query.PaymentId || req.query.Id;
