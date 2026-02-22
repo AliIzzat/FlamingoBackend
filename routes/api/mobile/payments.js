@@ -84,7 +84,11 @@ router.get("/myfatoorah/callback", async (req, res) => {
         "payment.paymentId": String(paymentId),
         "payment.invoiceId": String(data?.InvoiceId || ""),
       });
-      return res.send("✅ Payment successful. Return to the app.");
+      // return res.send("✅ Payment successful. Return to the app.");
+      // ✅ Payment success → open the app via deep link
+      return res.redirect(
+        `flamingdelivery://payment-success?orderId=${encodeURIComponent(orderId)}`
+        );
     }
 
     await Order.findByIdAndUpdate(orderId, {
