@@ -93,58 +93,73 @@ router.post("/myfatoorah/initiate", async (req, res) => {
 });
 
 router.get("/myfatoorah/callback", async (req, res) => {
-    console.log("✅✅ CALLBACK HIT ✅✅", new Date().toISOString(), req.query);
   try {
+    console.log("✅✅ CALLBACK HIT ✅✅", new Date().toISOString(), req.query);
+
     const orderId = req.query.orderId;
-    const paymentId = req.query.paymentId || req.query.PaymentId || req.query.Id;
+    const paymentId =
+      req.query.paymentId || req.query.PaymentId || req.query.Id;
 
-    if (!paymentId) return res.status(400).send("Missing paymentId");
     if (!orderId) return res.status(400).send("Missing orderId");
+    if (!paymentId) return res.status(400).send("Missing paymentId");
 
-    const response = await axios.post(
-      `${MF_BASE}/v2/GetPaymentStatus`,
-      { Key: paymentId, KeyType: "PaymentId" },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.MF_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const headers = {
+      Authorization: `Bearer ${process.env.MF_TOKEN}`,
+      "Content-Type": "application/json",
+    };
 
-    const data = response.data?.Data;
+    // 1) Try verify by PaymentId
+    let data;
+    try {
+      const r1 = await axios.post(
+        "https://apitest.myfatoorah.com/v2/GetPaymentStatus",
+        { Key: String(paymentId), KeyType: "PaymentId" },
+        { headers }
+      );
+      data = r1.data?.Data;
+    } catch (e1) {
+      //console.error("❌ Verify by PaymentId failed:", e1?.response?.data || e1.message);
+      console.error("❌ Verify by PaymentId failed:", e1?.response?.status, e1?.response?.data || e1.message);
+
+      // 2) Fallback: verify by InvoiceId (sometimes callback 'Id' is InvoiceId depending on setup)
+      const r2 = await axios.post(
+        "https://apitest.myfatoorah.com/v2/GetPaymentStatus",
+        { Key: String(paymentId), KeyType: "InvoiceId" },
+        { headers }
+      );
+      data = r2.data?.Data;
+    }
+
     console.log("✅ Payment status:", data?.InvoiceStatus, "InvoiceId:", data?.InvoiceId);
 
     const isPaid = data?.InvoiceStatus === "Paid";
 
-    // ✅ Update order using YOUR schema paths
-    await Order.findByIdAndUpdate(orderId, {
-      "payment.status": isPaid ? "paid" : "failed",
-      "payment.paymentId": String(paymentId),
-      "payment.invoiceId": String(data?.InvoiceId || ""),
-      ...(isPaid ? { "delivery.status": "Pending" } : {}),
-    });
+    await Order.findByIdAndUpdate(
+      orderId,
+      {
+        "payment.status": isPaid ? "paid" : "failed",
+        "payment.paymentId": String(paymentId),
+        "payment.invoiceId": String(data?.InvoiceId || ""),
+        ...(isPaid ? { "delivery.status": "Pending" } : {}),
+      },
+      { new: true }
+    );
 
-    // ✅ Return user to app (deep link). Add fallback HTML for Expo/Android browser.
-    const deepLink = isPaid
+    // Deep link back to app (change scheme if needed)
+    const deep = isPaid
       ? `flamingdelivery://payment-success?orderId=${encodeURIComponent(orderId)}`
       : `flamingdelivery://payment-failed?orderId=${encodeURIComponent(orderId)}`;
 
-    return res.send(`
-      <html>
-        <body style="font-family: Arial; padding: 24px;">
-          <h3>${isPaid ? "✅ Payment Successful" : "❌ Payment Failed"}</h3>
-          <p>Tap below to return to the app.</p>
-          <a href="${deepLink}" style="font-size:20px;">Return to App</a>
-          <script>
-            window.location.href = "${deepLink}";
-          </script>
-        </body>
-      </html>
-    `);
-  } catch (e) {
-    console.error("❌ callback error:", e?.response?.data || e.message);
+    return res.redirect(deep);
+  } catch (error) {
+    console.error("❌ Callback error message:", error.message);
+    console.error("❌ Callback error status:", error?.response?.status);
+    console.error("❌ Callback error data:", error?.response?.data);
+    console.error("❌ Callback error full:", error);
     return res.status(500).send("Payment verification failed.");
+
+    // console.error("❌ Callback error:", error?.response?.data || error.message);
+    // return res.status(500).send("Payment verification failed.");
   }
 });
 
@@ -178,129 +193,3 @@ router.get("/myfatoorah/error", async (req, res) => {
 });
 
 module.exports = router;
-
-
-
-
-
-
-
-
-// const express = require("express");
-// const router = express.Router();
-// const axios = require("axios");
-// const Order = require("../../../models/Order");
-
-// router.post("/myfatoorah/initiate", async (req, res) => {
-//   try {
-//     const { 
-//       orderId, 
-//       totalAmount, 
-//       customerName, 
-//       customerEmail, 
-//       customerMobile,
-//       PaymentMethodId 
-//     } = req.body;
-//     if (!orderId || !totalAmount) {
-//       return res.status(400).json({ ok: false, error: "orderId and totalAmount are required" });
-//     }
-//     const methodId = Number(req.body.paymentMethodId || 2);
-//     const baseUrl = process.env.APP_BASE_URL || "http://localhost:4000";
-
-//     const CallBackUrl = `${baseUrl}/api/mobile/payments/myfatoorah/callback?orderId=${encodeURIComponent(orderId)}`;
-//     const ErrorUrl = `${baseUrl}/api/mobile/payments/myfatoorah/error?orderId=${encodeURIComponent(orderId)}`;
-
-//     const payload = {
-//       PaymentMethodId:2,
-//       InvoiceValue: Number(totalAmount),
-//       CustomerName: customerName || "Customer",
-//       DisplayCurrencyIso: "KWD",
-//       MobileCountryCode: "+975",
-//       CustomerMobile: customerMobile || "00000000",
-//       CustomerEmail: customerEmail || "test@example.com",
-//       CallBackUrl,
-//       ErrorUrl,
-//       Language: "en",
-//     };
-
-//     const r = await axios.post("https://apitest.myfatoorah.com/v2/ExecutePayment", payload, {
-//       headers: {
-//         Authorization: `Bearer ${process.env.MF_TOKEN}`,
-//         "Content-Type": "application/json",
-//       },
-//     });
-
-//     const data = r.data?.Data;
-
-//     if (data?.InvoiceId) {
-//       await Order.findByIdAndUpdate(orderId, {
-//         "payment.invoiceId": String(data.InvoiceId),
-//       });
-//     }
-//     return res.json({ ok: true, paymentUrl: data?.PaymentURL, invoiceId: data?.InvoiceId });
-//   } catch (err) {
-//     const details = err?.response?.data || { message: err.message };
-//     console.error("❌ initiate error:", details);
-//     return res.status(500).json({ ok: false, error: "initiate failed", details });
-//   }
-// });
-
-// router.get("/myfatoorah/callback", async (req, res) => {
-//   try {
-//     const orderId = req.query.orderId;
-//     const paymentId = req.query.paymentId || req.query.PaymentId || req.query.Id;
-
-//     if (!paymentId) return res.status(400).send("Missing paymentId");
-//     if (!orderId) return res.status(400).send("Missing orderId");
-
-//     const response = await axios.post(
-//       "https://apitest.myfatoorah.com/v2/GetPaymentStatus",
-//       { Key: paymentId, KeyType: "PaymentId" },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${process.env.MF_TOKEN}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     const data = response.data?.Data;
-
-//     if (data?.InvoiceStatus === "Paid") {
-//       await Order.findByIdAndUpdate(orderId, {
-//         "payment.status": "paid",
-//         "payment.paymentId": String(paymentId),
-//         "payment.invoiceId": String(data?.InvoiceId || ""),
-//       });
-//    // ✅ Payment success → open the app via deep link
-//       return res.redirect(
-//         `flamingdelivery://payment-success?orderId=${encodeURIComponent(orderId)}`
-//         );
-//     }
-
-//     await Order.findByIdAndUpdate(orderId, {
-//       "payment.status": "failed",
-//       "payment.paymentId": String(paymentId),
-//       "payment.invoiceId": String(data?.InvoiceId || ""),
-//     });
-
-//     return res.send("❌ Payment not completed.");
-//   } catch (e) {
-//     console.error("❌ callback error:", e?.response?.data || e.message);
-//     return res.status(500).send("Payment verification failed.");
-//   }
-// });
-
-// router.get("/myfatoorah/error", async (req, res) => {
-//   try {
-//     const orderId = req.query.orderId;
-//     if (orderId) {
-//       await Order.findByIdAndUpdate(orderId, { "payment.status": "failed" });
-//     }
-//     return res.send("❌ Payment failed or cancelled.");
-//   } catch (e) {
-//     return res.status(500).send("Error handler failed.");
-//   }
-// });
-
-// module.exports = router;
