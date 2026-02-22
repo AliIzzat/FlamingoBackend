@@ -7,6 +7,7 @@ const Order = require("../../../models/Order");
 const MF_BASE = "https://apitest.myfatoorah.com"; // test endpoint
 
 router.post("/myfatoorah/initiate", async (req, res) => {
+  console.log("🌍 APP_BASE_URL =", process.env.APP_BASE_URL);
   try {
     const {
       orderId,
