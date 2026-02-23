@@ -56,7 +56,7 @@ router.post("/myfatoorah/initiate", async (req, res) => {
 
     const r = await axios.post(`${MF_BASE}/v2/ExecutePayment`, payload, {
       headers: {
-        Authorization: `Bearer ${process.env.process.env.MYFATOORAH_TOKEN}`,
+        Authorization: `Bearer ${process.env.MYFATOORAH_TOKEN}`,
         "Content-Type": "application/json",
       },
       timeout: 25000,
