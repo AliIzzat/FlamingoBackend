@@ -63,6 +63,8 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     });
 
     const data = r.data?.Data;
+    console.log("✅ MF response:", r.data);
+    console.log("✅ PaymentURL:", data?.PaymentURL);
 
     // ✅ Save invoiceId on the order immediately
     if (data?.InvoiceId) {
@@ -76,17 +78,15 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       paymentUrl: data?.PaymentURL,
       invoiceId: data?.InvoiceId,
     });
-  } catch (err) {
-  console.error("❌ initiate stack:", err?.stack);
+} catch (err) {
   const status = err?.response?.status;
   const details = err?.response?.data || { message: err.message };
 
-  console.error("❌ initiate error status:", status);
-  console.error("❌ initiate error details:", details);
+  console.error("❌ MF STATUS:", status);
+  console.error("❌ MF DETAILS:", details);
 
   return res.status(status || 500).json({
     ok: false,
-    error: "initiate failed",
     status,
     details,
   });
