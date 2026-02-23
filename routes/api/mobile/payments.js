@@ -77,6 +77,7 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       invoiceId: data?.InvoiceId,
     });
   } catch (err) {
+  console.error("❌ initiate stack:", err?.stack);
   const status = err?.response?.status;
   const details = err?.response?.data || { message: err.message };
 
