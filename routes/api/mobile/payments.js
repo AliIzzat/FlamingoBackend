@@ -5,7 +5,7 @@ const axios = require("axios");
 const Order = require("../../../models/Order");
 const mongoose = require("mongoose");
 
-const MF_BASE = (process.env.MF_API_URL || "https://apitest.myfatoorah.com");
+const MF_BASE = (process.env.MF_API_URL || "https://apitest.myfatoorah.com")
 .replace(/\/+$/, "")      // remove trailing slashes
 .replace(/\/v2$/, "");    // remove trailing /v2 if someone put it in env
 const verifyUrl = `${MF_BASE}/v2/GetPaymentStatus`;
@@ -100,7 +100,7 @@ router.get("/myfatoorah/callback", async (req, res) => {
     const response = await axios.post(
       verifyUrl,
       { Key: paymentId, KeyType: "PaymentId" },
-      { headers: { Authorization: `Bearer ${process.env.MF_TOKEN}`, "Content-Type": "application/json" }, timeout: 25000 }
+      { headers: { Authorization: `Bearer ${process.env.MF_TOKEN}`, "Content-Type": "application/json" }, timeout: 25000 },
       // `${MF_BASE}/v2/GetPaymentStatus`,
       // { Key: paymentId, KeyType: "PaymentId" },
       {
