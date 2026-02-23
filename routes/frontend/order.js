@@ -7,7 +7,7 @@ const mongoose = require("mongoose");
 const Notification = require("../../models/Notification");
 
 const MF_API_URL = process.env.MF_API_URL || 'https://apitest.myfatoorah.com';
-const MF_TOKEN = process.env.MF_TOKEN;
+const MYFATOORAH_TOKEN = process.env.MYFATOORAH_TOKEN;
 const MF_PAYMENT_METHOD_ID = Number(process.env.MF_PAYMENT_METHOD_ID || 2); 
 const APP_BASE_URL = process.env.APP_BASE_URL || 'http://192.168.1.26:4000';
 const { DELIVERY_FEE } = require("../../config/pricing");
@@ -285,10 +285,10 @@ if (firstStoreId) {
   }
 }
     // 6) Validate MyFatoorah config
-    if (!MF_TOKEN) {
+    if (!MYFATOORAH_TOKEN) {
       return res.status(500).json({
         success: false,
-        message: "Payment gateway not configured (MF_TOKEN missing).",
+        message: "Payment gateway not configured (MYFATOORAH_TOKEN missing).",
       });
     }
     // 7) Create order (matches your OrderSchema)
@@ -357,7 +357,7 @@ if (firstStoreId) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${MF_TOKEN}`,
+        Authorization: `Bearer ${MYFATOORAH_TOKEN}`,
       },
       body: JSON.stringify(executeBody),
     });
@@ -450,7 +450,7 @@ router.get("/mobile-payment-error", async (req, res) => {
   console.log("❌ ERROR callback (raw query):", { orderId, paymentId, Id });
   let mfStatusData = null;
   try {
-    if (MF_TOKEN) {
+    if (MYFATOORAH_TOKEN) {
       const statusPayload = {
         Key: paymentId || Id,
         KeyType: paymentId ? "PaymentId" : "InvoiceId",
@@ -459,7 +459,7 @@ router.get("/mobile-payment-error", async (req, res) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${MF_TOKEN}`,
+          Authorization: `Bearer ${MYFATOORAH_TOKEN}`,
         },
         body: JSON.stringify(statusPayload),
       });

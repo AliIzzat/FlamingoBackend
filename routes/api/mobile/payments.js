@@ -52,7 +52,7 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     };
 
     console.log("💳 Initiate payload:", payload);
-    console.log("🔑 MF_TOKEN exists?", !!process.env.MYFATOORAH_TOKEN);
+    console.log("🔑 MYFATOORAH_TOKEN exists?", !!process.env.MYFATOORAH_TOKEN);
 
     const r = await axios.post(`${MF_BASE}/v2/ExecutePayment`, payload, {
       headers: {
@@ -95,7 +95,7 @@ router.post("/myfatoorah/initiate", async (req, res) => {
 router.get("/myfatoorah/callback", async (req, res) => {
   console.log("✅✅ CALLBACK HIT ✅✅", new Date().toISOString());
   console.log("🔎 query =", req.query);
-  console.log("🔑 MF_TOKEN prefix:", process.env.MYFATOORAH_TOKEN?.slice(0, 10));
+  console.log("🔑 MYFATOORAH_TOKEN prefix:", process.env.MYFATOORAH_TOKEN?.slice(0, 10));
 
   try {
     const orderId = req.query.orderId;
