@@ -5,7 +5,10 @@ const axios = require("axios");
 const Order = require("../../../models/Order");
 const mongoose = require("mongoose");
 
-const MF_BASE = process.env.MF_API_URL || "https://apitest.myfatoorah.com";
+const MF_BASE = (process.env.MF_API_URL || "https://apitest.myfatoorah.com");
+.replace(/\/+$/, "")      // remove trailing slashes
+.replace(/\/v2$/, "");    // remove trailing /v2 if someone put it in env
+const verifyUrl = `${MF_BASE}/v2/GetPaymentStatus`;
 
 router.post("/myfatoorah/initiate", async (req, res) => {
   try {
@@ -95,8 +98,11 @@ router.get("/myfatoorah/callback", async (req, res) => {
   let data;
   try {
     const response = await axios.post(
-      `${MF_BASE}/v2/GetPaymentStatus`,
+      verifyUrl,
       { Key: paymentId, KeyType: "PaymentId" },
+      { headers: { Authorization: `Bearer ${process.env.MF_TOKEN}`, "Content-Type": "application/json" }, timeout: 25000 }
+      // `${MF_BASE}/v2/GetPaymentStatus`,
+      // { Key: paymentId, KeyType: "PaymentId" },
       {
         headers: {
           Authorization: `Bearer ${process.env.MF_TOKEN}`,
@@ -108,9 +114,13 @@ router.get("/myfatoorah/callback", async (req, res) => {
 
     data = response.data?.Data;
   } catch (err) {
-    const details = err?.response?.data || { message: err.message };
-    console.error("❌ GetPaymentStatus FAILED:", details);
-    return res.status(500).send("Payment verification failed (GetPaymentStatus).");
+   console.error("❌ GetPaymentStatus FAILED status:", err?.response?.status);
+   console.error("❌ GetPaymentStatus FAILED data:", err?.response?.data);
+   console.error("❌ GetPaymentStatus FAILED message:", err.message);
+   return res.status(500).send("Payment verification failed (GetPaymentStatus)."); 
+    // const details = err?.response?.data || { message: err.message };
+    // console.error("❌ GetPaymentStatus FAILED:", details);
+    // return res.status(500).send("Payment verification failed (GetPaymentStatus).");
   }
 
   const isPaid = data?.InvoiceStatus === "Paid";
