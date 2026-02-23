@@ -52,11 +52,11 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     };
 
     console.log("💳 Initiate payload:", payload);
-    console.log("🔑 MF_TOKEN exists?", !!process.env.MF_TOKEN);
+    console.log("🔑 MF_TOKEN exists?", !!process.env.MYFATOORAH_TOKEN);
 
     const r = await axios.post(`${MF_BASE}/v2/ExecutePayment`, payload, {
       headers: {
-        Authorization: `Bearer ${process.env.MF_TOKEN}`,
+        Authorization: `Bearer ${process.env.process.env.MYFATOORAH_TOKEN}`,
         "Content-Type": "application/json",
       },
       timeout: 25000,
@@ -77,17 +77,24 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       invoiceId: data?.InvoiceId,
     });
   } catch (err) {
-    const details = err?.response?.data || { message: err.message };
-    console.error("❌ initiate error:", details);
-    return res
-      .status(500)
-      .json({ ok: false, error: "initiate failed", details });
-  }
+  const status = err?.response?.status;
+  const details = err?.response?.data || { message: err.message };
+
+  console.error("❌ initiate error status:", status);
+  console.error("❌ initiate error details:", details);
+
+  return res.status(status || 500).json({
+    ok: false,
+    error: "initiate failed",
+    status,
+    details,
+  });
+}
 });
 router.get("/myfatoorah/callback", async (req, res) => {
   console.log("✅✅ CALLBACK HIT ✅✅", new Date().toISOString());
   console.log("🔎 query =", req.query);
-  console.log("🔑 MF_TOKEN prefix:", process.env.MF_TOKEN?.slice(0, 10));
+  console.log("🔑 MF_TOKEN prefix:", process.env.MYFATOORAH_TOKEN?.slice(0, 10));
 
   try {
     const orderId = req.query.orderId;
@@ -103,7 +110,7 @@ router.get("/myfatoorah/callback", async (req, res) => {
       { Key: paymentId, KeyType: "PaymentId" },
       {
         headers: {
-          Authorization: `Bearer ${process.env.MF_TOKEN}`,
+          Authorization: `Bearer ${process.env.MYFATOORAH_TOKEN}`,
           "Content-Type": "application/json",
         },
         timeout: 25000,
