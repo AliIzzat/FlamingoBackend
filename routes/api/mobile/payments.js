@@ -84,25 +84,22 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       .json({ ok: false, error: "initiate failed", details });
   }
 });
-
 router.get("/myfatoorah/callback", async (req, res) => {
-  console.log("✅✅ CALLBACK HIT ✅✅", new Date().toISOString(), req.query);
+  console.log("✅✅ CALLBACK HIT ✅✅", new Date().toISOString());
+  console.log("🔎 query =", req.query);
 
-  const orderId = req.query.orderId;
-  const paymentId = req.query.paymentId || req.query.PaymentId || req.query.Id;
-
-  if (!orderId) return res.status(400).send("Missing orderId");
-  if (!paymentId) return res.status(400).send("Missing paymentId");
-
-  // 1) VERIFY PAYMENT (MyFatoorah)
-  let data;
   try {
+    const orderId = req.query.orderId;
+    const paymentId = req.query.paymentId || req.query.PaymentId || req.query.Id;
+
+    if (!orderId) return res.status(400).send("Missing orderId");
+    if (!paymentId) return res.status(400).send("Missing paymentId");
+
+    console.log("➡️ verifying paymentId =", paymentId);
+
     const response = await axios.post(
-      verifyUrl,
+      `${MF_BASE}/v2/GetPaymentStatus`,
       { Key: paymentId, KeyType: "PaymentId" },
-      { headers: { Authorization: `Bearer ${process.env.MF_TOKEN}`, "Content-Type": "application/json" }, timeout: 25000 },
-      // `${MF_BASE}/v2/GetPaymentStatus`,
-      // { Key: paymentId, KeyType: "PaymentId" },
       {
         headers: {
           Authorization: `Bearer ${process.env.MF_TOKEN}`,
@@ -112,27 +109,11 @@ router.get("/myfatoorah/callback", async (req, res) => {
       }
     );
 
-    data = response.data?.Data;
-  } catch (err) {
-   console.error("❌ GetPaymentStatus FAILED status:", err?.response?.status);
-   console.error("❌ GetPaymentStatus FAILED data:", err?.response?.data);
-   console.error("❌ GetPaymentStatus FAILED message:", err.message);
-   return res.status(500).send("Payment verification failed (GetPaymentStatus)."); 
-    // const details = err?.response?.data || { message: err.message };
-    // console.error("❌ GetPaymentStatus FAILED:", details);
-    // return res.status(500).send("Payment verification failed (GetPaymentStatus).");
-  }
+    console.log("✅ GetPaymentStatus HTTP =", response.status);
+    console.log("✅ GetPaymentStatus body =", response.data);
 
-  const isPaid = data?.InvoiceStatus === "Paid";
-  console.log("✅ Payment status:", data?.InvoiceStatus, "InvoiceId:", data?.InvoiceId);
-
-  // 2) UPDATE ORDER (Mongo)
-  try {
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      console.error("❌ Invalid Mongo orderId:", orderId);
-      // Still show success to user (payment is verified), but you must fix orderId passing.
-      return res.send(isPaid ? "✅ Payment successful (orderId invalid, not saved)." : "❌ Payment not completed.");
-    }
+    const data = response.data?.Data;
+    const isPaid = data?.InvoiceStatus === "Paid";
 
     await Order.findByIdAndUpdate(orderId, {
       "payment.status": isPaid ? "paid" : "failed",
@@ -141,14 +122,24 @@ router.get("/myfatoorah/callback", async (req, res) => {
       ...(isPaid ? { "delivery.status": "Pending" } : {}),
     });
 
+    return res.send(isPaid ? "✅ Payment successful. Return to the app." : "❌ Payment not completed.");
   } catch (err) {
-    console.error("❌ Mongo update FAILED:", err.message);
-    // Payment verified, but DB didn’t update
-    return res.status(500).send("Payment verified but saving order failed.");
-  }
+    console.log("❌❌ GetPaymentStatus FAILED ❌❌");
+    console.log("status =", err?.response?.status);
+    console.log("data =", err?.response?.data);
+    console.log("message =", err?.message);
 
-  return res.send(isPaid ? "✅ Payment successful. Return to the app." : "❌ Payment not completed.");
+    // IMPORTANT: show details in browser too (so you don't rely only on logs)
+    return res.status(500).send(
+      `Payment verification failed.\n\nstatus=${err?.response?.status}\nmessage=${err?.message}\n\n${JSON.stringify(
+        err?.response?.data || {},
+        null,
+        2
+      )}`
+    );
+  }
 });
+
 router.get("/myfatoorah/error", async (req, res) => {
   try {
     console.log("❌ MyFatoorah error query:", req.query);
