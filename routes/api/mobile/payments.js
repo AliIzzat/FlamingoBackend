@@ -87,6 +87,7 @@ router.post("/myfatoorah/initiate", async (req, res) => {
 router.get("/myfatoorah/callback", async (req, res) => {
   console.log("✅✅ CALLBACK HIT ✅✅", new Date().toISOString());
   console.log("🔎 query =", req.query);
+  console.log("🔑 MF_TOKEN prefix:", process.env.MF_TOKEN?.slice(0, 10));
 
   try {
     const orderId = req.query.orderId;
