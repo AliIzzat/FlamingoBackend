@@ -1,4 +1,6 @@
 require("dotenv").config();
+console.log("MF TOKEN:", process.env.MYFATOORAH_TOKEN);
+console.log("MF URL:", process.env.MYFATOORAH_API_URL);
 const path = require("path");
 const express = require("express");
 const compression = require("compression");
