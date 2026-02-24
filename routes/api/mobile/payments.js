@@ -54,8 +54,7 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     console.log("💳 Initiate payload:", payload);
     console.log("🔑 MYFATOORAH_TOKEN exists?", !!process.env.MYFATOORAH_TOKEN);
 
-    console.log("MF_TOKEN length:", (process.env.MF_TOKEN || process.env.MYFATOORAH_TOKEN || "").length);
-    console.log("MF_API_URL:", process.env.MF_API_URL || process.env.MYFATOORAH_API_URL);
+  
     const r = await axios.post(`${MF_BASE}/v2/ExecutePayment`, payload, {
       headers: {
         Authorization: `Bearer ${process.env.MYFATOORAH_TOKEN}`,
@@ -107,7 +106,8 @@ router.get("/myfatoorah/callback", async (req, res) => {
     if (!paymentId) return res.status(400).send("Missing paymentId");
 
     console.log("➡️ verifying paymentId =", paymentId);
-
+    console.log("MF_TOKEN length:", (process.env.MF_TOKEN || process.env.MYFATOORAH_TOKEN || "").length);
+    console.log("MF_API_URL:", process.env.MF_API_URL || process.env.MYFATOORAH_API_URL);
     const response = await axios.post(
       `${MF_BASE}/v2/GetPaymentStatus`,
       { Key: paymentId, KeyType: "PaymentId" },
