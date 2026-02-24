@@ -19,3 +19,13 @@ Thumbs.db
 # optional: build output (if you ever add)
 dist/
 build/
+
+# keep runtime uploads ignored
+uploads/
+public/uploads/
+
+# ✅ BUT allow seed images to be committed
+!uploads/seed/
+!uploads/seed/**
+!public/uploads/seed/
+!public/uploads/seed/**
