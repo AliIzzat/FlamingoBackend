@@ -64,8 +64,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Static files (logos / uploads)
-app.use("/logos", express.static(path.join(__dirname, "public/logos")));
-app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+app.use("/logos", express.static(path.join(__dirname, "logos")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ✅ Health check (safe, no conflict)
 app.get("/api/health", (_req, res) => {
@@ -74,7 +74,7 @@ app.get("/api/health", (_req, res) => {
 
 // Static
 app.use(express.static(path.join(__dirname, "public"), { maxAge: isProd ? "1d" : 0 }));
-app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+
 
 // Sessions (needed for admin + web flows; harmless for API)
 if (ENABLE_WEB || ENABLE_ADMIN) {
