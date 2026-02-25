@@ -132,17 +132,32 @@ app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
 app.get("/health", (req, res) => {
+  const keys = Object.keys(process.env || {});
+  const pick = (k) => (process.env[k] ? true : false);
+
   res.json({
     ok: true,
     port: process.env.PORT,
-    has_MYFATOORAH_TOKEN: !!process.env.MYFATOORAH_TOKEN,
-    len_MYFATOORAH_TOKEN: (process.env.MYFATOORAH_TOKEN || "").length,
-    has_MF_TOKEN: !!process.env.MF_TOKEN,
-    len_MF_TOKEN: (process.env.MF_TOKEN || "").length,
-    MF_API_URL: process.env.MF_API_URL || null,
+    // show which of these exist (true/false)
+    envFlags: {
+      MYFATOORAH_TOKEN: pick("MYFATOORAH_TOKEN"),
+      MF_TOKEN: pick("MF_TOKEN"),
+      MYFATOORAH_API_URL: pick("MYFATOORAH_API_URL"),
+      MF_API_URL: pick("MF_API_URL"),
+      APP_BASE_URL: pick("APP_BASE_URL"),
+      RAILWAY_ENVIRONMENT: pick("RAILWAY_ENVIRONMENT"),
+    },
+    // show non-secret values for URLs only
+    urls: {
+      MYFATOORAH_API_URL: process.env.MYFATOORAH_API_URL || null,
+      MF_API_URL: process.env.MF_API_URL || null,
+      APP_BASE_URL: process.env.APP_BASE_URL || null,
+    },
+    // how many env vars exist + sample of names (no values)
+    envCount: keys.length,
+    envSample: keys.filter((k) => /MYFATOORAH|MF_|RAILWAY|APP_BASE|PORT/i.test(k)),
   });
 });
-
 // Root (do NOT redirect to /auth/login if admin disabled)
 app.get("/", (req, res) => {
   if (ENABLE_ADMIN) return res.redirect("/auth/login");
