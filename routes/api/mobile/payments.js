@@ -89,9 +89,19 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       invoiceId: data?.InvoiceId,
     });
   } catch (err) {
-    const status = err?.response?.status;
-    const details = err?.response?.data || { message: err.message };
-    return res.status(status || 500).json({ ok: false, status, details });
+  const status = err?.response?.status;
+  const mfBody = err?.response?.data;
+  console.error("❌ MF ERROR status =", status);
+  console.error("❌ MF ERROR body =", JSON.stringify(mfBody, null, 2));
+  console.error("❌ Using MF_BASE =", MF_BASE);
+  console.error("❌ TokenLen =", (MF_TOKEN || "").length);
+  console.error("❌ TokenPrefix =", (MF_TOKEN || "").slice(0, 12));
+
+  return res.status(status || 500).json({
+    ok: false,
+    status,
+    details: mfBody || { message: err.message },
+  });
   }
 });
 
