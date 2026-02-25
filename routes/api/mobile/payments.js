@@ -4,32 +4,20 @@ const router = express.Router();
 const axios = require("axios");
 const Order = require("../../../models/Order");
 
-// ------------------------
-// MyFatoorah config (TEST)
-// ------------------------
+// ✅ Token: support both naming styles
 const MF_TOKEN =
-  process.env.MYFATOORAH_API_KEY ||     // ✅ what Railway currently has
+  process.env.MYFATOORAH_API_KEY || // Railway variable you already have
   process.env.MYFATOORAH_TOKEN ||
   process.env.MF_TOKEN;
-// ✅ Read base URL from any supported env name
+
+// ✅ Base URL: support both naming styles
 const MF_BASE_RAW =
-  process.env.MYFATOORAH_API_BASE ||    // ✅ what Railway currently has
+  process.env.MYFATOORAH_API_BASE || // Railway variable you already have
   process.env.MF_API_URL ||
   process.env.MYFATOORAH_API_URL ||
   "https://apitest.myfatoorah.com";
 
-const MF_BASE = MF_BASE_RAW
-  .replace(/\/+$/, "")   // remove trailing slashes
-  .replace(/\/v2$/, ""); // remove trailing /v2 if present
-
-// ------------------------
-// INITIATE PAYMENT
-// ------------------------
-// routes/api/mobile/payments.js
-const express = require("express");
-const router = express.Router();
-const axios = require("axios");
-const Order = require("../../../models/Order");
+const MF_BASE = MF_BASE_RAW.replace(/\/+$/, "").replace(/\/v2$/, "");
 
 // ✅ Read token from any supported env name
 const MF_TOKEN =
