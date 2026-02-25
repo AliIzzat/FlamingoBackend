@@ -24,6 +24,7 @@ const MF_BASE = MF_BASE_RAW
   .replace(/\/v2$/, ""); // remove trailing /v2 if present
 
 router.post("/myfatoorah/initiate", async (req, res) => {
+  console.log("🔥 HIT /myfatoorah/initiate (VERSION 2026-02-25-X)", new Date().toISOString());
   try {
     if (!MF_TOKEN) {
       return res.status(500).json({
@@ -93,18 +94,18 @@ router.post("/myfatoorah/initiate", async (req, res) => {
   } catch (err) {
   const status = err?.response?.status;
   const mfBody = err?.response?.data;
-  console.error("❌ MF ERROR status =", status);
-  console.error("❌ MF ERROR body =", JSON.stringify(mfBody, null, 2));
-  console.error("❌ Using MF_BASE =", MF_BASE);
-  console.error("❌ TokenLen =", (MF_TOKEN || "").length);
-  console.error("❌ TokenPrefix =", (MF_TOKEN || "").slice(0, 12));
+
+  console.log("🔥 CATCH /initiate (VERSION 2026-02-25-X)");
+  console.log("❌ MF ERROR status =", status);
+  console.log("❌ MF ERROR body =", JSON.stringify(mfBody, null, 2));
 
   return res.status(status || 500).json({
     ok: false,
+    marker: "CATCH-2026-02-25-X",
     status,
     details: mfBody || { message: err.message },
   });
-  }
+}
 });
 
 // ------------------------
