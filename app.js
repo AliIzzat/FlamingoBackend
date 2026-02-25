@@ -131,6 +131,18 @@ app.engine(
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
+app.get("/health", (req, res) => {
+  res.json({
+    ok: true,
+    port: process.env.PORT,
+    has_MYFATOORAH_TOKEN: !!process.env.MYFATOORAH_TOKEN,
+    len_MYFATOORAH_TOKEN: (process.env.MYFATOORAH_TOKEN || "").length,
+    has_MF_TOKEN: !!process.env.MF_TOKEN,
+    len_MF_TOKEN: (process.env.MF_TOKEN || "").length,
+    MF_API_URL: process.env.MF_API_URL || null,
+  });
+});
+
 // Root (do NOT redirect to /auth/login if admin disabled)
 app.get("/", (req, res) => {
   if (ENABLE_ADMIN) return res.redirect("/auth/login");
