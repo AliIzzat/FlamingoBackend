@@ -5,10 +5,12 @@ const axios = require("axios");
 const Order = require("../../../models/Order");
 
 // ✅ Read token from any supported env name
-const MF_TOKEN =
-  process.env.MYFATOORAH_API_KEY ||     // ✅ what Railway currently has
+const MF_TOKEN = (
+  process.env.MYFATOORAH_API_KEY ||
   process.env.MYFATOORAH_TOKEN ||
-  process.env.MF_TOKEN;
+  process.env.MF_TOKEN ||
+  ""
+).trim();
 
 // ✅ Read base URL from any supported env name
 const MF_BASE_RAW =
