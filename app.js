@@ -234,6 +234,13 @@ app.get("/api/_debug/products-count", async (req, res) => {
     "storeSnapshot.type": "restaurant",
   });
 
+  // Add this for testing
+  app.get("/", (req, res) => res.status(200).send("OK")); 
+  app.get("/health", (req, res) => res.json({ 
+    ok: true, time: new Date() 
+  })
+);
+
   const offerRestaurantBySnapshot = await Product.countDocuments({
     isActive: true,
     offer: true,
@@ -284,6 +291,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ ok: false, error: "Server error", debug: err?.message });
 });
 
+process.on("SIGTERM", () => {
+  console.log("⚠️ SIGTERM received — Railway is stopping the container");
+  process.exit(0);
+});
 
 // Start
 (async () => {
