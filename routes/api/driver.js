@@ -77,6 +77,7 @@ function attachCoords(order) {
 // Body: { username, password }
 // --------------------
 router.post("/login", async (req, res) => {
+  console.log("🟣 /api/driver/login hit body =", req.body);
   try {
     const { username, password } = req.body || {};
 
@@ -118,18 +119,12 @@ router.post("/login", async (req, res) => {
       driver: { id: String(driver._id), name: driver.name || driver.username },
     });
   } catch (err) {
-    console.error("❌ /api/driver/login crashed:", err);
-    console.error("❌ message:", err?.message);
-    console.error("❌ stack:", err?.stack);
-    return res.status(500).json({ ok: false, error: "Server error" });
-    // // IMPORTANT: print the real reason
-    // console.error("❌ /api/driver/login crashed:", err);
-    // return res.status(500).json({
-    //   ok: false,
-    //   error: "Server error",
-    //   details: err?.message || String(err),
-    // });
-  }
+      console.error("❌ /api/driver/login crashed");
+      console.error("message =", err?.message);
+      console.error("stack =", err?.stack);
+      console.error("body =", req.body);
+      return res.status(500).json({ ok: false, error: "Server error" });
+    }
 });
 // ✅ GET /api/driver/orders/available
 router.get("/orders/available", requireDriverJWT, async (_req, res) => {
