@@ -22,9 +22,7 @@ const mealsRouter = require("./routes/api/meals");
 const storesRouter = require("./routes/api/stores");
 const mobileProducts = require("./routes/api/mobileProducts");
 const paymentsRoutes = require("./routes/api/mobile/payments");
-// Web / Payment pages (only if ENABLE_WEB)
 const orderRoutes = require("./routes/frontend/order");
-//const mobileOrdersRoutes = require("./routes/api/mobile/orders");
 const mobileOrders = require("./routes/api/mobile/orders");
 // Helpers
 const distanceHelper = require("./utils/distance");
@@ -44,6 +42,11 @@ if (!MONGODB_URI) {
 const isProd = process.env.NODE_ENV === "production";
 const app = express();
 
+// check request is reaching Node server
+app.use((req, res, next) => {
+  console.log("➡️", req.method, req.originalUrl);
+  next();
+});
 // Feature flags
 const flag = (name, fallback = "false") =>
   String(process.env[name] ?? fallback).toLowerCase() === "true";
@@ -275,6 +278,12 @@ app.use((err, req, res, next) => {
   }
   return res.status(500).send("Server error");
 });
+
+app.use((err, req, res, next) => {
+  console.error("💥 UNHANDLED ERROR:", err);
+  res.status(500).json({ ok: false, error: "Server error", debug: err?.message });
+});
+
 
 // Start
 (async () => {
