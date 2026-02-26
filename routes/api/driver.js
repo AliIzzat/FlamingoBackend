@@ -42,7 +42,7 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ ok: false, error: "Invalid credentials" });
     }
 
-    const secret = process.env.DRIVER_JWT_SECRET || process.env.JWT_SECRET;
+    const secret = process.env.JWT_SECRET || process.env.DRIVER_JWT_SECRET;
     if (!secret) {
       return res
         .status(500)
