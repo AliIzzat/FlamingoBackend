@@ -80,54 +80,62 @@ router.get("/ping", (req, res) => {
 // Body: { username, password }
 // --------------------
 router.post("/login", async (req, res) => {
-  console.log("🟣 /api/driver/login hit body =", req.body);
+  console.log("➡️ DRIVER LOGIN HIT");
+  console.log("headers content-type =", req.headers["content-type"]);
+  console.log("body =", req.body);
+
   try {
     const { username, password } = req.body || {};
 
     if (!username || !password) {
-      return res.status(400).json({ ok: false, error: "Missing username/password" });
+      return res.status(400).json({
+        ok: false,
+        error: "username and password are required",
+      });
     }
 
-    // 1) find driver
     const driver = await Driver.findOne({ username: username.trim() }).lean();
     if (!driver) {
       return res.status(401).json({ ok: false, error: "Invalid credentials" });
     }
 
-    // 2) verify password
-    const bcrypt = require("bcryptjs");
-    const okPass = await bcrypt.compare(password, driver.password);
-    if (!okPass) {
+    // if your DB stores plain password (NOT recommended), remove bcrypt and compare directly
+    const match = await bcrypt.compare(password, driver.password);
+    if (!match) {
       return res.status(401).json({ ok: false, error: "Invalid credentials" });
     }
 
-    // 3) sign token
-    const jwt = require("jsonwebtoken");
-    const JWT_SECRET = process.env.DRIVER_JWT_SECRET || process.env.JWT_SECRET;
-
-    if (!JWT_SECRET) {
-      console.error("❌ Missing DRIVER_JWT_SECRET / JWT_SECRET in env");
+    const secret = process.env.DRIVER_JWT_SECRET || process.env.JWT_SECRET;
+    if (!secret) {
       return res.status(500).json({ ok: false, error: "JWT secret missing on server" });
     }
 
     const token = jwt.sign(
       { id: String(driver._id), role: "driver" },
-      JWT_SECRET,
+      secret,
       { expiresIn: "30d" }
     );
 
     return res.json({
       ok: true,
       token,
-      driver: { id: String(driver._id), name: driver.name || driver.username },
+      driver: {
+        id: String(driver._id),
+        name: driver.name || driver.username,
+        username: driver.username,
+      },
     });
   } catch (err) {
-      console.error("❌ /api/driver/login crashed");
-      console.error("message =", err?.message);
-      console.error("stack =", err?.stack);
-      console.error("body =", req.body);
-      return res.status(500).json({ ok: false, error: "Server error" });
-    }
+    // ✅ THIS WILL FINALLY SHOW WHY IT'S 500
+    console.error("💥 DRIVER LOGIN CRASH:", err?.message);
+    console.error(err?.stack);
+
+    return res.status(500).json({
+      ok: false,
+      error: "Server error",
+      debug: err?.message, // ✅ temporary
+    });
+  }
 });
 // ✅ GET /api/driver/orders/available
 router.get("/orders/available", requireDriverJWT, async (_req, res) => {
