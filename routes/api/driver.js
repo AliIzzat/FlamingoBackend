@@ -79,31 +79,58 @@ function attachCoords(order) {
 router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body || {};
+
     if (!username || !password) {
-      return res.status(400).json({ ok: false, error: "username and password are required" });
+      return res.status(400).json({ ok: false, error: "Missing username/password" });
     }
 
-    const driver = await User.findOne({
-      username,
-      password,          // TODO: replace with bcrypt later
-      role: "driver",
-    }).lean();
+    // 1) find driver
+    const driver = await Driver.findOne({ username: username.trim() }).lean();
+    if (!driver) {
+      return res.status(401).json({ ok: false, error: "Invalid credentials" });
+    }
 
-    if (!driver) return res.status(401).json({ ok: false, error: "Invalid login" });
+    // 2) verify password
+    const bcrypt = require("bcryptjs");
+    const okPass = await bcrypt.compare(password, driver.password);
+    if (!okPass) {
+      return res.status(401).json({ ok: false, error: "Invalid credentials" });
+    }
 
-    const token = signDriverToken(driver);
+    // 3) sign token
+    const jwt = require("jsonwebtoken");
+    const JWT_SECRET = process.env.DRIVER_JWT_SECRET || process.env.JWT_SECRET;
+
+    if (!JWT_SECRET) {
+      console.error("❌ Missing DRIVER_JWT_SECRET / JWT_SECRET in env");
+      return res.status(500).json({ ok: false, error: "JWT secret missing on server" });
+    }
+
+    const token = jwt.sign(
+      { id: String(driver._id), role: "driver" },
+      JWT_SECRET,
+      { expiresIn: "30d" }
+    );
+
     return res.json({
       ok: true,
       token,
-      //driver: { id: driver._id, name: driver.name || driver.username },
-      driver: { id: String(driver._id), name: driver.name || driver.username }
+      driver: { id: String(driver._id), name: driver.name || driver.username },
     });
-  } catch (e) {
-    console.error("❌ driver login:", e);
+  } catch (err) {
+    console.error("❌ /api/driver/login crashed:", err);
+    console.error("❌ message:", err?.message);
+    console.error("❌ stack:", err?.stack);
     return res.status(500).json({ ok: false, error: "Server error" });
+    // // IMPORTANT: print the real reason
+    // console.error("❌ /api/driver/login crashed:", err);
+    // return res.status(500).json({
+    //   ok: false,
+    //   error: "Server error",
+    //   details: err?.message || String(err),
+    // });
   }
 });
-
 // ✅ GET /api/driver/orders/available
 router.get("/orders/available", requireDriverJWT, async (_req, res) => {
   try {
