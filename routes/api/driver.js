@@ -71,7 +71,10 @@ function attachCoords(order) {
   order.pickupLng = order.pickup?.location?.lng ?? null;
   return order;
 }
-
+router.get("/ping", (req, res) => {
+  console.log("✅ DRIVER PING HIT");
+  res.json({ ok: true, service: "driver", time: new Date().toISOString() });
+});
 // --------------------
 // POST /api/driver/login
 // Body: { username, password }
