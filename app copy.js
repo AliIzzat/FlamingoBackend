@@ -73,6 +73,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/logos", express.static(path.join(__dirname, "logos")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+// ✅ Health check (safe, no conflict)
+// app.get("/api/health", (_req, res) => {
+//   res.json({ ok: true, service: "FlamingoBackend", time: new Date().toISOString() });
+// });
+
 // Static
 app.use(express.static(path.join(__dirname, "public"), { maxAge: isProd ? "1d" : 0 }));
 
@@ -129,37 +134,41 @@ app.engine(
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
+// app.get("/health", (req, res) => {
+//   const keys = Object.keys(process.env || {});
+//   const pick = (k) => (process.env[k] ? true : false);
+
+//   res.json({
+//     ok: true,
+//     port: process.env.PORT,
+//     // show which of these exist (true/false)
+//     envFlags: {
+//       MYFATOORAH_TOKEN: pick("MYFATOORAH_TOKEN"),
+//       MF_TOKEN: pick("MF_TOKEN"),
+//       MYFATOORAH_API_URL: pick("MYFATOORAH_API_URL"),
+//       MF_API_URL: pick("MF_API_URL"),
+//       APP_BASE_URL: pick("APP_BASE_URL"),
+//       RAILWAY_ENVIRONMENT: pick("RAILWAY_ENVIRONMENT"),
+//     },
+//     // show non-secret values for URLs only
+//     urls: {
+//       MYFATOORAH_API_URL: process.env.MYFATOORAH_API_URL || null,
+//       MF_API_URL: process.env.MF_API_URL || null,
+//       APP_BASE_URL: process.env.APP_BASE_URL || null,
+//     },
+//     // how many env vars exist + sample of names (no values)
+//     envCount: keys.length,
+//     envSample: keys.filter((k) => /MYFATOORAH|MF_|RAILWAY|APP_BASE|PORT/i.test(k)),
+//   });
+// });
+// Root (do NOT redirect to /auth/login if admin disabled)
 app.get("/", (req, res) => {
   if (ENABLE_ADMIN) return res.redirect("/auth/login");
   return res.json({ ok: true, message: "FlamingoBackend API running" });
 });
 
 // Health
-// --- HEALTH (keep ONE copy only) ---
-app.get("/health", (_req, res) => {
-  res.json({
-    ok: true,
-    port: process.env.PORT || null,
-    envFlags: {
-      JWT_SECRET: !!process.env.JWT_SECRET,
-      DRIVER_JWT_SECRET: !!process.env.DRIVER_JWT_SECRET,
-      MYFATOORAH_TOKEN: !!process.env.MYFATOORAH_TOKEN,
-      MF_TOKEN: !!process.env.MF_TOKEN,
-      MF_API_URL: !!process.env.MF_API_URL,
-      MYFATOORAH_API_URL: !!process.env.MYFATOORAH_API_URL,
-    },
-    lens: {
-      JWT_SECRET: (process.env.JWT_SECRET || "").length,
-      DRIVER_JWT_SECRET: (process.env.DRIVER_JWT_SECRET || "").length,
-      MYFATOORAH_TOKEN: (process.env.MYFATOORAH_TOKEN || "").length,
-    },
-    time: new Date().toISOString(),
-  });
-});
-
-// optional alias
-app.get("/api/health", (_req, res) => res.redirect(302, "/health"));
-
+// app.get("/api/health", (_req, res) => res.json({ ok: true }));
 app.get("/api/ping", (_req, res) => res.type("text/plain").send("pong"));
 // APIs
 app.use("/api/mobile", mobileApi);
@@ -210,6 +219,10 @@ app.get("/api/_debug/db", (req, res) => {
   });
 });
 
+// app.get("/api/health", (_req, res) => {
+//   res.json({ ok: true, service: "FlamingoBackend" });
+// });
+
 app.get("/api/_debug/products-count", async (req, res) => {
   const Product = require("./models/Product");
 
@@ -223,6 +236,9 @@ app.get("/api/_debug/products-count", async (req, res) => {
 
   // Add this for testing
   app.get("/", (req, res) => res.status(200).send("OK")); 
+  // app.get("/health", (req, res) => res.json({ 
+  //   ok: true, time: new Date() 
+  // })
 );
 
   const offerRestaurantBySnapshot = await Product.countDocuments({
