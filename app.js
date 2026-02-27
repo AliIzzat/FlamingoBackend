@@ -141,11 +141,12 @@ app.get("/health", (_req, res) => {
     ok: true,
     port: process.env.PORT || null,
     envFlags: {
-      JWT_SECRET: !!process.env.JWT_SECRET,
-      DRIVER_JWT_SECRET: !!process.env.DRIVER_JWT_SECRET,
-      MYFATOORAH_TOKEN: !!process.env.MYFATOORAH_TOKEN,
-      MF_TOKEN: !!process.env.MF_TOKEN,
-      MF_API_URL: !!process.env.MF_API_URL,
+      JWT_SECRET: !!process.env.JWT_SECRET,     //this
+      TEST_ENV_CHECK: process.env.TEST_ENV_CHECK || null
+      DRIVER_JWT_SECRET: !!process.env.DRIVER_JWT_SECRET,  // this
+      MYFATOORAH_TOKEN: !!process.env.MYFATOORAH_TOKEN,    // this
+      MF_TOKEN: !!process.env.MF_TOKEN,                    // this
+      MF_API_URL: !!process.env.MF_API_URL,                // this
       MYFATOORAH_API_URL: !!process.env.MYFATOORAH_API_URL,
     },
     lens: {
