@@ -223,7 +223,6 @@ app.get("/api/_debug/products-count", async (req, res) => {
 
   // Add this for testing
   app.get("/", (req, res) => res.status(200).send("OK")); 
-);
 
   const offerRestaurantBySnapshot = await Product.countDocuments({
     isActive: true,
