@@ -14,6 +14,43 @@ router.get("/ping", (_req, res) => {
   res.json({ ok: true, service: "driver", time: new Date().toISOString() });
 });
 
+router.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+
+    if (!username || !password) {
+      return res.status(400).json({ ok: false, error: "username and password are required" });
+    }
+
+    const user = await User.findOne({
+      username: String(username).trim(),
+      role: "driver",
+    }).lean();
+
+    if (!user) return res.status(401).json({ ok: false, error: "Invalid credentials" });
+
+    const stored = user.password || "";
+    const isHashed = stored.startsWith("$2");
+    const match = isHashed ? await bcrypt.compare(password, stored) : String(password) === stored;
+
+    if (!match) return res.status(401).json({ ok: false, error: "Invalid credentials" });
+
+    const secret = process.env.JWT_SECRET || process.env.DRIVER_JWT_SECRET;
+    if (!secret) return res.status(500).json({ ok: false, error: "JWT secret missing on server" });
+
+    const token = jwt.sign({ id: String(user._id), role: "driver" }, secret, { expiresIn: "30d" });
+
+    return res.json({
+      ok: true,
+      token,
+      driver: { id: String(user._id), name: user.name || user.username, username: user.username, role: user.role },
+    });
+  } catch (err) {
+    console.error("💥 DRIVER LOGIN CRASH:", err);
+    return res.status(500).json({ ok: false, error: "Server error", debug: err?.message });
+  }
+});
+
 // GET available orders (Pending + unassigned)
 router.get("/orders/available", driverAuth, async (req, res) => {
   try {
