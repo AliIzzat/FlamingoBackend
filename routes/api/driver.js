@@ -1,4 +1,11 @@
+const express = require("express");
+const router = express.Router();   // ✅ MUST be here BEFORE router.get()
+
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
+
+const User = require("../../models/User");
 const Order = require("../../models/Order");
 const driverAuth = require("../../middleware/driverAuth");
 
@@ -120,126 +127,4 @@ router.post("/orders/:id/status", driverAuth, async (req, res) => {
     return res.status(500).json({ ok: false, error: "Server error" });
   }
 });
-
-
-
-
-
-
-
-// const express = require("express");
-// const router = express.Router();
-// const jwt = require("jsonwebtoken");
-// const bcrypt = require("bcryptjs");
-// const User = require("../../models/User"); // ✅ adjust if needed
-
-// const driverAuth = require("../../middleware/driverAuth");
-// const Order = require("../../models/Order"); // adjust path/name if different
-
-// router.get("/orders/available", driverAuth, async (req, res) => {
-//   try {
-//     const orders = await Order.find({
-//       "delivery.status": "Pending",
-//       "delivery.assignedDriverId": null,
-//     })
-//       .sort({ createdAt: -1 })
-//       .lean();
-
-//     return res.json({ ok: true, orders });
-//   } catch (e) {
-//     console.error("❌ available orders:", e);
-//     return res.status(500).json({ ok: false, error: "Server error" });
-//   }
-// });
-
-// router.get("/orders/my", driverAuth, async (req, res) => {
-//   try {
-//     const orders = await Order.find({
-//       "delivery.assignedDriverId": req.driverObjectId,
-//     })
-//       .sort({ "delivery.claimedAt": -1, createdAt: -1 })
-//       .lean();
-
-//     return res.json({ ok: true, orders });
-//   } catch (e) {
-//     console.error("❌ my orders:", e);
-//     return res.status(500).json({ ok: false, error: "Server error" });
-//   }
-// });
-
-// router.post("/login", async (req, res) => {
-//   console.log("➡️ DRIVER LOGIN HIT");
-//   console.log("content-type =", req.headers["content-type"]);
-//   console.log("body =", req.body);
-//   console.log("JWT_SECRET exists?", !!process.env.JWT_SECRET);
-//   console.log("JWT_SECRET length:", process.env.JWT_SECRET?.length);
-//   console.log("All env keys sample:", Object.keys(process.env).slice(0, 20));
-
-//   try {
-//     const { username, password } = req.body || {};
-
-//     if (!username || !password) {
-//       return res.status(400).json({
-//         ok: false,
-//         error: "username and password are required",
-//       });
-//     }
-
-//     const cleanUsername = String(username).trim();
-
-//     // ✅ Must be a DRIVER account
-//     const user = await User.findOne({
-//       username: cleanUsername,
-//       role: "driver",
-//     }).lean();
-
-//     if (!user) {
-//       return res.status(401).json({ ok: false, error: "Invalid credentials" });
-//     }
-
-//     const stored = user.password || "";
-//     const isHashed = stored.startsWith("$2"); // bcrypt hashes start with $2...
-
-//     const match = isHashed
-//       ? await bcrypt.compare(password, stored)
-//       : String(password) === stored;
-
-//     if (!match) {
-//       return res.status(401).json({ ok: false, error: "Invalid credentials" });
-//     }
-
-//     const secret = process.env.JWT_SECRET || process.env.DRIVER_JWT_SECRET;
-//     if (!secret) {
-//       return res
-//         .status(500)
-//         .json({ ok: false, error: "JWT secret missing on server" });
-//     }
-
-//     const token = jwt.sign(
-//       { id: String(user._id), role: "driver" },
-//       secret,
-//       { expiresIn: "30d" }
-//     );
-
-//     return res.json({
-//       ok: true,
-//       token,
-//       driver: {
-//         id: String(user._id),
-//         name: user.name || user.username,
-//         username: user.username,
-//         role: user.role,
-//       },
-//     });
-//   } catch (err) {
-//     console.error("💥 DRIVER LOGIN CRASH:", err?.message);
-//     console.error(err?.stack);
-//     return res.status(500).json({
-//       ok: false,
-//       error: "Server error",
-//       debug: err?.message, // keep temporarily while debugging
-//     });
-//   }
-// });
-
-// module.exports = router;
+module.exports = router;
