@@ -12,38 +12,68 @@ function calcSubtotal(cartItems = []) {
   }, 0);
 }
 
+function toNumOrNull(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 router.post("/create", async (req, res) => {
   console.log("📦 ORDER CREATE HIT:", req.body);
+
   try {
-    const { cartItems, customer } = req.body;
+    const { cartItems, customer } = req.body || {};
 
     if (!customer?.name || !customer?.phone || !customer?.addressText) {
-      return res.status(400).json({ ok: false, error: "Missing customer fields" });
+      return res
+        .status(400)
+        .json({ ok: false, error: "Missing customer fields" });
     }
 
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
       return res.status(400).json({ ok: false, error: "cartItems is required" });
     }
 
-    const items = cartItems.map((x) => ({
-      productId: x.id,
-      category: x.type || "restaurant",
-      name_snapshot: x.name,
-      price_snapshot: Number(x.price),
-      qty: Number(x.quantity || 1),
-      storeId: x.storeId || null,
-      image_snapshot: x.image || "",
-    }));
+    // ✅ Extract coords if provided (from app)
+    const lat = toNumOrNull(customer?.location?.lat);
+    const lng = toNumOrNull(customer?.location?.lng);
+
+    const items = cartItems.map((x) => {
+      const rawId = x.productId || x._id || x.id; // ✅ tolerate different shapes
+      const productId =
+        rawId && mongoose.Types.ObjectId.isValid(String(rawId))
+          ? new mongoose.Types.ObjectId(String(rawId))
+          : rawId; // if not ObjectId, store as-is (but ideally it IS ObjectId)
+
+      return {
+        productId,
+        category: x.type || x.category || "restaurant",
+        name_snapshot: x.name || x.name_snapshot || "Item",
+        price_snapshot: Number(x.price ?? x.price_snapshot ?? 0),
+        qty: Number(x.quantity ?? x.qty ?? 1),
+        storeId:
+          x.storeId && mongoose.Types.ObjectId.isValid(String(x.storeId))
+            ? new mongoose.Types.ObjectId(String(x.storeId))
+            : null,
+        image_snapshot: x.image || x.image_snapshot || "",
+      };
+    });
+
+    const subtotal = calcSubtotal(cartItems);
 
     const orderDoc = await Order.create({
       customer: {
-        name: customer.name,
-        phone: customer.phone,
-        addressText: customer.addressText,
+        name: String(customer.name).trim(),
+        phone: String(customer.phone).trim(),
+        addressText: String(customer.addressText).trim(),
+        location: {
+          lat,
+          lng,
+        },
       },
       items,
       totals: {
-        subtotal: items.reduce((s, i) => s + i.price_snapshot * i.qty, 0),
+        subtotal,
+        // deliveryFee + total are calculated by your OrderSchema pre("save")
       },
       delivery: {
         status: "Pending",
@@ -56,83 +86,68 @@ router.post("/create", async (req, res) => {
 
     return res.json({ ok: true, orderId: orderDoc._id });
   } catch (err) {
-    console.log("❌ /orders/create error:", err);
+    console.log("❌ /orders/create error:", err?.message);
+    console.log(err?.stack);
     return res.status(500).json({ ok: false, error: "Server error" });
   }
 });
 
+module.exports = router;
+
+
+
+
+
+// const express = require("express");
+// const router = express.Router();
+// const mongoose = require("mongoose");
+// const Order = require("../../../models/Order");
+
+// // helper to compute subtotal from cartItems
+// function calcSubtotal(cartItems = []) {
+//   return cartItems.reduce((sum, x) => {
+//     const price = Number(x.price ?? x.price_snapshot ?? 0);
+//     const qty = Number(x.quantity ?? x.qty ?? 1);
+//     return sum + price * qty;
+//   }, 0);
+// }
+
 // router.post("/create", async (req, res) => {
+//   console.log("📦 ORDER CREATE HIT:", req.body);
 //   try {
 //     const { cartItems, customer } = req.body;
 
-//     // ✅ Validate customer
 //     if (!customer?.name || !customer?.phone || !customer?.addressText) {
-//       return res.status(400).json({
-//         ok: false,
-//         error: "Missing customer fields",
-//         required: ["customer.name", "customer.phone", "customer.addressText"],
-//       });
+//       return res.status(400).json({ ok: false, error: "Missing customer fields" });
 //     }
 
-//     // ✅ Validate cart items
 //     if (!Array.isArray(cartItems) || cartItems.length === 0) {
 //       return res.status(400).json({ ok: false, error: "cartItems is required" });
 //     }
 
-//     // ✅ Map cartItems → Order.items (YOUR schema)
-//     const items = cartItems.map((x) => {
-//       const productId = x.productId || x.id;
-//       if (!mongoose.Types.ObjectId.isValid(productId)) {
-//         throw new Error(`Invalid productId: ${productId}`);
-//       }
-
-//       const qty = Number(x.quantity ?? x.qty ?? 1);
-//       if (!qty || qty < 1) {
-//         throw new Error(`Invalid qty for productId ${productId}`);
-//       }
-
-//       const price = Number(x.price ?? x.price_snapshot ?? 0);
-
-//       return {
-//         productId,
-//         storeId: x.storeId && mongoose.Types.ObjectId.isValid(x.storeId) ? x.storeId : null,
-//         category: x.category || x.storeType || x.type || "unknown", // must be String
-//         name_snapshot: x.name || x.name_snapshot || "Item",
-//         price_snapshot: price,
-//         qty,
-//         image_snapshot: x.image || "",
-//       };
-//     });
-
-//     // ✅ totals.subtotal is what your pre("save") uses
-//     const subtotal = calcSubtotal(cartItems);
-
-//     // ✅ optional: pickup info (if you have it)
-//     // If you don't have pickup yet, leave it blank safely.
-//     const pickup = req.body.pickup || undefined;
+//     const items = cartItems.map((x) => ({
+//       productId: x.id,
+//       category: x.type || "restaurant",
+//       name_snapshot: x.name,
+//       price_snapshot: Number(x.price),
+//       qty: Number(x.quantity || 1),
+//       storeId: x.storeId || null,
+//       image_snapshot: x.image || "",
+//     }));
 
 //     const orderDoc = await Order.create({
 //       customer: {
 //         name: customer.name,
 //         phone: customer.phone,
 //         addressText: customer.addressText,
-//         location: customer.location || { lat: null, lng: null },
 //       },
-
-//       ...(pickup ? { pickup } : {}),
-
 //       items,
-
 //       totals: {
-//         subtotal, // ✅ pre-save will compute deliveryFee + total
+//         subtotal: items.reduce((s, i) => s + i.price_snapshot * i.qty, 0),
 //       },
-
-//       // ✅ real order status in your schema:
 //       delivery: {
 //         status: "Pending",
 //       },
-
-//       // ✅ payment block (optional; defaults exist in schema)
 //       payment: {
 //         method: "myfatoorah",
 //         status: "unpaid",
@@ -142,12 +157,7 @@ router.post("/create", async (req, res) => {
 //     return res.json({ ok: true, orderId: orderDoc._id });
 //   } catch (err) {
 //     console.log("❌ /orders/create error:", err);
-//     return res.status(500).json({
-//       ok: false,
-//       error: "Server error",
-//       message: err.message,
-//     });
+//     return res.status(500).json({ ok: false, error: "Server error" });
 //   }
 // });
-
-module.exports = router;
+// module.exports = router;
