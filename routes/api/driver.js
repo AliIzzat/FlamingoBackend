@@ -8,6 +8,9 @@ router.post("/login", async (req, res) => {
   console.log("➡️ DRIVER LOGIN HIT");
   console.log("content-type =", req.headers["content-type"]);
   console.log("body =", req.body);
+  console.log("JWT_SECRET exists?", !!process.env.JWT_SECRET);
+  console.log("JWT_SECRET length:", process.env.JWT_SECRET?.length);
+  console.log("All env keys sample:", Object.keys(process.env).slice(0, 20));
 
   try {
     const { username, password } = req.body || {};
