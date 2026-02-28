@@ -62,14 +62,14 @@ router.post("/create", async (req, res) => {
 
     const orderDoc = await Order.create({
       customer: {
-        name: String(customer.name).trim(),
-        phone: String(customer.phone).trim(),
-        addressText: String(customer.addressText).trim(),
-        location: {
-          lat,
-          lng,
+          name: customer.name,
+          phone: customer.phone,
+          addressText: customer.addressText,
+          location: {
+            lat: customer?.location?.lat ?? null,
+            lng: customer?.location?.lng ?? null,
+          },
         },
-      },
       items,
       totals: {
         subtotal,
