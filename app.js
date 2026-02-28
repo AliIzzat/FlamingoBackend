@@ -172,6 +172,7 @@ app.use("/api/customer/disputes", customerDisputes);
 app.use("/api/mobile/products", mobileProducts);
 app.use("/api/mobile/payments", paymentsRoutes);
 app.use("/api/mobile/orders", mobileOrders);
+app.use("/api/mobile/categories", require("./routes/api/mobile/categories"));
 
 if (ENABLE_WEB) {
   app.use("/order", orderRoutes);
