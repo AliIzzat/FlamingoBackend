@@ -5,27 +5,22 @@ const axios = require("axios");
 const Order = require("../../../models/Order");
 
 // ✅ Read token from any supported env name
-const MF_TOKEN = 
+// ✅ Token (support all possible env names)
+const MF_TOKEN =
   process.env.MYFATOORAH_API_KEY ||
   process.env.MYFATOORAH_TOKEN ||
   process.env.MF_TOKEN ||
   "";
 
-const MF_BASE =
-  process.env.MYFATOORAH_API_URL ||
-  process.env.MF_API_URL ||
-  "https://apitest.myfatoorah.com";
-
-// ✅ Read base URL from any supported env name
+// ✅ Base URL (support all possible env names)
 const MF_BASE_RAW =
-  process.env.MYFATOORAH_API_BASE ||    // ✅ what Railway currently has
-  process.env.MF_API_URL ||
+  process.env.MYFATOORAH_API_BASE || // (your Railway variable name)
   process.env.MYFATOORAH_API_URL ||
+  process.env.MF_API_URL ||
   "https://apitest.myfatoorah.com";
 
-const MF_BASE = MF_BASE_RAW
-  .replace(/\/+$/, "")   // remove trailing slashes
-  .replace(/\/v2$/, ""); // remove trailing /v2 if present
+// ✅ Normalize: remove trailing slashes + remove trailing /v2 if user stored it that way
+const MF_BASE = MF_BASE_RAW.replace(/\/+$/, "").replace(/\/v2$/, "");
 
 router.post("/myfatoorah/initiate", async (req, res) => {
   console.log("🔥 HIT /myfatoorah/initiate (VERSION 2026-02-25-X)", new Date().toISOString());
@@ -75,16 +70,16 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       Language: "en",
     };
     // This is just for checking
-   console.log("MF URL =", process.env.MYFATOORAH_API_URL || process.env.MF_API_URL);
-   console.log("MF token exists?", !!(process.env.MYFATOORAH_TOKEN || process.env.MF_TOKEN));
-   console.log("MF token length =", (process.env.MYFATOORAH_TOKEN || process.env.MF_TOKEN || "").length);
+     console.log("MF_BASE =", MF_BASE);
+     console.log("MF_TOKEN length =", MF_TOKEN.length);
+     console.log("MF_TOKEN first10 =", MF_TOKEN.slice(0, 10));
 
     const r = await axios.post(`${MF_BASE}/v2/ExecutePayment`, payload, {
       headers: {
         Authorization: `Bearer ${MF_TOKEN}`,
-      //   "Content-Type": "application/json",
-      // },
-      // timeout: 25000,
+        "Content-Type": "application/json",
+      },
+      timeout: 25000,
     });
 
     const data = r.data?.Data;
