@@ -5,12 +5,16 @@ const axios = require("axios");
 const Order = require("../../../models/Order");
 
 // ✅ Read token from any supported env name
-const MF_TOKEN = (
+const MF_TOKEN = 
   process.env.MYFATOORAH_API_KEY ||
   process.env.MYFATOORAH_TOKEN ||
   process.env.MF_TOKEN ||
-  ""
-).trim();
+  "";
+
+const MF_BASE =
+  process.env.MYFATOORAH_API_URL ||
+  process.env.MF_API_URL ||
+  "https://apitest.myfatoorah.com";
 
 // ✅ Read base URL from any supported env name
 const MF_BASE_RAW =
@@ -50,9 +54,10 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     }
 
     const methodId = Number(paymentMethodId || 2);
-    const baseUrl = process.env.APP_BASE_URL || process.env.RAILWAY_PUBLIC_DOMAIN
-      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
-      : "http://localhost:4000";
+    const baseUrl = process.env.APP_BASE_URL ||
+         (process.env.RAILWAY_PUBLIC_DOMAIN
+          ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+          : "http://localhost:4000");
 
     const CallBackUrl = `${baseUrl}/api/mobile/payments/myfatoorah/callback?orderId=${encodeURIComponent(orderId)}`;
     const ErrorUrl = `${baseUrl}/api/mobile/payments/myfatoorah/error?orderId=${encodeURIComponent(orderId)}`;
@@ -69,13 +74,17 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       ErrorUrl,
       Language: "en",
     };
+    // This is just for checking
+   console.log("MF URL =", process.env.MYFATOORAH_API_URL || process.env.MF_API_URL);
+   console.log("MF token exists?", !!(process.env.MYFATOORAH_TOKEN || process.env.MF_TOKEN));
+   console.log("MF token length =", (process.env.MYFATOORAH_TOKEN || process.env.MF_TOKEN || "").length);
 
     const r = await axios.post(`${MF_BASE}/v2/ExecutePayment`, payload, {
       headers: {
         Authorization: `Bearer ${MF_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      timeout: 25000,
+      //   "Content-Type": "application/json",
+      // },
+      // timeout: 25000,
     });
 
     const data = r.data?.Data;
@@ -105,7 +114,7 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     status,
     details: mfBody || { message: err.message },
   });
-}
+ }
 });
 
 // ------------------------
