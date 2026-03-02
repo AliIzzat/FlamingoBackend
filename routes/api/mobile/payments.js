@@ -24,6 +24,9 @@ const MF_BASE = MF_BASE_RAW.replace(/\/+$/, "").replace(/\/v2$/, "");
 
 router.post("/myfatoorah/initiate", async (req, res) => {
   console.log("🔥 HIT /myfatoorah/initiate (VERSION 2026-02-25-X)", new Date().toISOString());
+  const tok = (process.env.MYFATOORAH_API_KEY || process.env.MYFATOORAH_TOKEN || process.env.MF_TOKEN || "").trim();
+  console.log("MF token length =", tok.length);
+  console.log("MF token prefix =", tok.slice(0, 12));
   try {
     if (!MF_TOKEN) {
       return res.status(500).json({
