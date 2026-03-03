@@ -11,10 +11,19 @@ function toNumOrNull(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 }
+function toObjectIdOrNull(v) {
+  if (!v) return null;
+  const s = String(v);
+  return mongoose.Types.ObjectId.isValid(s) ? new mongoose.Types.ObjectId(s) : null;
+}
 
 // helper to compute subtotal from normalized items
-function calcItemsSubtotal(items = []) {
-  return items.reduce((sum, i) => sum + Number(i.price_snapshot || 0) * Number(i.qty || 1), 0);
+function calcSubtotalFromItems(items = []) {
+  return items.reduce((sum, it) => {
+    const price = Number(it.price_snapshot ?? 0);
+    const qty = Number(it.qty ?? 1);
+    return sum + price * qty;
+  }, 0);
 }
 
 router.post("/create", async (req, res) => {
@@ -38,15 +47,11 @@ router.post("/create", async (req, res) => {
     // ✅ Normalize items (tolerate different shapes)
     const items = cartItems.map((x) => {
       const rawId = x.productId || x._id || x.id;
-      const productId =
-        rawId && mongoose.Types.ObjectId.isValid(String(rawId))
-          ? new mongoose.Types.ObjectId(String(rawId))
-          : rawId;
+      const productId = rawId && mongoose.Types.ObjectId.isValid(String(rawId))
+        ? new mongoose.Types.ObjectId(String(rawId))
+        : rawId;
 
-      const storeId =
-        x.storeId && mongoose.Types.ObjectId.isValid(String(x.storeId))
-          ? new mongoose.Types.ObjectId(String(x.storeId))
-          : null;
+       const storeId = toObjectIdOrNull(x.storeId);
 
       return {
         productId,
@@ -60,78 +65,66 @@ router.post("/create", async (req, res) => {
     });
 
     // ✅ Auto-pick pickup.storeId from first item that has it
-    const firstStoreId = items.find((i) => i.storeId)?.storeId || null;
+    const pickupStoreId = items.find((i) => i.storeId)?.storeId || null;
 
-    // ✅ Pull store coords from DB so pickup is never null
-    let pickup = {
-      storeId: firstStoreId,
-      addressText: "",
-      location: { lat: null, lng: null },
-    };
+    let pickupLocation = { lat: null, lng: null };
+    let pickupAddressText = "";
 
-    if (firstStoreId) {
-      const store = await Store.findById(firstStoreId)
-        .select("name addressText address location coordinates geo locationGeo locationLat locationLng lat lng")
-        .lean();
+    if (pickupStoreId) {
+      const store = await Store.findById(pickupStoreId).lean();
 
-      // Try common patterns:
+      // Your Store model may store coordinates differently; this supports common patterns:
       const sLat =
         toNumOrNull(store?.location?.lat) ??
         toNumOrNull(store?.coordinates?.lat) ??
-        toNumOrNull(store?.lat) ??
-        toNumOrNull(store?.locationLat);
+        toNumOrNull(store?.coordinates?.[1]) ?? // if [lng,lat] or [lat,lng] adjust below if needed
+        null;
 
       const sLng =
         toNumOrNull(store?.location?.lng) ??
         toNumOrNull(store?.coordinates?.lng) ??
-        toNumOrNull(store?.lng) ??
-        toNumOrNull(store?.locationLng);
+        toNumOrNull(store?.coordinates?.[0]) ??
+        null;
 
-      pickup = {
-        storeId: firstStoreId,
-        addressText: store?.addressText || store?.address || store?.name || "",
-        location: { lat: sLat, lng: sLng },
-      };
+      pickupLocation = { lat: sLat, lng: sLng };
+      pickupAddressText = store?.address || store?.addressText || store?.name || "";
     }
 
-    const subtotal = calcItemsSubtotal(items);
+    const subtotal = calcSubtotalFromItems(items);
 
     const orderDoc = await Order.create({
       customer: {
         name: String(customer.name).trim(),
         phone: String(customer.phone).trim(),
         addressText: String(customer.addressText).trim(),
-        location: {
-          lat: customerLat,
-          lng: customerLng,
-        },
+        location: { lat: customerLat, lng: customerLng }, // ✅ saved to DB
       },
 
-      pickup, // ✅ THIS FIXES driver map (store marker/route)
+      pickup: {
+        storeId: pickupStoreId,
+        addressText: pickupAddressText,
+        location: pickupLocation, // ✅ saved to DB (driver needs it)
+      },
 
       items,
 
       totals: {
         subtotal,
-        // deliveryFee + total calculated by OrderSchema pre("save")
+        // deliveryFee + total are calculated by your OrderSchema pre("save")
       },
 
-      delivery: {
-        status: "Pending",
-      },
+      delivery: { status: "Pending" },
 
-      payment: {
-        method: "myfatoorah",
-        status: "unpaid",
-      },
+      payment: { method: "myfatoorah", status: "unpaid" },
     });
 
-    // ✅ Create notification so Admin Dashboard shows it
+    // ✅ Create notification (for admin dashboard)
     await Notification.create({
       orderId: orderDoc._id,
-      message: `🆕 New order from ${customer.name} (${customer.phone})`,
+      message: `🆕 New order from ${orderDoc.customer.name} (${orderDoc.customer.phone})`,
       status: "unpicked",
       driverId: null,
+      createdAt: new Date(),
       updatedAt: new Date(),
     });
 
