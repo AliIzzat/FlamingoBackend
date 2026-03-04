@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const Order = require("../../../models/Order");
-
+const [invoiceId, setInvoiceId] = useState(null);
 // ----------------------------
 // ENV HELPERS
 // ----------------------------
@@ -160,7 +160,47 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     });
   }
 });
+router.get("/status", async (req, res) => {
+  try {
+    const { invoiceId } = req.query;
 
+    if (!invoiceId) {
+      return res.status(400).json({ ok: false, error: "invoiceId missing" });
+    }
+
+    const response = await fetch(
+      "https://apitest.myfatoorah.com/v2/GetPaymentStatus",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.MYFATOORAH_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          Key: invoiceId,
+          KeyType: "InvoiceId",
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    console.log("MF status:", data);
+
+    const status = data?.Data?.InvoiceStatus;
+
+    return res.json({
+      ok: true,
+      invoiceId,
+      status,
+      paid: status === "Paid",
+    });
+
+  } catch (err) {
+    console.error("Payment status error:", err);
+    res.status(500).json({ ok: false, error: "status check failed" });
+  }
+});
 // ----------------------------
 // CALLBACK (SUCCESS URL)
 // GET /api/mobile/payments/myfatoorah/callback?orderId=...&paymentId=...
