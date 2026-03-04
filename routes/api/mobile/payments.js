@@ -270,7 +270,7 @@ router.get("/myfatoorah/error", async (req, res) => {
   // ✅ return to app
   return res.redirect(deepLinkFail(orderId || "", "CANCELLED"));
 });
-router.get("/return", async (req, res) => {
+router.get("/myfatoorah/return", async (req, res) => {
   // MyFatoorah usually sends PaymentId (and sometimes other params)
   const paymentId =
     req.query.paymentId || req.query.PaymentId || req.query.paymentID;
