@@ -95,12 +95,8 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     const baseUrl = getPublicBaseUrl();
     const methodId = Number(paymentMethodId || 2);
 
-    const CallBackUrl = `${baseUrl}/api/mobile/payments/myfatoorah/callback?orderId=${encodeURIComponent(
-      orderId
-    )}`;
-    const ErrorUrl = `${baseUrl}/api/mobile/payments/myfatoorah/error?orderId=${encodeURIComponent(
-      orderId
-    )}`;
+    const CallBackUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${encodeURIComponent(orderId)}`;
+    const ErrorUrl   = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${encodeURIComponent(orderId)}`;
 
     const payload = {
       PaymentMethodId: methodId,
@@ -161,43 +157,38 @@ router.post("/myfatoorah/initiate", async (req, res) => {
 });
 router.get("/status", async (req, res) => {
   try {
-    const { invoiceId } = req.query;
+    const { invoiceId, paymentId } = req.query;
 
-    if (!invoiceId) {
-      return res.status(400).json({ ok: false, error: "invoiceId missing" });
+    if (!invoiceId && !paymentId) {
+      return res.status(400).json({ ok: false, error: "invoiceId or paymentId required" });
     }
 
-    const response = await fetch(
-      "https://apitest.myfatoorah.com/v2/GetPaymentStatus",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.MYFATOORAH_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          Key: invoiceId,
-          KeyType: "InvoiceId",
-        }),
-      }
-    );
+    const Key = paymentId || invoiceId;
+    const KeyType = paymentId ? "PaymentId" : "InvoiceId";
 
-    const data = await response.json();
+    const mfRes = await fetch("https://apitest.myfatoorah.com/v2/GetPaymentStatus", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.MYFATOORAH_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ Key, KeyType }),
+    });
 
-    console.log("MF status:", data);
-
-    const status = data?.Data?.InvoiceStatus;
+    const data = await mfRes.json();
+    const status = data?.Data?.InvoiceStatus; // Paid / Unpaid / etc.
 
     return res.json({
       ok: true,
-      invoiceId,
+      Key,
+      KeyType,
       status,
       paid: status === "Paid",
+      raw: data,
     });
-
   } catch (err) {
-    console.error("Payment status error:", err);
-    res.status(500).json({ ok: false, error: "status check failed" });
+    console.error("Status check failed:", err);
+    return res.status(500).json({ ok: false, error: "Status check failed" });
   }
 });
 // ----------------------------
