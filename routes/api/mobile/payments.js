@@ -271,43 +271,114 @@ router.get("/myfatoorah/error", async (req, res) => {
   return res.redirect(deepLinkFail(orderId || "", "CANCELLED"));
 });
 router.get("/myfatoorah/return", async (req, res) => {
-  // MyFatoorah usually sends PaymentId (and sometimes other params)
-  const paymentId =
-    req.query.paymentId || req.query.PaymentId || req.query.paymentID;
+  try {
+    const paymentId =
+      req.query.paymentId || req.query.PaymentId || req.query.paymentID || null;
 
-  const invoiceId =
-    req.query.invoiceId || req.query.InvoiceId;
+    const invoiceId =
+      req.query.invoiceId || req.query.InvoiceId || null;
 
-  res.setHeader("Content-Type", "text/html; charset=utf-8");
+    const orderId = req.query.orderId || null;
 
-  // Always show something visible (no blank)
-  return res.send(`
-    <!doctype html>
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Payment Result</title>
-        <style>
-          body{font-family:Arial,sans-serif;padding:24px;line-height:1.4}
-          .card{max-width:520px;margin:0 auto;border:1px solid #eee;border-radius:14px;padding:18px}
-          .btn{display:inline-block;margin-top:12px;padding:12px 14px;border-radius:10px;background:#520582;color:#fff;text-decoration:none}
-          .muted{color:#666;font-size:13px}
-        </style>
-      </head>
-      <body>
-        <div class="card">
-          <h2>Payment processing…</h2>
-          <p>You can return to the app now.</p>
-          <p class="muted">paymentId: ${paymentId || "-"}<br/>invoiceId: ${invoiceId || "-"}</p>
+    // If MyFatoorah didn’t send invoiceId/paymentId, still show page
+    let status = "UNKNOWN";
+    let paid = false;
 
-          <!-- OPTIONAL: If you have deep linking, put your scheme here -->
-          <!-- <a class="btn" href="flamingdelivery://payment-return?paymentId=${paymentId || ""}&invoiceId=${invoiceId || ""}">Return to App</a> -->
+    // Prefer PaymentId if available (more reliable)
+    const Key = paymentId || invoiceId;
+    const KeyType = paymentId ? "PaymentId" : "InvoiceId";
 
-          <p class="muted">If the app doesn’t update automatically, open the app and press “Check Payment Status”.</p>
-        </div>
-      </body>
-    </html>
-  `);
+    if (Key) {
+      const mfRes = await fetch("https://apitest.myfatoorah.com/v2/GetPaymentStatus", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.MF_TOKEN || process.env.MYFATOORAH_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ Key, KeyType }),
+      });
+
+      const mfJson = await mfRes.json();
+      status = mfJson?.Data?.InvoiceStatus || "UNKNOWN";
+      paid = status === "Paid";
+
+      // Optional: update your Order record if you want
+      if (orderId) {
+        await Order.findByIdAndUpdate(orderId, {
+          "payment.status": paid ? "paid" : "unpaid",
+          "payment.invoiceId": invoiceId ? String(invoiceId) : undefined,
+          "payment.paymentId": paymentId ? String(paymentId) : undefined,
+        });
+      }
+    }
+
+    const title = paid ? "Payment Successful ✅" : (status === "Failed" ? "Payment Failed ❌" : "Payment Pending ⏳");
+    const subtitle = paid
+      ? "Thank you! You can return to the app."
+      : "You can return to the app and try again if needed.";
+
+    // Your deep link schemes (change to YOUR real scheme)
+    const APP_DEEPLINK = `flamingdelivery://payment-return?orderId=${encodeURIComponent(orderId || "")}&invoiceId=${encodeURIComponent(invoiceId || "")}&paymentId=${encodeURIComponent(paymentId || "")}&status=${encodeURIComponent(status)}`;
+
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.send(`
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <title>${title}</title>
+          <style>
+            body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f7fb;color:#111}
+            .wrap{max-width:560px;margin:0 auto;padding:18px}
+            .card{background:#fff;border-radius:18px;padding:18px;border:1px solid #e9e9ef;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+            h1{margin:0 0 10px;font-size:22px}
+            p{margin:8px 0;line-height:1.45}
+            .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
+            .ok{background:#e9f7ef;color:#137333}
+            .bad{background:#fdecea;color:#b3261e}
+            .mid{background:#fff4e5;color:#7a4d00}
+            .btn{display:block;text-align:center;text-decoration:none;font-weight:800;padding:14px 16px;border-radius:14px;margin-top:14px}
+            .primary{background:#520582;color:#fff}
+            .secondary{background:#eef0f6;color:#111}
+            .meta{margin-top:10px;font-size:12px;color:#666;word-break:break-word}
+          </style>
+        </head>
+        <body>
+          <div class="wrap">
+            <div class="card">
+              <h1>${title}</h1>
+              <p>${subtitle}</p>
+
+              <div style="margin-top:10px">
+                <span class="badge ${paid ? "ok" : (status === "Failed" ? "bad" : "mid")}">
+                  Status: ${status}
+                </span>
+              </div>
+
+              <a class="btn primary" href="${APP_DEEPLINK}">Return to App</a>
+
+              <a class="btn secondary" href="javascript:history.back()">Go Back</a>
+
+              <div class="meta">
+                orderId: ${orderId || "-"}<br/>
+                invoiceId: ${invoiceId || "-"}<br/>
+                paymentId: ${paymentId || "-"}<br/>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+  } catch (err) {
+    console.error("RETURN error:", err);
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.status(200).send(`
+      <html><body style="font-family:Arial;padding:24px">
+        <h2>Payment completed</h2>
+        <p>You can return to the app now.</p>
+      </body></html>
+    `);
+  }
 });
 module.exports = router;
