@@ -279,5 +279,44 @@ router.get("/myfatoorah/error", async (req, res) => {
   // ✅ return to app
   return res.redirect(deepLinkFail(orderId || "", "CANCELLED"));
 });
+router.get("/return", async (req, res) => {
+  // MyFatoorah usually sends PaymentId (and sometimes other params)
+  const paymentId =
+    req.query.paymentId || req.query.PaymentId || req.query.paymentID;
 
+  const invoiceId =
+    req.query.invoiceId || req.query.InvoiceId;
+
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+
+  // Always show something visible (no blank)
+  return res.send(`
+    <!doctype html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Payment Result</title>
+        <style>
+          body{font-family:Arial,sans-serif;padding:24px;line-height:1.4}
+          .card{max-width:520px;margin:0 auto;border:1px solid #eee;border-radius:14px;padding:18px}
+          .btn{display:inline-block;margin-top:12px;padding:12px 14px;border-radius:10px;background:#520582;color:#fff;text-decoration:none}
+          .muted{color:#666;font-size:13px}
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h2>Payment processing…</h2>
+          <p>You can return to the app now.</p>
+          <p class="muted">paymentId: ${paymentId || "-"}<br/>invoiceId: ${invoiceId || "-"}</p>
+
+          <!-- OPTIONAL: If you have deep linking, put your scheme here -->
+          <!-- <a class="btn" href="flamingdelivery://payment-return?paymentId=${paymentId || ""}&invoiceId=${invoiceId || ""}">Return to App</a> -->
+
+          <p class="muted">If the app doesn’t update automatically, open the app and press “Check Payment Status”.</p>
+        </div>
+      </body>
+    </html>
+  `);
+});
 module.exports = router;
