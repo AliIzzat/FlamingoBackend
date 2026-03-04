@@ -3,7 +3,6 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const Order = require("../../../models/Order");
-const [invoiceId, setInvoiceId] = useState(null);
 // ----------------------------
 // ENV HELPERS
 // ----------------------------
