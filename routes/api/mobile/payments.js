@@ -14,11 +14,8 @@ function pickFirst(...vals) {
 }
 
 // ✅ Token (supports all names)
-const MF_TOKEN = pickFirst(
-  process.env.MYFATOORAH_API_KEY,
-  process.env.MYFATOORAH_TOKEN,
-  process.env.MF_TOKEN
-);
+const MF_TOKEN = (process.env.MYFATOORAH_API_KEY || process.env.MYFATOORAH_TOKEN ||  process.env.MF_TOKEN);
+console.log("🔐 MF_TOKEN length =", (MF_TOKEN || "").length);
 
 // ✅ Base URL (supports all names)
 const MF_BASE_RAW = pickFirst(
