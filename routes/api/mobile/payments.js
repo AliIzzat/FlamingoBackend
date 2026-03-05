@@ -27,7 +27,14 @@ const MF_BASE_RAW=process.env.MYFATOORAH_API_BASE;
 // );
 
 // ✅ Normalize base: remove trailing "/" + remove trailing "/v2"
+const MF_BASE_RAW =
+  process.env.MYFATOORAH_API_URL ||
+  process.env.MF_API_URL ||
+  "https://apitest.myfatoorah.com";
+
 const MF_BASE = MF_BASE_RAW.replace(/\/+$/, "").replace(/\/v2$/, "");
+
+console.log("🌐 MF_BASE =", MF_BASE);
 
 const MF_HEADERS = {
   Authorization: `Bearer ${token}`,   //MF_TOKEN
