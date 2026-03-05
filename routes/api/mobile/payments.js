@@ -271,127 +271,107 @@ router.get("/myfatoorah/error", async (req, res) => {
   return res.redirect(deepLinkFail(orderId || "", "CANCELLED"));
 });
 router.get("/myfatoorah/return", async (req, res) => {
+  const orderId = req.query.orderId || "-";
+  const paymentId = req.query.paymentId || req.query.PaymentId || req.query.Id || "-";
+
   try {
-    const orderId = req.query.orderId || null;
+    console.log("✅ RETURN HIT originalUrl =", req.originalUrl);
+    console.log("✅ RETURN HIT query =", req.query);
 
-    // Always render something nice
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-
-    if (!orderId) {
-      return res.send(renderPage({
-        title: "Payment completed",
-        status: "UNKNOWN",
-        message: "Missing orderId. Please return to the app and check payment status.",
-        orderId: "-",
-        invoiceId: "-",
-      }));
-    }
-
-    // 1) Get invoiceId from DB (you already save it during initiate)
-    const order = await Order.findById(orderId).lean();
-    const invoiceId = order?.payment?.invoiceId || null;
-
-    if (!invoiceId) {
-      return res.send(renderPage({
-        title: "Payment processing…",
-        status: "PENDING",
-        message: "Invoice not found yet. Return to the app and press “Check Payment Status”.",
-        orderId,
-        invoiceId: "-",
-      }));
-    }
-
-    // 2) Ask MyFatoorah for status
     const token = process.env.MF_TOKEN || process.env.MYFATOORAH_TOKEN;
+    if (!token) {
+      return res
+        .status(200)
+        .type("html")
+        .send(renderReturnPage({ title: "Payment completed", status: "UNKNOWN", orderId, paymentId, note: "Server token missing" }));
+    }
+
+    // Prefer PaymentId if available
+    const Key = paymentId !== "-" ? String(paymentId) : null;
+    const KeyType = Key ? "PaymentId" : null;
+
+    if (!Key) {
+      return res
+        .status(200)
+        .type("html")
+        .send(renderReturnPage({ title: "Payment completed", status: "UNKNOWN", orderId, paymentId, note: "Missing paymentId" }));
+    }
+
     const mfRes = await fetch("https://apitest.myfatoorah.com/v2/GetPaymentStatus", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ Key: invoiceId, KeyType: "InvoiceId" }),
+      body: JSON.stringify({ Key, KeyType }),
     });
 
-    const mfJson = await mfRes.json();
-    const status = mfJson?.Data?.InvoiceStatus || "UNKNOWN";
-    const paid = status === "Paid";
+    const raw = await mfRes.text(); // ✅ read text first
+    console.log("💳 MF status http =", mfRes.status);
+    console.log("💳 MF status raw  =", raw.slice(0, 800));
 
-    // 3) (Optional) Update DB
-    await Order.findByIdAndUpdate(orderId, {
-      "payment.status": paid ? "paid" : "unpaid",
-    });
+    let mfJson = null;
+    try {
+      mfJson = JSON.parse(raw);
+    } catch {
+      // MyFatoorah returned empty / HTML / non-JSON
+      return res
+        .status(200)
+        .type("html")
+        .send(renderReturnPage({
+          title: "Payment completed",
+          status: "UNKNOWN",
+          orderId,
+          paymentId,
+          note: `MF non-JSON response (HTTP ${mfRes.status})`,
+        }));
+    }
 
-    // 4) Render formatted result + a Return to App button
-    const appLink = `flamingdelivery://payment-return?orderId=${encodeURIComponent(orderId)}&invoiceId=${encodeURIComponent(String(invoiceId))}&status=${encodeURIComponent(status)}`;
+    const invoiceStatus = mfJson?.Data?.InvoiceStatus || "UNKNOWN";
+    const paid = invoiceStatus === "Paid";
 
-    return res.send(renderPage({
-      title: paid ? "Payment Successful ✅" : (status === "Failed" ? "Payment Failed ❌" : "Payment Pending ⏳"),
-      status,
-      message: paid
-        ? "Thank you! You can return to the app now."
-        : "You can return to the app and try again if needed.",
-      orderId,
-      invoiceId: String(invoiceId),
-      appLink,
-    }));
+    // Optional: update DB here using orderId if you want
 
+    return res
+      .status(200)
+      .type("html")
+      .send(renderReturnPage({
+        title: paid ? "Payment Successful ✅" : invoiceStatus === "Failed" ? "Payment Failed ❌" : "Payment Pending ⏳",
+        status: invoiceStatus,
+        orderId,
+        paymentId,
+      }));
   } catch (err) {
     console.error("RETURN error:", err);
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    return res.send(renderPage({
-      title: "Payment completed",
-      status: "UNKNOWN",
-      message: "Please return to the app and check payment status.",
-      orderId: "-",
-      invoiceId: "-",
-    }));
+    return res
+      .status(200)
+      .type("html")
+      .send(renderReturnPage({ title: "Payment completed", status: "UNKNOWN", orderId, paymentId, note: err?.message }));
   }
 });
 
-// Simple HTML renderer
-function renderPage({ title, status, message, orderId, invoiceId, appLink }) {
-  const badgeClass = status === "Paid" ? "ok" : (status === "Failed" ? "bad" : "mid");
-  const returnBtn = appLink
-    ? `<a class="btn primary" href="${appLink}">Return to App</a>`
-    : "";
-
+function renderReturnPage({ title, status, orderId, paymentId, note }) {
   return `
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${title}</title>
   <style>
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f7fb;color:#111}
-    .wrap{max-width:560px;margin:0 auto;padding:18px}
-    .card{background:#fff;border-radius:18px;padding:18px;border:1px solid #e9e9ef;box-shadow:0 8px 24px rgba(0,0,0,.06)}
-    h1{margin:0 0 10px;font-size:22px}
-    p{margin:8px 0;line-height:1.45}
-    .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
-    .ok{background:#e9f7ef;color:#137333}
-    .bad{background:#fdecea;color:#b3261e}
-    .mid{background:#fff4e5;color:#7a4d00}
-    .btn{display:block;text-align:center;text-decoration:none;font-weight:800;padding:14px 16px;border-radius:14px;margin-top:14px}
-    .primary{background:#520582;color:#fff}
-    .secondary{background:#eef0f6;color:#111}
-    .meta{margin-top:10px;font-size:12px;color:#666;word-break:break-word}
+    body{font-family:Arial;padding:20px;background:#f6f7fb}
+    .card{background:#fff;border:1px solid #eee;border-radius:14px;padding:16px}
+    .btn{display:block;text-align:center;margin-top:12px;padding:12px;border-radius:10px;background:#520582;color:#fff;text-decoration:none;font-weight:800}
+    .muted{color:#666;font-size:12px;word-break:break-word;margin-top:10px}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>${title}</h1>
-      <p>${message}</p>
-      <div style="margin-top:10px">
-        <span class="badge ${badgeClass}">Status: ${status}</span>
-      </div>
-      ${returnBtn}
-      <a class="btn secondary" href="javascript:history.back()">Go Back</a>
-      <div class="meta">
-        orderId: ${orderId}<br/>
-        invoiceId: ${invoiceId}<br/>
-      </div>
+  <div class="card">
+    <h2>${title}</h2>
+    <p>Status: <b>${status}</b></p>
+    <a class="btn" href="flamingdelivery://payment-return?orderId=${encodeURIComponent(orderId)}&paymentId=${encodeURIComponent(paymentId)}&status=${encodeURIComponent(status)}">Return to App</a>
+    <div class="muted">
+      orderId: ${orderId}<br/>
+      paymentId: ${paymentId}<br/>
+      ${note ? `note: ${note}<br/>` : ""}
     </div>
   </div>
 </body>

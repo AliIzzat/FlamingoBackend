@@ -1,7 +1,8 @@
+require("dotenv").config();
+
 console.log("🚀 APP.JS LOADED - VERSION 2026-02-25 B");
 console.log("🔐 MF TOKEN length =", process.env.MYFATOORAH_TOKEN?.length);
 console.log("🌐 MF API URL =", process.env.MF_API_URL);
-require("dotenv").config();
 const path = require("path");
 const express = require("express");
 const compression = require("compression");
