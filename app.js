@@ -141,13 +141,13 @@ app.get("/health", (_req, res) => {
     ok: true,
     port: process.env.PORT || null,
     envFlags: {
-      JWT_SECRET: process.env.JWT_SECRET,     //this
+      JWT_SECRET: process.env.JWT_SECRET,
       TEST_ENV_CHECK: process.env.TEST_ENV_CHECK || null,
-      DRIVER_JWT_SECRET: process.env.DRIVER_JWT_SECRET,  // this
-      MYFATOORAH_TOKEN: process.env.MYFATOORAH_TOKEN,    // this
-      MF_TOKEN: process.env.MF_TOKEN,                    // this
-      MF_API_URL: process.env.MF_API_URL,                // this
-      MYFATOORAH_API_URL: process.env.MYFATOORAH_API_URL,//this
+      DRIVER_JWT_SECRET: process.env.DRIVER_JWT_SECRET,
+      MYFATOORAH_TOKEN: process.env.MYFATOORAH_TOKEN,
+      MF_TOKEN: process.env.MF_TOKEN,
+      MF_API_URL: process.env.MF_API_URL,
+      MYFATOORAH_API_URL: process.env.MYFATOORAH_API_URL,
     },
     lens: {
       JWT_SECRET: (process.env.JWT_SECRET || "").length,
@@ -224,8 +224,6 @@ app.get("/api/_debug/products-count", async (req, res) => {
   });
 
   // Add this for testing
-  app.get("/", (req, res) => res.status(200).send("OK")); 
-
   const offerRestaurantBySnapshot = await Product.countDocuments({
     isActive: true,
     offer: true,

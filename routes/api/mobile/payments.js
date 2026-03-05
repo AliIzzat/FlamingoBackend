@@ -272,113 +272,129 @@ router.get("/myfatoorah/error", async (req, res) => {
 });
 router.get("/myfatoorah/return", async (req, res) => {
   try {
-    const paymentId =
-      req.query.paymentId || req.query.PaymentId || req.query.paymentID || null;
-
-    const invoiceId =
-      req.query.invoiceId || req.query.InvoiceId || null;
-
     const orderId = req.query.orderId || null;
 
-    // If MyFatoorah didn’t send invoiceId/paymentId, still show page
-    let status = "UNKNOWN";
-    let paid = false;
+    // Always render something nice
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
 
-    // Prefer PaymentId if available (more reliable)
-    const Key = paymentId || invoiceId;
-    const KeyType = paymentId ? "PaymentId" : "InvoiceId";
-
-    if (Key) {
-      const mfRes = await fetch("https://apitest.myfatoorah.com/v2/GetPaymentStatus", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.MF_TOKEN || process.env.MYFATOORAH_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ Key, KeyType }),
-      });
-
-      const mfJson = await mfRes.json();
-      status = mfJson?.Data?.InvoiceStatus || "UNKNOWN";
-      paid = status === "Paid";
-
-      // Optional: update your Order record if you want
-      if (orderId) {
-        await Order.findByIdAndUpdate(orderId, {
-          "payment.status": paid ? "paid" : "unpaid",
-          "payment.invoiceId": invoiceId ? String(invoiceId) : undefined,
-          "payment.paymentId": paymentId ? String(paymentId) : undefined,
-        });
-      }
+    if (!orderId) {
+      return res.send(renderPage({
+        title: "Payment completed",
+        status: "UNKNOWN",
+        message: "Missing orderId. Please return to the app and check payment status.",
+        orderId: "-",
+        invoiceId: "-",
+      }));
     }
 
-    const title = paid ? "Payment Successful ✅" : (status === "Failed" ? "Payment Failed ❌" : "Payment Pending ⏳");
-    const subtitle = paid
-      ? "Thank you! You can return to the app."
-      : "You can return to the app and try again if needed.";
+    // 1) Get invoiceId from DB (you already save it during initiate)
+    const order = await Order.findById(orderId).lean();
+    const invoiceId = order?.payment?.invoiceId || null;
 
-    // Your deep link schemes (change to YOUR real scheme)
-    const APP_DEEPLINK = `flamingdelivery://payment-return?orderId=${encodeURIComponent(orderId || "")}&invoiceId=${encodeURIComponent(invoiceId || "")}&paymentId=${encodeURIComponent(paymentId || "")}&status=${encodeURIComponent(status)}`;
+    if (!invoiceId) {
+      return res.send(renderPage({
+        title: "Payment processing…",
+        status: "PENDING",
+        message: "Invoice not found yet. Return to the app and press “Check Payment Status”.",
+        orderId,
+        invoiceId: "-",
+      }));
+    }
 
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    return res.send(`
-      <!doctype html>
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <title>${title}</title>
-          <style>
-            body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f7fb;color:#111}
-            .wrap{max-width:560px;margin:0 auto;padding:18px}
-            .card{background:#fff;border-radius:18px;padding:18px;border:1px solid #e9e9ef;box-shadow:0 8px 24px rgba(0,0,0,.06)}
-            h1{margin:0 0 10px;font-size:22px}
-            p{margin:8px 0;line-height:1.45}
-            .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
-            .ok{background:#e9f7ef;color:#137333}
-            .bad{background:#fdecea;color:#b3261e}
-            .mid{background:#fff4e5;color:#7a4d00}
-            .btn{display:block;text-align:center;text-decoration:none;font-weight:800;padding:14px 16px;border-radius:14px;margin-top:14px}
-            .primary{background:#520582;color:#fff}
-            .secondary{background:#eef0f6;color:#111}
-            .meta{margin-top:10px;font-size:12px;color:#666;word-break:break-word}
-          </style>
-        </head>
-        <body>
-          <div class="wrap">
-            <div class="card">
-              <h1>${title}</h1>
-              <p>${subtitle}</p>
+    // 2) Ask MyFatoorah for status
+    const token = process.env.MF_TOKEN || process.env.MYFATOORAH_TOKEN;
+    const mfRes = await fetch("https://apitest.myfatoorah.com/v2/GetPaymentStatus", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ Key: invoiceId, KeyType: "InvoiceId" }),
+    });
 
-              <div style="margin-top:10px">
-                <span class="badge ${paid ? "ok" : (status === "Failed" ? "bad" : "mid")}">
-                  Status: ${status}
-                </span>
-              </div>
+    const mfJson = await mfRes.json();
+    const status = mfJson?.Data?.InvoiceStatus || "UNKNOWN";
+    const paid = status === "Paid";
 
-              <a class="btn primary" href="${APP_DEEPLINK}">Return to App</a>
+    // 3) (Optional) Update DB
+    await Order.findByIdAndUpdate(orderId, {
+      "payment.status": paid ? "paid" : "unpaid",
+    });
 
-              <a class="btn secondary" href="javascript:history.back()">Go Back</a>
+    // 4) Render formatted result + a Return to App button
+    const appLink = `flamingdelivery://payment-return?orderId=${encodeURIComponent(orderId)}&invoiceId=${encodeURIComponent(String(invoiceId))}&status=${encodeURIComponent(status)}`;
 
-              <div class="meta">
-                orderId: ${orderId || "-"}<br/>
-                invoiceId: ${invoiceId || "-"}<br/>
-                paymentId: ${paymentId || "-"}<br/>
-              </div>
-            </div>
-          </div>
-        </body>
-      </html>
-    `);
+    return res.send(renderPage({
+      title: paid ? "Payment Successful ✅" : (status === "Failed" ? "Payment Failed ❌" : "Payment Pending ⏳"),
+      status,
+      message: paid
+        ? "Thank you! You can return to the app now."
+        : "You can return to the app and try again if needed.",
+      orderId,
+      invoiceId: String(invoiceId),
+      appLink,
+    }));
+
   } catch (err) {
     console.error("RETURN error:", err);
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    return res.status(200).send(`
-      <html><body style="font-family:Arial;padding:24px">
-        <h2>Payment completed</h2>
-        <p>You can return to the app now.</p>
-      </body></html>
-    `);
+    return res.send(renderPage({
+      title: "Payment completed",
+      status: "UNKNOWN",
+      message: "Please return to the app and check payment status.",
+      orderId: "-",
+      invoiceId: "-",
+    }));
   }
 });
+
+// Simple HTML renderer
+function renderPage({ title, status, message, orderId, invoiceId, appLink }) {
+  const badgeClass = status === "Paid" ? "ok" : (status === "Failed" ? "bad" : "mid");
+  const returnBtn = appLink
+    ? `<a class="btn primary" href="${appLink}">Return to App</a>`
+    : "";
+
+  return `
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${title}</title>
+  <style>
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f7fb;color:#111}
+    .wrap{max-width:560px;margin:0 auto;padding:18px}
+    .card{background:#fff;border-radius:18px;padding:18px;border:1px solid #e9e9ef;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+    h1{margin:0 0 10px;font-size:22px}
+    p{margin:8px 0;line-height:1.45}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px}
+    .ok{background:#e9f7ef;color:#137333}
+    .bad{background:#fdecea;color:#b3261e}
+    .mid{background:#fff4e5;color:#7a4d00}
+    .btn{display:block;text-align:center;text-decoration:none;font-weight:800;padding:14px 16px;border-radius:14px;margin-top:14px}
+    .primary{background:#520582;color:#fff}
+    .secondary{background:#eef0f6;color:#111}
+    .meta{margin-top:10px;font-size:12px;color:#666;word-break:break-word}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>${title}</h1>
+      <p>${message}</p>
+      <div style="margin-top:10px">
+        <span class="badge ${badgeClass}">Status: ${status}</span>
+      </div>
+      ${returnBtn}
+      <a class="btn secondary" href="javascript:history.back()">Go Back</a>
+      <div class="meta">
+        orderId: ${orderId}<br/>
+        invoiceId: ${invoiceId}<br/>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
 module.exports = router;
