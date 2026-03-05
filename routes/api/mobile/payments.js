@@ -297,7 +297,7 @@ router.get("/myfatoorah/return", async (req, res) => {
     const mfRes = await fetch("https://apitest.myfatoorah.com/v2/GetPaymentStatus", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${MF_TOKEN}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ Key, KeyType }),
