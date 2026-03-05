@@ -35,7 +35,7 @@ const MF_HEADERS = {
 };
 
 // ✅ Your customer app scheme (must match app.json -> scheme)
-const APP_SCHEME = process.env.MOBILE_SCHEME, "flamingdelivery"; //pickFirst()
+const APP_SCHEME = (process.env.MOBILE_SCHEME, "flamingdelivery"); //pickFirst()
 
 // ✅ Public base URL for callback/error endpoints
 function getPublicBaseUrl() {
