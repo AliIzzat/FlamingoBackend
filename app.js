@@ -213,6 +213,13 @@ app.get("/api/_debug/db", (req, res) => {
   });
 });
 
+app.get("/api/_debug/mf-token", (_req, res) => {
+  res.json({
+    ok: true,
+    MYFATOORAH_TOKEN_len: (process.env.MYFATOORAH_TOKEN || "").length,
+  });
+});
+
 app.get("/api/_debug/products-count", async (req, res) => {
   const Product = require("./models/Product");
 

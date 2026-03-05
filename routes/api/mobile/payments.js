@@ -6,42 +6,43 @@ const Order = require("../../../models/Order");
 // ----------------------------
 // ENV HELPERS
 // ----------------------------
-function pickFirst(...vals) {
-  for (const v of vals) {
-    if (typeof v === "string" && v.trim()) return v.trim();
-  }
-  return "";
-}
+// function pickFirst(...vals) {
+//   for (const v of vals) {
+//     if (typeof v === "string" && v.trim()) return v.trim();
+//   }
+//   return "";
+// }
 
 // ✅ Token (supports all names)
 const MF_TOKEN = (process.env.MYFATOORAH_API_KEY || process.env.MYFATOORAH_TOKEN ||  process.env.MF_TOKEN);
 console.log("🔐 MF_TOKEN length =", (MF_TOKEN || "").length);
 
 // ✅ Base URL (supports all names)
-const MF_BASE_RAW = pickFirst(
-  process.env.MYFATOORAH_API_BASE, // your Railway variable name
-  process.env.MYFATOORAH_API_URL,
-  process.env.MF_API_URL,
-  "https://apitest.myfatoorah.com"
-);
+const MF_BASE_RAW=process.env.MYFATOORAH_API_BASE;
+// const MF_BASE_RAW = pickFirst(
+//   process.env.MYFATOORAH_API_BASE, // your Railway variable name
+//   process.env.MYFATOORAH_API_URL,
+//   process.env.MF_API_URL,
+//   "https://apitest.myfatoorah.com"
+// );
 
 // ✅ Normalize base: remove trailing "/" + remove trailing "/v2"
 const MF_BASE = MF_BASE_RAW.replace(/\/+$/, "").replace(/\/v2$/, "");
 
 const MF_HEADERS = {
-  Authorization: `Bearer ${MF_TOKEN}`,
+  Authorization: `Bearer ${token}`,   //MF_TOKEN
   "Content-Type": "application/json",
 };
 
 // ✅ Your customer app scheme (must match app.json -> scheme)
-const APP_SCHEME = pickFirst(process.env.MOBILE_SCHEME, "flamingdelivery");
+const APP_SCHEME = process.env.MOBILE_SCHEME, "flamingdelivery"; //pickFirst()
 
 // ✅ Public base URL for callback/error endpoints
 function getPublicBaseUrl() {
-  const appBase = pickFirst(process.env.APP_BASE_URL);
+  const appBase = process.env.APP_BASE_URL;      //pickFirst()
   if (appBase) return appBase.replace(/\/+$/, "");
 
-  const pub = pickFirst(process.env.RAILWAY_PUBLIC_DOMAIN);
+  const pub = process.env.RAILWAY_PUBLIC_DOMAIN;   //pickFirst()
   if (pub) return `https://${pub}`;
 
   return "http://localhost:4000";
@@ -60,6 +61,8 @@ function deepLinkFail(orderId, reason) {
 // POST /api/mobile/payments/myfatoorah/initiate
 // ----------------------------
 router.post("/myfatoorah/initiate", async (req, res) => {
+  const token = process.env.MYFATOORAH_TOKEN;   // ✅ read at request time
+
   console.log("🔥 HIT /myfatoorah/initiate", new Date().toISOString());
   console.log("MF_BASE =", MF_BASE);
   console.log("MF_TOKEN length =", (MF_TOKEN || "").length);
@@ -304,26 +307,59 @@ router.get("/myfatoorah/return", async (req, res) => {
     });
 
     const raw = await mfRes.text(); // ✅ read text first
-    console.log("💳 MF status http =", mfRes.status);
-    console.log("💳 MF status raw  =", raw.slice(0, 800));
+console.log("💳 MF status http =", mfRes.status);
+console.log("💳 MF status raw  =", (raw || "").slice(0, 800));
 
-    let mfJson = null;
-    try {
-      mfJson = JSON.parse(raw);
-    } catch {
-      // MyFatoorah returned empty / HTML / non-JSON
-      return res
-        .status(200)
-        .type("html")
-        .send(renderReturnPage({
-          title: "Payment completed",
-          status: "UNKNOWN",
-          orderId,
-          paymentId,
-          note: `MF non-JSON response (HTTP ${mfRes.status})`,
-        }));
-    }
+// 1) Empty body case
+if (!raw || !raw.trim()) {
+  return res
+    .status(200)
+    .type("html")
+    .send(renderReturnPage({
+      title: "Payment completed",
+      status: "UNKNOWN",
+      orderId,
+      paymentId,
+      note: `MF empty response body (HTTP ${mfRes.status})`,
+    }));
+}
 
+let mfJson;
+try {
+  mfJson = JSON.parse(raw);
+} catch (e) {
+  // 2) Non-JSON case (HTML, text, proxy error, etc.)
+  const snippet = raw.replace(/\s+/g, " ").slice(0, 160);
+  return res
+    .status(200)
+    .type("html")
+    .send(renderReturnPage({
+      title: "Payment completed",
+      status: "UNKNOWN",
+      orderId,
+      paymentId,
+      note: `MF non-JSON response (HTTP ${mfRes.status}) :: ${snippet}`,
+    }));
+}
+
+// 3) JSON error structure case (no Data)
+if (!mfJson?.Data) {
+  const msg =
+    mfJson?.Message ||
+    mfJson?.message ||
+    mfJson?.ValidationErrors?.[0]?.Error ||
+    "MF JSON missing Data";
+  return res
+    .status(200)
+    .type("html")
+    .send(renderReturnPage({
+      title: "Payment completed",
+      status: "UNKNOWN",
+      orderId,
+      paymentId,
+      note: `MF JSON error (HTTP ${mfRes.status}) :: ${msg}`,
+    }));
+}
     const invoiceStatus = mfJson?.Data?.InvoiceStatus || "UNKNOWN";
     const paid = invoiceStatus === "Paid";
 
