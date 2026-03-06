@@ -121,7 +121,7 @@ router.post("/create", async (req, res) => {
     // ✅ Create notification (for admin dashboard)
     await Notification.create({
       orderId: orderDoc._id,
-      message: `🆕 New order from ${orderDoc.customer.name} (${orderDoc.customer.phone}) - ${store.name} - Total: QAR ${orderDoc.totals.total}`,
+      message: `🆕 New order from ${orderDoc.customer.name} (${orderDoc.customer.phone})`,
       status: "unpicked",
       driverId: null,
       createdAt: new Date(),
