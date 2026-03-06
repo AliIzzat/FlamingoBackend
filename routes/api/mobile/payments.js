@@ -327,9 +327,16 @@ router.get("/myfatoorah/verify", async (req, res) => {
     if (!orderId) return res.status(400).json({ ok: false, error: "orderId required" });
 
     // 1) Load order and get invoiceId/paymentId
-    const order = await Order.findById(orderId).lean();
-    if (!order) return res.status(404).json({ ok: false, error: "Order not found" });
-
+    const order = await Order.findById(orderId);
+    if (!order) {
+       return res.status(404).json({ ok: false, error: "Order not found" });
+    }
+    if (order.payment?.status === "paid") {
+       return res.status(400).json({
+       ok: false,
+       error: "This order is already paid",
+     });
+    }
     const invoiceId = order?.payment?.invoiceId || "";
     const paymentId = order?.payment?.paymentId || "";
 
@@ -373,7 +380,7 @@ router.get("/myfatoorah/verify", async (req, res) => {
       ok: true,
       orderId,
       invoiceId: String(data?.InvoiceId || ""),
-      status: invoiceStatus,
+      status: isPaid ? "Paid" : invoiceStatus,
       paid: isPaid,
     });
   } catch (err) {
@@ -385,53 +392,185 @@ router.get("/myfatoorah/verify", async (req, res) => {
 // =========================
 // HTML TEMPLATE
 // =========================
-function renderReturnPage({ title, status, orderId, paymentId, note, deepLink }) {
-  const badge =
-    status === "Paid" ? "ok" : status === "Failed" ? "bad" : status === "PENDING" ? "mid" : "mid";
-  const linkBtn = deepLink
-    ? `<a class="btn primary" href="${deepLink}">Return to App</a>`
-    : "";
+function renderReturnPage({ title, status, orderId, paymentId, note }) {
+  const color =
+    status === "Paid"
+      ? "#16a34a"
+      : status === "Failed"
+      ? "#dc2626"
+      : "#f59e0b";
 
   return `
 <!doctype html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta charset="utf-8" />
-  <title>${title}</title>
-  <style>
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f7fb;color:#111}
-    .wrap{max-width:560px;margin:0 auto;padding:18px}
-    .card{background:#fff;border-radius:18px;padding:18px;border:1px solid #e9e9ef;box-shadow:0 8px 24px rgba(0,0,0,.06)}
-    h2{margin:0 0 10px;font-size:22px}
-    p{margin:8px 0;line-height:1.45}
-    .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:800;font-size:12px}
-    .ok{background:#e9f7ef;color:#137333}
-    .bad{background:#fdecea;color:#b3261e}
-    .mid{background:#fff4e5;color:#7a4d00}
-    .btn{display:block;text-align:center;text-decoration:none;font-weight:900;padding:14px 16px;border-radius:14px;margin-top:14px}
-    .primary{background:#520582;color:#fff}
-    .secondary{background:#eef0f6;color:#111}
-    .meta{margin-top:10px;font-size:12px;color:#666;word-break:break-word}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="card">
-      <h2>${title}</h2>
-      <p><span class="badge ${badge}">Status: ${status}</span></p>
-      ${linkBtn}
-      <a class="btn secondary" href="/health">Open Server Status</a>
-      <div class="meta">
-        orderId: ${orderId || "-"}<br/>
-        paymentId: ${paymentId || "-"}<br/>
-        ${note ? `note: ${note}<br/>` : ""}
-      </div>
-      <p class="meta">If “Return to App” doesn’t open the app, it means your app scheme isn’t registered on this phone (Expo Go limitation). Use a Dev Build/APK for deep links.</p>
-    </div>
-  </div>
-</body>
-</html>`;
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<style>
+
+body{
+  font-family:system-ui,Arial;
+  background:#f4f6fb;
+  margin:0;
+  padding:20px;
+  display:flex;
+  justify-content:center;
 }
 
+.card{
+  max-width:420px;
+  width:100%;
+  background:white;
+  padding:25px;
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+  text-align:center;
+}
+
+.title{
+  font-size:22px;
+  font-weight:800;
+  margin-bottom:10px;
+}
+
+.status{
+  display:inline-block;
+  padding:8px 14px;
+  border-radius:20px;
+  background:${color}20;
+  color:${color};
+  font-weight:700;
+  margin-bottom:20px;
+}
+
+.btn{
+  display:block;
+  padding:14px;
+  margin-top:12px;
+  border-radius:12px;
+  font-weight:700;
+  text-decoration:none;
+}
+
+.btn-primary{
+  background:#520582;
+  color:white;
+}
+
+.btn-secondary{
+  background:#e5e7eb;
+  color:#111;
+}
+
+.details{
+  margin-top:20px;
+  font-size:13px;
+  color:#555;
+  text-align:left;
+  line-height:1.5;
+}
+
+.note{
+  margin-top:14px;
+  font-size:12px;
+  color:#777;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<div class="title">${title}</div>
+
+<div class="status">
+Status: ${status}
+</div>
+
+<a class="btn btn-primary"
+href="flamingdelivery://payment-return?orderId=${encodeURIComponent(
+    orderId
+  )}&paymentId=${encodeURIComponent(paymentId)}&status=${encodeURIComponent(
+    status
+  )}">
+Return to App
+</a>
+
+<a class="btn btn-secondary"
+href="/api/mobile/payments/myfatoorah/status?paymentId=${encodeURIComponent(
+    paymentId
+  )}">
+Open Server Status
+</a>
+
+<div class="details">
+<b>orderId:</b> ${orderId}<br/>
+<b>paymentId:</b> ${paymentId}<br/>
+${note ? `<b>note:</b> ${note}` : ""}
+</div>
+
+<div class="note">
+If "Return to App" doesn't open the app, your phone browser does not allow deep links
+from this page. Simply open the app and press <b>"Check Payment Status"</b>.
+</div>
+
+</div>
+
+</body>
+</html>
+`;
+}
 module.exports = router;
+
+
+// function renderReturnPage({ title, status, orderId, paymentId, note, deepLink }) {
+//   const badge =
+//     status === "Paid" ? "ok" : status === "Failed" ? "bad" : status === "PENDING" ? "mid" : "mid";
+//   const linkBtn = deepLink
+//     ? `<a class="btn primary" href="${deepLink}">Return to App</a>`
+//     : "";
+
+//   return `
+// <!doctype html>
+// <html>
+// <head>
+//   <meta name="viewport" content="width=device-width, initial-scale=1" />
+//   <meta charset="utf-8" />
+//   <title>${title}</title>
+//   <style>
+//     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f7fb;color:#111}
+//     .wrap{max-width:560px;margin:0 auto;padding:18px}
+//     .card{background:#fff;border-radius:18px;padding:18px;border:1px solid #e9e9ef;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+//     h2{margin:0 0 10px;font-size:22px}
+//     p{margin:8px 0;line-height:1.45}
+//     .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:800;font-size:12px}
+//     .ok{background:#e9f7ef;color:#137333}
+//     .bad{background:#fdecea;color:#b3261e}
+//     .mid{background:#fff4e5;color:#7a4d00}
+//     .btn{display:block;text-align:center;text-decoration:none;font-weight:900;padding:14px 16px;border-radius:14px;margin-top:14px}
+//     .primary{background:#520582;color:#fff}
+//     .secondary{background:#eef0f6;color:#111}
+//     .meta{margin-top:10px;font-size:12px;color:#666;word-break:break-word}
+//   </style>
+// </head>
+// <body>
+//   <div class="wrap">
+//     <div class="card">
+//       <h2>${title}</h2>
+//       <p><span class="badge ${badge}">Status: ${status}</span></p>
+//       ${linkBtn}
+//       <a class="btn secondary" href="/health">Open Server Status</a>
+//       <div class="meta">
+//         orderId: ${orderId || "-"}<br/>
+//         paymentId: ${paymentId || "-"}<br/>
+//         ${note ? `note: ${note}<br/>` : ""}
+//       </div>
+//       <p class="meta">If “Return to App” doesn’t open the app, it means your app scheme isn’t registered on this phone (Expo Go limitation). Use a Dev Build/APK for deep links.</p>
+//     </div>
+//   </div>
+// </body>
+// </html>`;
+// }
+

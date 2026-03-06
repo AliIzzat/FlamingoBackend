@@ -336,7 +336,7 @@ if (firstStoreId) {
       PaymentMethodId: MF_PAYMENT_METHOD_ID,
       CustomerName: customer.name,
       CustomerMobile: customer.phone,
-      DisplayCurrencyIso: "KWD",
+      DisplayCurrencyIso: "QAR",
       InvoiceValue: Number(total.toFixed(3)),
       CallBackUrl: successUrl,
       ErrorUrl: errorUrl,
