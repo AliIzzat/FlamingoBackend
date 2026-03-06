@@ -1,5 +1,7 @@
 // models/Order.js
 const mongoose = require("mongoose");
+const { DELIVERY_FEE } = require("../config/pricing");
+
 const OrderItemSchema = new mongoose.Schema(
   {
     productId: {
@@ -22,6 +24,7 @@ const OrderItemSchema = new mongoose.Schema(
   },
   { _id: false }
 );
+
 const OrderSchema = new mongoose.Schema(
   {
     customer: {
@@ -33,6 +36,7 @@ const OrderSchema = new mongoose.Schema(
         lng: { type: Number, default: null },
       },
     },
+
     pickup: {
       storeId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -46,12 +50,15 @@ const OrderSchema = new mongoose.Schema(
         lng: { type: Number, default: null },
       },
     },
+
     items: { type: [OrderItemSchema], default: [] },
+
     totals: {
       subtotal: { type: Number, default: 0 },
       deliveryFee: { type: Number, default: 0 },
       total: { type: Number, default: 0, index: true },
     },
+
     payment: {
       method: {
         type: String,
@@ -65,10 +72,36 @@ const OrderSchema = new mongoose.Schema(
         default: "unpaid",
         index: true,
       },
-      invoiceId: { type: String, default: "" },
-      paymentId: { type: String, default: "" },
+      invoiceId: { type: String, default: "", index: true },
+      paymentId: { type: String, default: "", index: true },
+
+      // ✅ provider details belong INSIDE payment
+      provider: {
+        name: { type: String, default: "myfatoorah" },
+        trackId: { type: String, default: "" },
+        referenceId: { type: String, default: "" },
+        transactionId: { type: String, default: "" },
+        authorizationId: { type: String, default: "" },
+        gateway: { type: String, default: "" },
+        currency: { type: String, default: "" },
+        amount: { type: Number, default: 0 },
+
+        invoiceStatus: { type: String, default: "" },
+        transactionStatus: { type: String, default: "" },
+        verifiedAt: { type: Date, default: null },
+
+        card: {
+          brand: { type: String, default: "" },
+          issuer: { type: String, default: "" },
+          issuerCountry: { type: String, default: "" },
+          fundingMethod: { type: String, default: "" },
+          maskedNumber: { type: String, default: "" },
+          nameOnCard: { type: String, default: "" },
+        },
+      },
     },
-    // ✅ This is your real "order status" section
+
+    // ✅ Delivery workflow
     delivery: {
       status: {
         type: String,
@@ -86,6 +119,8 @@ const OrderSchema = new mongoose.Schema(
       pickedUpAt: { type: Date, default: null },
       deliveredAt: { type: Date, default: null },
     },
+
+    // ✅ Disputes & refunds
     dispute: {
       status: {
         type: String,
@@ -109,19 +144,25 @@ const OrderSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-// ✅ Helpful compound index for your "available/unpicked orders" page
-OrderSchema.index({ "delivery.status": 1, "delivery.assignedDriverId": 1, createdAt: -1 });
-const { DELIVERY_FEE } = require("../config/pricing");
+
+// ✅ Helpful compound index for driver/available orders queries
+OrderSchema.index({
+  "delivery.status": 1,
+  "delivery.assignedDriverId": 1,
+  createdAt: -1,
+});
+
+// ✅ keep totals consistent
 OrderSchema.pre("save", function (next) {
   if (!this.totals) this.totals = { subtotal: 0, deliveryFee: 0, total: 0 };
-  // Force fixed fee
-  this.totals.deliveryFee = DELIVERY_FEE;
-  // Ensure subtotal exists
+
   const subtotal = Number(this.totals.subtotal || 0);
   this.totals.subtotal = subtotal;
-  // Recalculate total
+
+  this.totals.deliveryFee = DELIVERY_FEE;
   this.totals.total = subtotal + DELIVERY_FEE;
 
   next();
 });
+
 module.exports = mongoose.model("Order", OrderSchema);

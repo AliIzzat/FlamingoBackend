@@ -4,6 +4,38 @@ const router = express.Router();
 const axios = require("axios");
 const Order = require("../../../models/Order");
 
+// Adding getPaymentStatus
+async function getPaymentStatusFromMF({ invoiceId, paymentId }) {
+  if (!MF_TOKEN) throw new Error("MYFATOORAH_TOKEN missing");
+
+  if (!invoiceId && !paymentId) {
+    throw new Error("invoiceId or paymentId is required");
+  }
+
+  const Key = paymentId ? String(paymentId) : String(invoiceId);
+  const KeyType = paymentId ? "PaymentId" : "InvoiceId";
+
+  const r = await axios.post(
+    `${MF_BASE}/v2/GetPaymentStatus`,
+    { Key, KeyType },
+    { headers: mfHeaders(), timeout: 25000, validateStatus: () => true }
+  );
+
+  // If MyFatoorah returns HTTP error, still return details
+  if (r.status < 200 || r.status >= 300) {
+    const msg = r.data?.Message || `MF GetPaymentStatus failed (HTTP ${r.status})`;
+    throw new Error(msg);
+  }
+
+  const data = r.data?.Data;
+  if (!data) {
+    const msg = r.data?.Message || "MF response missing Data";
+    throw new Error(msg);
+  }
+
+  return data; // <- this is MyFatoorah Data (InvoiceStatus, InvoiceTransactions, etc.)
+}
+
 // =========================
 // ENV (You said Railway uses ONLY MYFATOORAH_TOKEN)
 // =========================
@@ -99,8 +131,8 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       PaymentMethodId: methodId,
       InvoiceValue: Number(totalAmount),
       CustomerName: customerName || "Customer",
-      DisplayCurrencyIso: "KWD",
-      MobileCountryCode: "+965",
+      DisplayCurrencyIso: "QAR",
+      MobileCountryCode: "+974",
       CustomerMobile: customerMobile || "00000000",
       CustomerEmail: customerEmail || "test@example.com",
       CallBackUrl,
@@ -286,6 +318,67 @@ router.get("/myfatoorah/return", async (req, res) => {
         note: err?.message || "Return crashed",
       })
     );
+  }
+});
+
+router.get("/myfatoorah/verify", async (req, res) => {
+  try {
+    const { orderId } = req.query || {};
+    if (!orderId) return res.status(400).json({ ok: false, error: "orderId required" });
+
+    // 1) Load order and get invoiceId/paymentId
+    const order = await Order.findById(orderId).lean();
+    if (!order) return res.status(404).json({ ok: false, error: "Order not found" });
+
+    const invoiceId = order?.payment?.invoiceId || "";
+    const paymentId = order?.payment?.paymentId || "";
+
+    // 2) Call MF GetPaymentStatus
+    const data = await getPaymentStatusFromMF({ invoiceId, paymentId });
+
+    const invoiceStatus = data?.InvoiceStatus || "UNKNOWN";
+    const isPaid = invoiceStatus === "Paid";
+
+    // 3) Take first transaction (if any)
+    const tx = data?.InvoiceTransactions?.[0] || {};
+
+    // 4) Update MongoDB (your block)
+    await Order.findByIdAndUpdate(orderId, {
+      "payment.status": isPaid ? "paid" : "failed",
+      "payment.invoiceId": String(data?.InvoiceId || invoiceId || ""),
+      "payment.paymentId": String(tx?.PaymentId || paymentId || ""),
+
+      "payment.provider.trackId": String(tx?.TrackId || ""),
+      "payment.provider.referenceId": String(tx?.ReferenceId || ""),
+      "payment.provider.transactionId": String(tx?.TransactionId || ""),
+      "payment.provider.authorizationId": String(tx?.AuthorizationId || ""),
+      "payment.provider.gateway": String(tx?.PaymentGateway || ""),
+      "payment.provider.currency": String(tx?.PaidCurrency || tx?.Currency || ""),
+      "payment.provider.amount": Number(tx?.TransationValue || 0),
+
+      "payment.provider.invoiceStatus": String(invoiceStatus || ""),
+      "payment.provider.transactionStatus": String(tx?.TransactionStatus || ""),
+      "payment.provider.verifiedAt": new Date(),
+
+      "payment.provider.card.brand": String(tx?.Card?.Brand || ""),
+      "payment.provider.card.issuer": String(tx?.Card?.Issuer || ""),
+      "payment.provider.card.issuerCountry": String(tx?.Card?.IssuerCountry || ""),
+      "payment.provider.card.fundingMethod": String(tx?.Card?.FundingMethod || ""),
+      "payment.provider.card.maskedNumber": String(tx?.CardNumber || ""),
+      "payment.provider.card.nameOnCard": String(tx?.Card?.NameOnCard || ""),
+    });
+
+    // 5) Respond
+    return res.json({
+      ok: true,
+      orderId,
+      invoiceId: String(data?.InvoiceId || ""),
+      status: invoiceStatus,
+      paid: isPaid,
+    });
+  } catch (err) {
+    console.error("❌ verify failed:", err?.message);
+    return res.status(500).json({ ok: false, error: err?.message || "verify failed" });
   }
 });
 
