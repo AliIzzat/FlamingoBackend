@@ -293,42 +293,6 @@ router.get("/status", async (req, res) => {
     });
   }
 });
-
-// router.get("/status", async (req, res) => {
-//   try {
-//     if (!MF_TOKEN) {
-//       return res.status(500).json({ ok: false, error: "MYFATOORAH_TOKEN missing" });
-//     }
-
-//     const { invoiceId, paymentId } = req.query || {};
-//     if (!invoiceId && !paymentId) {
-//       return res.status(400).json({ ok: false, error: "invoiceId or paymentId required" });
-//     }
-
-//     const Key = paymentId ? String(paymentId) : String(invoiceId);
-//     const KeyType = paymentId ? "PaymentId" : "InvoiceId";
-
-//     const r = await axios.post(
-//       `${MF_BASE}/v2/GetPaymentStatus`,
-//       { Key, KeyType },
-//       { headers: mfHeaders(), timeout: 25000, validateStatus: () => true }
-//     );
-
-//     return res.status(200).json({
-//       ok: r.status >= 200 && r.status < 300,
-//       http: r.status,
-//       Key,
-//       KeyType,
-//       status: r.data?.Data?.InvoiceStatus || "UNKNOWN",
-//       paid: r.data?.Data?.InvoiceStatus === "Paid",
-//       raw: r.data,
-//     });
-//   } catch (err) {
-//     console.error("Status check failed:", err?.message);
-//     return res.status(500).json({ ok: false, error: "Status check failed", details: err?.message });
-//   }
-// });
-
 // =========================
 // RETURN PAGE (HTML)
 // GET /api/mobile/payments/myfatoorah/return?orderId=...&paymentId=...
