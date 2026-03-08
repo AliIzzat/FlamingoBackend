@@ -72,9 +72,13 @@ const OrderSchema = new mongoose.Schema(
         default: "unpaid",
         index: true,
       },
-      invoiceId: { type: String, default: "", index: true },
-      paymentId: { type: String, default: "", index: true },
-
+      invoiceId: { type: String, default: "" },
+      paymentId: { type: String, default: "" },
+    },
+      checkout: {
+       isFinalized: { type: Boolean, default: false, index: true },
+       finalizedAt: { type: Date, default: null },
+     },
       // ✅ provider details belong INSIDE payment
       provider: {
         name: { type: String, default: "myfatoorah" },
@@ -99,7 +103,6 @@ const OrderSchema = new mongoose.Schema(
           nameOnCard: { type: String, default: "" },
         },
       },
-    },
 
     // ✅ Delivery workflow
     delivery: {

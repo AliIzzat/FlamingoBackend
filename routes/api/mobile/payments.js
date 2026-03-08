@@ -112,6 +112,21 @@ router.post("/myfatoorah/initiate", async (req, res) => {
         error: "orderId and totalAmount are required",
       });
     }
+     // ✅ block already finalized orders
+    if (order.checkout?.isFinalized) {
+      return res.status(400).json({
+        ok: false,
+        error: "Order already completed",
+      });
+    }
+
+    // ✅ optional extra guard
+    if (order.payment?.status === "paid") {
+      return res.status(400).json({
+        ok: false,
+        error: "Order already paid",
+      });
+    }
 
     const baseUrl = getPublicBaseUrl();
     const methodId = Number(paymentMethodId || 2);
@@ -212,20 +227,104 @@ router.get("/status", async (req, res) => {
       { headers: mfHeaders(), timeout: 25000, validateStatus: () => true }
     );
 
+    const data = r.data?.Data || null;
+    const invoiceStatus = data?.InvoiceStatus || "UNKNOWN";
+    const isPaid = invoiceStatus === "Paid";
+
+    // ✅ Find the related order in MongoDB
+    let order = null;
+
+    if (paymentId) {
+      order = await Order.findOne({
+        $or: [
+          { "payment.paymentId": String(paymentId) },
+          { "payment.provider.transactionId": String(paymentId) },
+        ],
+      });
+    }
+
+    if (!order && invoiceId) {
+      order = await Order.findOne({
+        "payment.invoiceId": String(invoiceId),
+      });
+    }
+
+    // ✅ Update order if paid and not yet finalized
+    if (order && isPaid && !order.checkout?.isFinalized) {
+      await Order.findByIdAndUpdate(order._id, {
+        "payment.status": "paid",
+        "payment.invoiceId": String(data?.InvoiceId || invoiceId || ""),
+        "payment.paymentId": String(
+          data?.InvoiceTransactions?.[0]?.PaymentId || paymentId || ""
+        ),
+        "checkout.isFinalized": true,
+        "checkout.finalizedAt": new Date(),
+      });
+    }
+
+    const updatedOrder = order
+    ? await Order.findById(order._id).lean()
+    : null;
+
     return res.status(200).json({
       ok: r.status >= 200 && r.status < 300,
       http: r.status,
       Key,
       KeyType,
-      status: r.data?.Data?.InvoiceStatus || "UNKNOWN",
-      paid: r.data?.Data?.InvoiceStatus === "Paid",
+      status: invoiceStatus,
+      paid: isPaid,
+      orderId: updatedOrder?._id || order?._id || null,
+
+      // ✅ values from MongoDB after update
+      finalized: updatedOrder?.checkout?.isFinalized || false,
+      paymentStatusInDb: updatedOrder?.payment?.status || "unpaid",
+
       raw: r.data,
     });
   } catch (err) {
     console.error("Status check failed:", err?.message);
-    return res.status(500).json({ ok: false, error: "Status check failed", details: err?.message });
+    return res.status(500).json({
+      ok: false,
+      error: "Status check failed",
+      details: err?.message,
+    });
   }
 });
+
+// router.get("/status", async (req, res) => {
+//   try {
+//     if (!MF_TOKEN) {
+//       return res.status(500).json({ ok: false, error: "MYFATOORAH_TOKEN missing" });
+//     }
+
+//     const { invoiceId, paymentId } = req.query || {};
+//     if (!invoiceId && !paymentId) {
+//       return res.status(400).json({ ok: false, error: "invoiceId or paymentId required" });
+//     }
+
+//     const Key = paymentId ? String(paymentId) : String(invoiceId);
+//     const KeyType = paymentId ? "PaymentId" : "InvoiceId";
+
+//     const r = await axios.post(
+//       `${MF_BASE}/v2/GetPaymentStatus`,
+//       { Key, KeyType },
+//       { headers: mfHeaders(), timeout: 25000, validateStatus: () => true }
+//     );
+
+//     return res.status(200).json({
+//       ok: r.status >= 200 && r.status < 300,
+//       http: r.status,
+//       Key,
+//       KeyType,
+//       status: r.data?.Data?.InvoiceStatus || "UNKNOWN",
+//       paid: r.data?.Data?.InvoiceStatus === "Paid",
+//       raw: r.data,
+//     });
+//   } catch (err) {
+//     console.error("Status check failed:", err?.message);
+//     return res.status(500).json({ ok: false, error: "Status check failed", details: err?.message });
+//   }
+// });
 
 // =========================
 // RETURN PAGE (HTML)
@@ -499,10 +598,8 @@ Return to App
 </a>
 
 <a class="btn btn-secondary"
-href="/api/mobile/payments/myfatoorah/status?paymentId=${encodeURIComponent(
-    paymentId
-  )}">
-Open Server Status
+<a class="btn" href="/api/mobile/payments/status?paymentId=${encodeURIComponent(paymentId)}">
+  View Payment Status
 </a>
 
 <div class="details">
@@ -523,54 +620,4 @@ from this page. Simply open the app and press <b>"Check Payment Status"</b>.
 `;
 }
 module.exports = router;
-
-
-// function renderReturnPage({ title, status, orderId, paymentId, note, deepLink }) {
-//   const badge =
-//     status === "Paid" ? "ok" : status === "Failed" ? "bad" : status === "PENDING" ? "mid" : "mid";
-//   const linkBtn = deepLink
-//     ? `<a class="btn primary" href="${deepLink}">Return to App</a>`
-//     : "";
-
-//   return `
-// <!doctype html>
-// <html>
-// <head>
-//   <meta name="viewport" content="width=device-width, initial-scale=1" />
-//   <meta charset="utf-8" />
-//   <title>${title}</title>
-//   <style>
-//     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f7fb;color:#111}
-//     .wrap{max-width:560px;margin:0 auto;padding:18px}
-//     .card{background:#fff;border-radius:18px;padding:18px;border:1px solid #e9e9ef;box-shadow:0 8px 24px rgba(0,0,0,.06)}
-//     h2{margin:0 0 10px;font-size:22px}
-//     p{margin:8px 0;line-height:1.45}
-//     .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:800;font-size:12px}
-//     .ok{background:#e9f7ef;color:#137333}
-//     .bad{background:#fdecea;color:#b3261e}
-//     .mid{background:#fff4e5;color:#7a4d00}
-//     .btn{display:block;text-align:center;text-decoration:none;font-weight:900;padding:14px 16px;border-radius:14px;margin-top:14px}
-//     .primary{background:#520582;color:#fff}
-//     .secondary{background:#eef0f6;color:#111}
-//     .meta{margin-top:10px;font-size:12px;color:#666;word-break:break-word}
-//   </style>
-// </head>
-// <body>
-//   <div class="wrap">
-//     <div class="card">
-//       <h2>${title}</h2>
-//       <p><span class="badge ${badge}">Status: ${status}</span></p>
-//       ${linkBtn}
-//       <a class="btn secondary" href="/health">Open Server Status</a>
-//       <div class="meta">
-//         orderId: ${orderId || "-"}<br/>
-//         paymentId: ${paymentId || "-"}<br/>
-//         ${note ? `note: ${note}<br/>` : ""}
-//       </div>
-//       <p class="meta">If “Return to App” doesn’t open the app, it means your app scheme isn’t registered on this phone (Expo Go limitation). Use a Dev Build/APK for deep links.</p>
-//     </div>
-//   </div>
-// </body>
-// </html>`;
-// }
 
