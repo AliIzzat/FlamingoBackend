@@ -86,14 +86,11 @@ function mfHeaders() {
 // POST /api/mobile/payments/myfatoorah/initiate
 // =========================
 router.post("/myfatoorah/initiate", async (req, res) => {
-  console.log("🔥 HIT /myfatoorah/initiate", new Date().toISOString());
-
   try {
     if (!MF_TOKEN) {
       return res.status(500).json({
         ok: false,
         error: "MYFATOORAH_TOKEN missing on server",
-        hint: "Set MYFATOORAH_TOKEN in Railway Variables",
       });
     }
 
@@ -112,7 +109,16 @@ router.post("/myfatoorah/initiate", async (req, res) => {
         error: "orderId and totalAmount are required",
       });
     }
-     // ✅ block already finalized orders
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({
+        ok: false,
+        error: "Order not found",
+      });
+    }
+
+    // safe guards for old documents
     if (order.checkout?.isFinalized) {
       return res.status(400).json({
         ok: false,
@@ -120,7 +126,6 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       });
     }
 
-    // ✅ optional extra guard
     if (order.payment?.status === "paid") {
       return res.status(400).json({
         ok: false,
@@ -131,16 +136,11 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     const baseUrl = getPublicBaseUrl();
     const methodId = Number(paymentMethodId || 2);
 
-    // Use ONE return endpoint for success & error
-    const CallBackUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${encodeURIComponent(
-      orderId
-    )}`;
-    const ErrorUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${encodeURIComponent(
-      orderId
-    )}`;
+    const CallBackUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${encodeURIComponent(orderId)}`;
+    const ErrorUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${encodeURIComponent(orderId)}`;
 
     console.log("✅ MF CallBackUrl =", CallBackUrl);
-    console.log("✅ MF ErrorUrl    =", ErrorUrl);
+    console.log("✅ MF ErrorUrl =", ErrorUrl);
 
     const payload = {
       PaymentMethodId: methodId,
@@ -161,6 +161,9 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       validateStatus: () => true,
     });
 
+    console.log("💳 ExecutePayment HTTP =", r.status);
+    console.log("💳 ExecutePayment body =", JSON.stringify(r.data, null, 2));
+
     if (r.status < 200 || r.status >= 300) {
       return res.status(502).json({
         ok: false,
@@ -170,7 +173,6 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     }
 
     const data = r.data?.Data;
-
     if (!data?.PaymentURL) {
       return res.status(500).json({
         ok: false,
@@ -179,14 +181,11 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       });
     }
 
-    // Save invoiceId for later verification (important!)
-    if (data?.InvoiceId) {
-      await Order.findByIdAndUpdate(orderId, {
-        "payment.invoiceId": String(data.InvoiceId),
-        "payment.method": "myfatoorah",
-        "payment.status": "unpaid",
-      });
-    }
+    await Order.findByIdAndUpdate(orderId, {
+      "payment.invoiceId": String(data?.InvoiceId || ""),
+      "payment.method": "myfatoorah",
+      "payment.status": "unpaid",
+    });
 
     return res.json({
       ok: true,
@@ -194,11 +193,15 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       invoiceId: data.InvoiceId,
     });
   } catch (err) {
-    console.log("❌ /initiate error:", err?.message);
+    console.error("❌ /myfatoorah/initiate crashed:");
+    console.error("message =", err?.message);
+    console.error("stack =", err?.stack);
+    console.error("response =", JSON.stringify(err?.response?.data || {}, null, 2));
+
     return res.status(500).json({
       ok: false,
-      error: "Initiate crashed",
-      details: err?.message,
+      error: "initiate crashed",
+      details: err?.message || "Unknown error",
     });
   }
 });
