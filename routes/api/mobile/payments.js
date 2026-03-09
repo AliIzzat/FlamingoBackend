@@ -460,7 +460,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
   const isPaid = status === "Paid";
   const isFailed = status === "Failed";
 
-  const badgeClass = isPaid ? "OK" : isFailed ? "danger" : "warning";
+  const badgeClass = isPaid ? "success" : isFailed ? "danger" : "warning";
   const icon = isPaid ? "✅" : isFailed ? "❌" : "⏳";
   const subtitle = isPaid
     ? "Your payment was completed successfully."
@@ -469,7 +469,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
     : "Your payment is being processed.";
 
   const returnBtn = deepLink
-    ? `<a class="btn btn-primary" href="${deepLink}">Back to App</a>`
+    ? `<a class="btn btn-primary" href="${deepLink}">Return to App</a>`
     : "";
 
   return `
@@ -539,7 +539,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       align-items:center;
       justify-content:center;
       font-size:34px;
-      background:#f3f4f6;
+      background: red;                      //#f3f4f6;       
     }
 
     .title{
@@ -593,7 +593,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
 
     .btn{
       display:block;
-      width:100%;
+      width:50%;      //100%
       text-align:center;
       text-decoration:none;
       font-weight:800;
