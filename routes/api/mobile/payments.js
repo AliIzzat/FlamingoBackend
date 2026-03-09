@@ -569,7 +569,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       padding:8px 12px;  //10  16
       border-radius:999px;
       font-weight:400;    // 800
-      font-size:12px;   //14
+      font-size:10px;   //14
     }
 
     .badge.success{
@@ -697,8 +697,8 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
         ${returnBtn}
         <a class="btn btn-secondary" href="/">Back to Home</a>
 
-        <div class="meta">
-          <div class="meta-title">Transaction Details</div>
+        // <div class="meta">
+        //   <div class="meta-title">Transaction Details</div>
 
           <div class="row">
             <div class="label">Order ID</div>
