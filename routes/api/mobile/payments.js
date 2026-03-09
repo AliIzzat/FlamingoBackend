@@ -37,8 +37,6 @@ async function getPaymentStatusFromMF({ invoiceId, paymentId }) {
 }
 
 // =========================
-// ENV (You said Railway uses ONLY MYFATOORAH_TOKEN)
-// =========================
 const MF_TOKEN = process.env.MYFATOORAH_TOKEN || "";
 console.log("🔐 payments.js MYFATOORAH_TOKEN length =", MF_TOKEN.length);
 
@@ -458,133 +456,289 @@ router.get("/myfatoorah/verify", async (req, res) => {
 // =========================
 // HTML TEMPLATE
 // =========================
-function renderReturnPage({ title, status, orderId, paymentId, note }) {
-  const color =
-    status === "Paid"
-      ? "#16a34a"
-      : status === "Failed"
-      ? "#dc2626"
-      : "#f59e0b";
+function renderReturnPage({ title, status, orderId, paymentId, note, deepLink }) {
+  const isPaid = status === "Paid";
+  const isFailed = status === "Failed";
+
+  const badgeClass = isPaid ? "success" : isFailed ? "danger" : "warning";
+  const icon = isPaid ? "✅" : isFailed ? "❌" : "⏳";
+  const subtitle = isPaid
+    ? "Your payment was completed successfully."
+    : isFailed
+    ? "Your payment could not be completed."
+    : "Your payment is being processed.";
+
+  const returnBtn = deepLink
+    ? `<a class="btn btn-primary" href="${deepLink}">Return to App</a>`
+    : "";
 
   return `
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${title}</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#151515;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --primary:#520582;
+      --primary-dark:#3d0461;
+      --success-bg:#eaf8ef;
+      --success-text:#177245;
+      --danger-bg:#fdecec;
+      --danger-text:#b42318;
+      --warning-bg:#fff7e8;
+      --warning-text:#9a6700;
+      --shadow:0 12px 30px rgba(0,0,0,.08);
+      --radius:20px;
+    }
 
-<style>
+    *{box-sizing:border-box}
 
-body{
-  font-family:system-ui,Arial;
-  background:#f4f6fb;
-  margin:0;
-  padding:20px;
-  display:flex;
-  justify-content:center;
-}
+    body{
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:linear-gradient(180deg,#f8f9fc 0%, #f2f4f9 100%);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
 
-.card{
-  max-width:420px;
-  width:100%;
-  background:white;
-  padding:25px;
-  border-radius:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.08);
-  text-align:center;
-}
+    .wrap{
+      width:100%;
+      max-width:460px;
+    }
 
-.title{
-  font-size:22px;
-  font-weight:800;
-  margin-bottom:10px;
-}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
 
-.status{
-  display:inline-block;
-  padding:8px 14px;
-  border-radius:20px;
-  background:${color}20;
-  color:${color};
-  font-weight:700;
-  margin-bottom:20px;
-}
+    .top{
+      padding:28px 24px 20px;
+      text-align:center;
+    }
 
-.btn{
-  display:block;
-  padding:14px;
-  margin-top:12px;
-  border-radius:12px;
-  font-weight:700;
-  text-decoration:none;
-}
+    .icon{
+      width:72px;
+      height:72px;
+      margin:0 auto 14px;
+      border-radius:999px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:34px;
+      background:#f3f4f6;
+    }
 
-.btn-primary{
-  background:#520582;
-  color:white;
-}
+    .title{
+      margin:0;
+      font-size:26px;
+      font-weight:800;
+      letter-spacing:-0.02em;
+    }
 
-.btn-secondary{
-  background:#e5e7eb;
-  color:#111;
-}
+    .subtitle{
+      margin:10px 0 0;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.5;
+    }
 
-.details{
-  margin-top:20px;
-  font-size:13px;
-  color:#555;
-  text-align:left;
-  line-height:1.5;
-}
+    .status-wrap{
+      display:flex;
+      justify-content:center;
+      padding:0 24px 18px;
+    }
 
-.note{
-  margin-top:14px;
-  font-size:12px;
-  color:#777;
-}
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 16px;
+      border-radius:999px;
+      font-weight:800;
+      font-size:14px;
+    }
 
-</style>
+    .badge.success{
+      background:var(--success-bg);
+      color:var(--success-text);
+    }
+
+    .badge.danger{
+      background:var(--danger-bg);
+      color:var(--danger-text);
+    }
+
+    .badge.warning{
+      background:var(--warning-bg);
+      color:var(--warning-text);
+    }
+
+    .body{
+      padding:0 24px 24px;
+    }
+
+    .btn{
+      display:block;
+      width:100%;
+      text-align:center;
+      text-decoration:none;
+      font-weight:800;
+      font-size:16px;
+      padding:15px 18px;
+      border-radius:14px;
+      transition:.18s ease;
+      margin-top:12px;
+    }
+
+    .btn-primary{
+      background:var(--primary);
+      color:#fff;
+    }
+
+    .btn-primary:hover{
+      background:var(--primary-dark);
+    }
+
+    .btn-secondary{
+      background:#eef1f6;
+      color:#1f2937;
+    }
+
+    .meta{
+      margin-top:18px;
+      border-top:1px solid var(--border);
+      padding-top:16px;
+    }
+
+    .meta-title{
+      margin:0 0 10px;
+      font-size:13px;
+      font-weight:800;
+      color:#374151;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+
+    .row{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      padding:8px 0;
+      border-bottom:1px dashed #eceff4;
+    }
+
+    .row:last-child{
+      border-bottom:none;
+    }
+
+    .label{
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .value{
+      color:var(--text);
+      font-size:14px;
+      font-weight:700;
+      text-align:right;
+      word-break:break-word;
+      max-width:62%;
+    }
+
+    .note{
+      margin-top:16px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.6;
+      text-align:center;
+    }
+
+    .brand{
+      margin-top:14px;
+      text-align:center;
+      color:#9ca3af;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.04em;
+    }
+  </style>
 </head>
-
 <body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div class="icon">${icon}</div>
+        <h1 class="title">${title}</h1>
+        <p class="subtitle">${subtitle}</p>
+      </div>
 
-<div class="card">
+      <div class="status-wrap">
+        <div class="badge ${badgeClass}">
+          <span>Status:</span>
+          <span>${status}</span>
+        </div>
+      </div>
 
-<div class="title">${title}</div>
+      <div class="body">
+        ${returnBtn}
+        <a class="btn btn-secondary" href="/">Back to Home</a>
 
-<div class="status">
-Status: ${status}
-</div>
+        <div class="meta">
+          <div class="meta-title">Transaction Details</div>
 
-<a class="btn btn-primary"
-href="flamingdelivery://payment-return?orderId=${encodeURIComponent(
-    orderId
-  )}&paymentId=${encodeURIComponent(paymentId)}&status=${encodeURIComponent(
-    status
-  )}">
-Return to App
-</a>
+          <div class="row">
+            <div class="label">Order ID</div>
+            <div class="value">${orderId || "-"}</div>
+          </div>
 
-<a class="btn btn-secondary"
-<a class="btn" href="/api/mobile/payments/status?paymentId=${encodeURIComponent(paymentId)}">
-  View Payment Status
-</a>
+          <div class="row">
+            <div class="label">Payment ID</div>
+            <div class="value">${paymentId || "-"}</div>
+          </div>
 
-<div class="details">
-<b>orderId:</b> ${orderId}<br/>
-<b>paymentId:</b> ${paymentId}<br/>
-${note ? `<b>note:</b> ${note}` : ""}
-</div>
+          ${
+            note
+              ? `
+          <div class="row">
+            <div class="label">Note</div>
+            <div class="value">${note}</div>
+          </div>
+          `
+              : ""
+          }
+        </div>
 
-<div class="note">
-If "Return to App" doesn't open the app, your phone browser does not allow deep links
-from this page. Simply open the app and press <b>"Check Payment Status"</b>.
-</div>
+        <div class="note">
+          If the “Return to App” button does not open the app, reopen the app manually and use
+          “Check Payment Status”.
+        </div>
 
-</div>
-
+        <div class="brand">Flaming Delivery</div>
+      </div>
+    </div>
+  </div>
+ <script>
+  setTimeout(function () {
+    var url = "${deepLink || ""}";
+    if (url) window.location.href = url;
+  }, 2000);
+</script>
 </body>
-</html>
-`;
+</html>`;
 }
 module.exports = router;
 
