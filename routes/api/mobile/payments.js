@@ -593,12 +593,13 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
 
     .btn{
       display:block;
-      width:50%;     
+      width:100%;     
+      height:30px;
       text-align:center;
       text-decoration:none;
       font-weight:400;  
       font-size:12px;  
-      padding:15px 18px;
+      padding:5px 8px;
       border-radius:12px;    
       transition:.18s ease;
       margin-top:12px;
