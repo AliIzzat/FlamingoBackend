@@ -539,13 +539,13 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       align-items:center;
       justify-content:center;
       font-size:34px;
-      background: red;                      //#f3f4f6;       
+      background: transparent;                      //#f3f4f6;       
     }
 
     .title{
       margin:0;
-      font-size:26px;
-      font-weight:800;
+      font-size:16px;  //26
+      font-weight:800;  // 400
       letter-spacing:-0.02em;
     }
 
@@ -568,8 +568,8 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       gap:8px;
       padding:10px 16px;
       border-radius:999px;
-      font-weight:800;
-      font-size:14px;
+      font-weight:400;    // 800
+      font-size:12px;   //14
     }
 
     .badge.success{
