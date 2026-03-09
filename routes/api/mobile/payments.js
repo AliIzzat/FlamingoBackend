@@ -463,7 +463,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
   const badgeClass = isPaid ? "success" : isFailed ? "danger" : "warning";
   const icon = isPaid ? "✅" : isFailed ? "❌" : "⏳";
   const subtitle = isPaid
-    ? "Your payment was completed successfully."
+    ? ""
     : isFailed
     ? "Your payment could not be completed."
     : "Your payment is being processed.";
