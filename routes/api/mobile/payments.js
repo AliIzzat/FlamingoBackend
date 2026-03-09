@@ -509,7 +509,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:14px;  //24
+      padding:14px; 
     }
 
     .wrap{
@@ -526,7 +526,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
     }
 
     .top{
-      padding:18px 14px 10px;  //28 24 20
+      padding:18px 14px 10px;  
       text-align:center;
     }
 
@@ -538,14 +538,14 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       display:flex;
       align-items:center;
       justify-content:center;
-      font-size:18px;  //34
-      background: transparent;                      //#f3f4f6;       
+      font-size:18px;  
+      background: transparent; 
     }
 
     .title{
       margin:0;
-      font-size:16px;  //26
-      font-weight:800;  // 400
+      font-size:16px;  
+      font-weight:800; 
       letter-spacing:-0.02em;
     }
 
@@ -559,17 +559,17 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
     .status-wrap{
       display:flex;
       justify-content:center;
-      padding:0 16px 10px;  // 24 18
-    }
+      padding:0 16px 10px;  
+      }
 
     .badge{
       display:inline-flex;
       align-items:center;
       gap:8px;
-      padding:8px 12px;  //10  16
+      padding:8px 12px;  
       border-radius:999px;
-      font-weight:400;    // 800
-      font-size:10px;   //14
+      font-weight:400;    
+      font-size:10px;  
     }
 
     .badge.success{
@@ -593,15 +593,16 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
 
     .btn{
       display:block;
-      width:50%;      //100%
+      width:50%;     
       text-align:center;
       text-decoration:none;
-      font-weight:400;    //800
-      font-size:12px;  //16
+      font-weight:400;  
+      font-size:12px;  
       padding:15px 18px;
-      border-radius:12px;    //14
+      border-radius:12px;    
       transition:.18s ease;
       margin-top:12px;
+      border:2px solid red;
     }
 
     .btn-primary{
