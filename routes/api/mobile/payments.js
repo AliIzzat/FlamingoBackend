@@ -697,30 +697,30 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
         ${returnBtn}
         <a class="btn btn-secondary" href="/">Back to Home</a>
 
-        // <div class="meta">
-        //   <div class="meta-title">Transaction Details</div>
+      // <div class="meta">
+      //     <div class="meta-title">Transaction Details</div>
 
-          <div class="row">
-            <div class="label">Order ID</div>
-            <div class="value">${orderId || "-"}</div>
-          </div>
+      //     <div class="row">
+      //       <div class="label">Order ID</div>
+      //       <div class="value">${orderId || "-"}</div>
+      //     </div>
 
-          <div class="row">
-            <div class="label">Payment ID</div>
-            <div class="value">${paymentId || "-"}</div>
-          </div>
+      //     <div class="row">
+      //       <div class="label">Payment ID</div>
+      //       <div class="value">${paymentId || "-"}</div>
+      //     </div>
 
-          ${
-            note
-              ? `
-          <div class="row">
-            <div class="label">Note</div>
-            <div class="value">${note}</div>
-          </div>
-          `
-              : ""
-          }
-        </div>
+      //     ${
+      //       note
+      //         ? `
+      //     <div class="row">
+      //       <div class="label">Note</div>
+      //       <div class="value">${note}</div>
+      //     </div>
+      //     `
+      //         : ""
+      //     }
+      //   </div>
 
         <div class="note">
           If the “Return to App” button does not open the app, reopen the app manually and use
