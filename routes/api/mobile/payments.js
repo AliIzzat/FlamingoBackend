@@ -731,12 +731,12 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       </div>
     </div>
   </div>
- <script>
-  setTimeout(function () {
-    var url = "${deepLink || ""}";
-    if (url) window.location.href = url;
-  }, 2000);
-</script>
+//  <script>
+//   setTimeout(function () {
+//     var url = "${deepLink || ""}";
+//     if (url) window.location.href = url;
+//   }, 2000);
+// </script>
 </body>
 </html>`;
 }
