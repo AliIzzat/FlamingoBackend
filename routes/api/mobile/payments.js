@@ -526,7 +526,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
     }
 
     .top{
-      padding:28px 24px 20px;
+      padding:18px 14px 10px;  //28 24 20
       text-align:center;
     }
 
@@ -538,7 +538,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       display:flex;
       align-items:center;
       justify-content:center;
-      font-size:34px;
+      font-size:18px;  //34
       background: transparent;                      //#f3f4f6;       
     }
 
