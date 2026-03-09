@@ -696,11 +696,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       <div class="body">
         ${returnBtn}
         <a class="btn btn-secondary" href="/">Back to Home</a>
-        <div class="note">
-          If the “Return to App” button does not open the app, reopen the app manually and use
-          “Check Payment Status”.
-        </div>
-
+       
         <div class="brand">Flaming Delivery</div>
       </div>
     </div>
