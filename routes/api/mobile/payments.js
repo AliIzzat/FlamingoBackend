@@ -607,7 +607,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
     .btn{
       display:block;
       width:80%;
-      min-height:30px;
+      height:30px;
       padding:8px 12px;
       border:none;
       border-radius:12px;
