@@ -614,7 +614,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       text-align:center;
       text-decoration:none;
       font-size:18px;
-      font-weight:500;
+      // font-weight:500;
       line-height:1.2;
       cursor:pointer;
       transition:all .2s ease;
