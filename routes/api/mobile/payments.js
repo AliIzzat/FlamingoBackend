@@ -51,6 +51,7 @@ console.log("🌐 payments.js MF_BASE =", MF_BASE);
 
 // Deep link scheme (optional; will NOT work reliably on Expo Go)
 const APP_SCHEME = process.env.MOBILE_SCHEME || "flamingdelivery";
+console.log("📱 payments.js APP_SCHEME =", APP_SCHEME);
 
 // Public base URL used in CallBackUrl/ErrorUrl
 function getPublicBaseUrl() {
@@ -64,8 +65,17 @@ function getPublicBaseUrl() {
   return "http://localhost:4000";
 }
 
+// function deepLinkReturn({ orderId, paymentId, status }) {
+//   return `${APP_SCHEME}://payment-return?orderId=${encodeURIComponent(
+//     orderId || ""
+//   )}&paymentId=${encodeURIComponent(paymentId || "")}&status=${encodeURIComponent(
+//     status || ""
+//   )}`;
+// }
+
 function deepLinkReturn({ orderId, paymentId, status }) {
-  return `${APP_SCHEME}://payment-return?orderId=${encodeURIComponent(
+  const scheme = String(APP_SCHEME || "flamingdelivery").trim().replace("://", "");
+  return `${scheme}://payment-return?orderId=${encodeURIComponent(
     orderId || ""
   )}&paymentId=${encodeURIComponent(paymentId || "")}&status=${encodeURIComponent(
     status || ""
@@ -362,7 +372,11 @@ router.get("/myfatoorah/return", async (req, res) => {
     // Render user-friendly page
     return res.status(200).send(
       renderReturnPage({
-        title: isPaid ? "Payment Successful ✅" : invoiceStatus === "Failed" ? "Payment Failed ❌" : "Payment Completed",
+        title: isPaid
+           ? "Payment Successful"
+           : invoiceStatus === "Failed"
+           ? "Payment Failed"
+           : "Payment Completed",
         status: invoiceStatus,
         orderId,
         paymentId: paymentId || "-",
@@ -461,7 +475,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
   const isFailed = status === "Failed";
 
   const badgeClass = isPaid ? "success" : isFailed ? "danger" : "warning";
-  const icon = isPaid ? "✅" : isFailed ? "❌" : "⏳";
+  const titleIcon = isPaid ? "✅" : isFailed ? "❌" : "⏳";
   const subtitle = isPaid
     ? ""
     : isFailed
@@ -498,7 +512,9 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       --radius:20px;
     }
 
-    *{box-sizing:border-box}
+    *{
+      box-sizing:border-box;
+    }
 
     body{
       margin:0;
@@ -509,7 +525,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:14px; 
+      padding:16px;
     }
 
     .wrap{
@@ -523,53 +539,43 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       border-radius:var(--radius);
       box-shadow:var(--shadow);
       overflow:hidden;
+      padding:28px 16px 18px;
     }
 
     .top{
-      padding:18px 14px 10px;  
       text-align:center;
-    }
-
-    .icon{
-      width:72px;
-      height:72px;
-      margin:0 auto 14px;
-      border-radius:999px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:18px;  
-      background: transparent; 
     }
 
     .title{
       margin:0;
-      font-size:16px;  
-      font-weight:800; 
-      letter-spacing:-0.02em;
+      font-size:22px;
+      font-weight:700;
+      line-height:1.3;
+      letter-spacing:-0.01em;
     }
 
     .subtitle{
-      margin:10px 0 0;
+      margin:8px 0 0;
       color:var(--muted);
-      font-size:12px;   //15
+      font-size:13px;
       line-height:1.5;
     }
 
     .status-wrap{
       display:flex;
       justify-content:center;
-      padding:0 16px 10px;  
-      }
+      margin-top:18px;
+      margin-bottom:18px;
+    }
 
     .badge{
       display:inline-flex;
       align-items:center;
       gap:8px;
-      padding:8px 12px;  
+      padding:10px 16px;
       border-radius:999px;
-      font-weight:400;    
-      font-size:10px;  
+      font-weight:500;
+      font-size:14px;
     }
 
     .badge.success{
@@ -588,26 +594,33 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
     }
 
     .body{
-      padding:0 12px 12px;  
+      margin-top:8px;
+    }
+
+    .actions{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      margin-top:8px;
     }
 
     .btn{
-        display:block;
-        width:100%;
-        height:30px;
-        padding:8px 0;
-        text-align:center;
-        font-size:12px;
-        font-weight:400;
+      display:block;
+      width:100%;
+      min-height:48px;
+      padding:14px 16px;
+      border:none;
+      border-radius:16px;
+      text-align:center;
+      text-decoration:none;
+      font-size:18px;
+      font-weight:500;
+      line-height:1.2;
+      cursor:pointer;
+      transition:all .2s ease;
+    }
 
-        color:white;
-        background:linear-gradient(180deg,#5f7fc4,#3a63b4);
-
-        border:none;
-        border-radius:12px;
-        cursor:pointer;
-      }
-   .btn-primary{
+    .btn-primary{
       background:var(--primary);
       color:#fff;
     }
@@ -621,62 +634,32 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       color:#1f2937;
     }
 
-    .meta{
-      margin-top:18px;
-      border-top:1px solid var(--border);
-      padding-top:16px;
-    }
-
-    .meta-title{
-      margin:0 0 10px;
-      font-size:13px;
-      font-weight:800;
-      color:#374151;
-      text-transform:uppercase;
-      letter-spacing:.04em;
-    }
-
-    .row{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      padding:8px 0;
-      border-bottom:1px dashed #eceff4;
-    }
-
-    .row:last-child{
-      border-bottom:none;
-    }
-
-    .label{
-      color:var(--muted);
-      font-size:14px;
-    }
-
-    .value{
-      color:var(--text);
-      font-size:14px;
-      font-weight:700;
-      text-align:right;
-      word-break:break-word;
-      max-width:62%;
-    }
-
-    .note{
-      margin-top:16px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.6;
-      text-align:center;
+    .btn-secondary:hover{
+      background:#e5e7eb;
     }
 
     .brand{
-      margin-top:14px;
+      margin-top:16px;
       text-align:center;
       color:#9ca3af;
       font-size:12px;
       font-weight:700;
       letter-spacing:.04em;
+    }
+
+    @media (max-width:480px){
+      .card{
+        padding:24px 14px 16px;
+      }
+
+      .title{
+        font-size:20px;
+      }
+
+      .btn{
+        font-size:17px;
+        min-height:46px;
+      }
     }
   </style>
 </head>
@@ -684,9 +667,8 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
   <div class="wrap">
     <div class="card">
       <div class="top">
-        <div class="icon">${icon}</div>
-        <h1 class="title">${title}</h1>
-        <p class="subtitle">${subtitle}</p>
+        <h1 class="title">${title} ${titleIcon}</h1>
+        ${subtitle ? `<p class="subtitle">${subtitle}</p>` : ""}
       </div>
 
       <div class="status-wrap">
@@ -697,19 +679,15 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       </div>
 
       <div class="body">
-        ${returnBtn}
-        <a class="btn btn-secondary" href="/">Back to Home</a>
-       
+        <div class="actions">
+          ${returnBtn}
+          <a class="btn btn-secondary" href="/">Back to Home</a>
+        </div>
+
         <div class="brand">Flaming Delivery</div>
       </div>
     </div>
- </div>
-//  <script>
-//   setTimeout(function () {
-//     var url = "${deepLink || ""}";
-//     if (url) window.location.href = url;
-//   }, 2000);
-// </script>
+  </div>
 </body>
 </html>`;
 }
