@@ -525,7 +525,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:16px;
+      padding:6px;
     }
 
     .wrap{
@@ -539,7 +539,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       border-radius:var(--radius);
       box-shadow:var(--shadow);
       overflow:hidden;
-      padding:28px 16px 18px;
+      padding:12px 6px 8px;
     }
 
     .top{
@@ -549,7 +549,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
     .title{
       margin:0;
       font-size:16px;
-      font-weight:500;
+     // font-weight:500;
       line-height:1.3;
       letter-spacing:-0.01em;
     }
@@ -574,7 +574,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       gap:8px;
       padding:6px 12px;
       border-radius:999px;
-      font-weight:500;
+     //font-weight:500;
       font-size:12px;
     }
 
@@ -643,7 +643,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       text-align:center;
       color:#9ca3af;
       font-size:12px;
-      font-weight:700;
+     // font-weight:700;
       letter-spacing:.04em;
     }
 
@@ -653,11 +653,11 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       }
 
       .title{
-        font-size:20px;
+        font-size:14px;
       }
 
       .btn{
-        font-size:17px;
+        font-size:12px;
         min-height:46px;
       }
     }
