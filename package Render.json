@@ -204,10 +204,9 @@
     "wrap-ansi-cjs": "^7.0.0",
     "xtend": "^4.0.2"
   },
-
 "engines": {
- "node": ">=18"
- },
+  "node": "20.x"
+},
   "scripts": {
   "start": "node app.js",
   "dev": "nodemon app.js",
