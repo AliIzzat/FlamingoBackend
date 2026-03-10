@@ -493,182 +493,187 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${title}</title>
-  <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --text:#151515;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-      --primary:#520582;
-      --primary-dark:#3d0461;
-      --success-bg:#eaf8ef;
-      --success-text:#177245;
-      --danger-bg:#fdecec;
-      --danger-text:#b42318;
-      --warning-bg:#fff7e8;
-      --warning-text:#9a6700;
-      --shadow:0 12px 30px rgba(0,0,0,.08);
-      --radius:20px;
-    }
+ <style>
+  :root{
+    --bg:#f7f8fc;
+    --card:#ffffff;
+    --text:#1a1a1a;
+    --muted:#7a8190;
+    --primary:#520582;
+    --primary-dark:#3d0461;
+    --success-bg:#eef8f1;
+    --success-text:#1d7a46;
+    --danger-bg:#fdecec;
+    --danger-text:#b42318;
+    --warning-bg:#fff7e8;
+    --warning-text:#9a6700;
+    --radius:18px;
+  }
 
-    *{
-      box-sizing:border-box;
-    }
+  *{
+    box-sizing:border-box;
+  }
 
+  body{
+    margin:0;
+    font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    background:linear-gradient(180deg,#fbfcfe 0%, #f3f5fa 100%);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+  }
+
+  .wrap{
+    width:100%;
+    max-width:380px;
+  }
+
+  .card{
+    background:var(--card);
+    border-radius:22px;
+    padding:24px 18px 18px;
+    box-shadow:0 8px 24px rgba(15,23,42,.06);
+  }
+
+  .top{
+    text-align:center;
+  }
+
+  .title{
+    margin:0;
+    font-size:17px;
+    font-weight:600;
+    line-height:1.35;
+    letter-spacing:-0.01em;
+  }
+
+  .subtitle{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.5;
+  }
+
+  .status-wrap{
+    display:flex;
+    justify-content:center;
+    margin-top:14px;
+    margin-bottom:18px;
+  }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 11px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:500;
+  }
+
+  .badge.success{
+    background:var(--success-bg);
+    color:var(--success-text);
+  }
+
+  .badge.danger{
+    background:var(--danger-bg);
+    color:var(--danger-text);
+  }
+
+  .badge.warning{
+    background:var(--warning-bg);
+    color:var(--warning-text);
+  }
+
+  .body{
+    margin-top:2px;
+  }
+
+  .actions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .btn{
+    display:block;
+    width:100%;
+    padding:9px 12px;
+    border:none;
+    border-radius:14px;
+    text-align:center;
+    text-decoration:none;
+    font-size:12px;
+    font-weight:500;
+    line-height:1.2;
+    cursor:pointer;
+    transition:background .2s ease, transform .15s ease;
+  }
+
+  .btn-primary{
+    background:var(--primary);
+    color:#fff;
+  }
+
+  .btn-primary:hover{
+    background:var(--primary-dark);
+  }
+
+  .btn-secondary{
+    background:#eef1f6;
+    color:#1f2937;
+  }
+
+  .btn-secondary:hover{
+    background:#e4e8ef;
+  }
+
+  .brand{
+    margin-top:14px;
+    text-align:center;
+    color:#a0a7b4;
+    font-size:11px;
+    letter-spacing:.03em;
+  }
+
+  @media (max-width:480px){
     body{
-      margin:0;
-      font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background:linear-gradient(180deg,#f8f9fc 0%, #f2f4f9 100%);
-      color:var(--text);
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:6px;
+      padding:14px;
     }
 
     .wrap{
-      width:100%;
-      max-width:460px;
+      max-width:360px;
     }
 
     .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-      padding:12px 6px 8px;
-    }
-
-    .top{
-      text-align:center;
+      padding:20px 16px 16px;
+      border-radius:20px;
     }
 
     .title{
-      margin:0;
       font-size:16px;
-      line-height:1.3;
-      letter-spacing:-0.01em;
     }
 
     .subtitle{
-      margin:8px 0 0;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.5;
-    }
-
-    .status-wrap{
-      display:flex;
-      justify-content:center;
-      margin-top:18px;
-      margin-bottom:18px;
-    }
-
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 12px;
-      border-radius:999px;
-      font-size:12px;
-    }
-
-    .badge.success{
-      background:var(--success-bg);
-      color:var(--success-text);
-    }
-
-    .badge.danger{
-      background:var(--danger-bg);
-      color:var(--danger-text);
-    }
-
-    .badge.warning{
-      background:var(--warning-bg);
-      color:var(--warning-text);
-    }
-
-    .body{
-      margin-top:8px;
-    }
-
-    .actions{
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-      margin-top:8px;
+      font-size:11px;
     }
 
     .btn{
-      display:block;
-      width:80%;
-      height:20px;
-      padding:6px 10px;
-      border:none;
+      padding:8px 10px;
+      font-size:11px;
       border-radius:12px;
-      text-align:center;
-      text-decoration:none;
-      font-size:12px;
-      line-height:1.2;
-      cursor:pointer;
-      transition:all .2s ease;
     }
 
-    .btn-primary{
-      background:var(--primary);
-      color:#fff;
+    .badge{
+      font-size:10px;
+      padding:5px 10px;
     }
-
-    .btn-primary:hover{
-      background:var(--primary-dark);
-    }
-
-    .btn-secondary{
-      background:#eef1f6;
-      color:#1f2937;
-    }
-
-   .btn-primary,
-   .btn-secondary{
-      display:block;
-      width:100%;
-      font-size:14px;      /* smaller text */
-      padding:8px 12px;    /* shorter button height */
-      border-radius:12px;
-      text-align:center;
-      font-weight:500;
-    } 
-    .btn-secondary:hover{
-      background:#e5e7eb;
-    }
-
-    .brand{
-      margin-top:16px;
-      text-align:center;
-      color:#9ca3af;
-      font-size:12px;
-      letter-spacing:.04em;
-    }
-
-    @media (max-width:480px){
-      .card{
-        padding:24px 14px 16px;
-      }
-
-      .title{
-        font-size:14px;
-      }
-
-      .btn{
-        font-size:12px;
-        min-height:46px;
-      }
-    }
-  </style>
-</head>
+  }
+</style>
 <body>
   <div class="wrap">
     <div class="card">
