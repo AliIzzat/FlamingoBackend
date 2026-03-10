@@ -650,10 +650,6 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       border-radius:20px;
     }
 
-    .title{
-      font-size:16px;
-    }
-
     .subtitle{
       font-size:11px;
     }
