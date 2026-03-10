@@ -620,7 +620,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
   }
 
   .btn-secondary{
-    background:#eef1f6;
+    background:#f4f6ee;
     color:#1f2937;
   }
 
@@ -686,8 +686,6 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
           ${returnBtn}
           <a class="btn btn-secondary" href="/">Back to Home</a>
         </div>
-
-        <div class="brand">Flaming Delivery</div>
       </div>
     </div>
   </div>
