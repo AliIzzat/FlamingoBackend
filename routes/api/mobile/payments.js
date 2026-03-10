@@ -548,8 +548,8 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
 
     .title{
       margin:0;
-      font-size:22px;
-      font-weight:700;
+      font-size:16px;
+      font-weight:500;
       line-height:1.3;
       letter-spacing:-0.01em;
     }
@@ -572,10 +572,10 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       display:inline-flex;
       align-items:center;
       gap:8px;
-      padding:10px 16px;
+      padding:6px 12px;
       border-radius:999px;
       font-weight:500;
-      font-size:14px;
+      font-size:12px;
     }
 
     .badge.success{
@@ -607,13 +607,13 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
     .btn{
       display:block;
       width:100%;
-      min-height:48px;
-      padding:14px 16px;
+      min-height:40px;
+      padding:8px 12px;
       border:none;
-      border-radius:16px;
+      border-radius:12px;
       text-align:center;
       text-decoration:none;
-      font-size:18px;
+      font-size:14px;
       // font-weight:500;
       line-height:1.2;
       cursor:pointer;
