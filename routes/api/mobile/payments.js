@@ -620,12 +620,12 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
   }
 
   .btn-secondary{
-    background:#f4f6ee;
+    background:#bfc7a9;
     color:#1f2937;
   }
 
   .btn-secondary:hover{
-    background:#e4e8ef;
+    background:#e6f2bf;
   }
 
   .brand{
