@@ -527,25 +527,22 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
   }
 
   .wrap{
-    width:100%;
-    max-width:380px;
-  }
+  width:100%;
+  max-width:300px;
+  margin:auto;
+ }
 
   .card{
-    background:var(--card);
-    border-radius:22px;
-    padding:24px 18px 18px;
-    box-shadow:0 8px 24px rgba(15,23,42,.06);
+    padding:10px 6px;
   }
-
   .top{
     text-align:center;
   }
 
   .title{
     margin:0;
-    font-size:17px;
-    font-weight:600;
+    font-size:14px;   /* smaller title */
+    // font-weight:500;
     line-height:1.35;
     letter-spacing:-0.01em;
   }
@@ -663,7 +660,7 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
     }
 
     .btn{
-      padding:8px 10px;
+      padding:7px 10px;
       font-size:11px;
       border-radius:12px;
     }
