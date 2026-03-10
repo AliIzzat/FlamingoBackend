@@ -594,10 +594,11 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
     .btn{
         display:block;
         width:100%;
-        padding:14px 0;
+        height:30px;
+        padding:8px 0;
         text-align:center;
-        font-size:18px;
-        font-weight:600;
+        font-size:12px;
+        font-weight:400;
 
         color:white;
         background:linear-gradient(180deg,#5f7fc4,#3a63b4);
@@ -606,21 +607,6 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
         border-radius:12px;
         cursor:pointer;
       }
-      
-      // display:block;
-      // width:100%;     
-      // height:30px;
-      // text-align:center;
-      // text-decoration:none;
-      // font-weight:400;  
-      // font-size:12px;  
-      // padding:5px 8px;
-      // border-radius:12px;    
-      // transition:.18s ease;
-      // margin-top:12px;
-      // border:2px solid red;
-    }
-
    .btn-primary{
       background:var(--primary);
       color:#fff;
