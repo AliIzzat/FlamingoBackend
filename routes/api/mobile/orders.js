@@ -159,18 +159,17 @@ router.post("/create", async (req, res) => {
 
       storeName = store?.name || "Store";
 
-      const sLat =
-        toNumOrNull(store?.location?.lat) ??
-        toNumOrNull(store?.coordinates?.lat) ??
-        toNumOrNull(store?.coordinates?.[1]) ??
-        null;
+      // ✅ Read store coordinates correctly
+        const sLat =
+          toNumOrNull(store?.latitude) ??
+          toNumOrNull(store?.location?.coordinates?.[1]) ??
+          null;
 
-      const sLng =
-        toNumOrNull(store?.location?.lng) ??
-        toNumOrNull(store?.coordinates?.lng) ??
-        toNumOrNull(store?.coordinates?.[0]) ??
-        null;
-
+        const sLng =
+          toNumOrNull(store?.longitude) ??
+          toNumOrNull(store?.location?.coordinates?.[0]) ??
+          null;
+      
       pickupLocation = { lat: sLat, lng: sLng };
       pickupAddressText = store?.address || store?.addressText || store?.name || "";
     }
@@ -243,3 +242,18 @@ router.post("/create", async (req, res) => {
 });
 
 module.exports = router;
+
+
+
+
+// const sLat =
+      //   toNumOrNull(store?.location?.lat) ??
+      //   toNumOrNull(store?.coordinates?.lat) ??
+      //   toNumOrNull(store?.coordinates?.[1]) ??
+      //   null;
+
+      // const sLng =
+      //   toNumOrNull(store?.location?.lng) ??
+      //   toNumOrNull(store?.coordinates?.lng) ??
+      //   toNumOrNull(store?.coordinates?.[0]) ??
+      //   null;

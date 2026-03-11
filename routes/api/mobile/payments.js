@@ -627,8 +627,6 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
       <a class="btn btn-primary" href="flamingdelivery://payment-return">Return to App</a>
       <a class="btn btn-secondary" href="/">Back to Home</a>
     </div>
-
-    <div class="brand">Flaming Delivery</div>
   </main>
 
   <script>
