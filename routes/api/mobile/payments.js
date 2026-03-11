@@ -491,206 +491,154 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${title}</title>
- <style>
-  :root{
-    --bg:#f7f8fc;
-    --card:#ffffff;
-    --text:#1a1a1a;
-    --muted:#7a8190;
-    --primary:#520582;
-    --primary-dark:#3d0461;
-    --success-bg:#eef8f1;
-    --success-text:#1d7a46;
-    --danger-bg:#fdecec;
-    --danger-text:#b42318;
-    --warning-bg:#fff7e8;
-    --warning-text:#9a6700;
-    --radius:18px;
-  }
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Payment Successful</title>
 
-  *{
-    box-sizing:border-box;
-  }
+  <style>
+    :root{
+      --bg1:#fbfcfe;
+      --bg2:#f3f5fa;
+      --text:#1b1b1f;
+      --muted:#7a8190;
+      --primary:#520582;
+      --primary-dark:#3d0461;
+      --success-bg:#eef8f1;
+      --success-text:#1c7a45;
+      --secondary-bg:#eef1f6;
+      --secondary-text:#1f2937;
+    }
 
-  body{
-    margin:0;
-    font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    background:linear-gradient(180deg,#fbfcfe 0%, #f3f5fa 100%);
-    color:var(--text);
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:18px;
-  }
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-  .wrap{
-  width:100%;
-  max-width:300px;
-  margin:auto;
- }
+    html, body{
+      margin:0;
+      padding:0;
+      min-height:100dvh;
+    }
 
-  .card{
-    padding:10px 6px;
-  }
-  .top{
-    text-align:center;
-  }
-
-  .title{
-    margin:0;
-    font-size:12px;   /* smaller title */
-    line-height:1.35;
-    letter-spacing:-0.01em;
-  }
-
-  .subtitle{
-    margin:6px 0 0;
-    color:var(--muted);
-    font-size:12px;
-    line-height:1.5;
-  }
-
-  .status-wrap{
-    display:flex;
-    justify-content:center;
-    margin-top:14px;
-    margin-bottom:18px;
-  }
-
-  .badge{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    padding:6px 11px;
-    border-radius:999px;
-    font-size:11px;
-    font-weight:500;
-  }
-
-  .badge.success{
-    background:var(--success-bg);
-    color:var(--success-text);
-  }
-
-  .badge.danger{
-    background:var(--danger-bg);
-    color:var(--danger-text);
-  }
-
-  .badge.warning{
-    background:var(--warning-bg);
-    color:var(--warning-text);
-  }
-
-  .body{
-    margin-top:2px;
-  }
-
-  .actions{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-
-  .btn{
-    display:block;
-    width:100%;
-    padding:9px 12px;
-    border:none;
-    border-radius:14px;
-    text-align:center;
-    text-decoration:none;
-    font-size:12px;
-    font-weight:500;
-    line-height:1.2;
-    cursor:pointer;
-    transition:background .2s ease, transform .15s ease;
-  }
-
-  .btn-primary{
-    background:var(--primary);
-    color:#fff;
-  }
-
-  .btn-primary:hover{
-    background:var(--primary-dark);
-  }
-
-  .btn-secondary{
-    background:#bfc7a9;
-    color:#1f2937;
-  }
-
-  .btn-secondary:hover{
-    background:#e6f2bf;
-  }
-
-  .brand{
-    margin-top:14px;
-    text-align:center;
-    color:#a0a7b4;
-    font-size:11px;
-    letter-spacing:.03em;
-  }
-
-  @media (max-width:480px){
     body{
-      padding:14px;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+      color: var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px 16px calc(20px + env(safe-area-inset-bottom));
     }
 
-    .wrap{
-      max-width:360px;
+    .screen{
+      width:100%;
+      max-width:340px;
+      text-align:center;
     }
 
-    .card{
-      padding:20px 16px 16px;
-      border-radius:20px;
+    .title{
+      margin:0;
+      font-size:14px;
+      font-weight:600;
+      line-height:1.35;
+      letter-spacing:-0.01em;
     }
 
     .subtitle{
+      margin:6px 0 0;
       font-size:11px;
+      color:var(--muted);
+      line-height:1.5;
+    }
+
+    .status{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      margin-top:14px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:var(--success-bg);
+      color:var(--success-text);
+      font-size:11px;
+      font-weight:600;
+    }
+
+    .actions{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:18px;
     }
 
     .btn{
-      padding:7px 10px;
-      font-size:11px;
+      display:block;
+      width:100%;
+      padding:9px 12px;
+      border:none;
       border-radius:12px;
+      text-decoration:none;
+      text-align:center;
+      font-size:11px;
+      font-weight:600;
+      line-height:1.2;
     }
 
-    .badge{
+    .btn-primary{
+      background:var(--primary);
+      color:#fff;
+    }
+
+    .btn-primary:active{
+      background:var(--primary-dark);
+    }
+
+    .btn-secondary{
+      background:var(--secondary-bg);
+      color:var(--secondary-text);
+    }
+
+    .brand{
+      margin-top:14px;
       font-size:10px;
-      padding:5px 10px;
+      color:#a0a7b4;
+      letter-spacing:.03em;
     }
-  }
-</style>
+
+    @media (min-width: 481px){
+      .title{ font-size:15px; }
+      .btn{ font-size:12px; }
+      .subtitle{ font-size:12px; }
+      .status{ font-size:12px; }
+    }
+  </style>
+</head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="top">
-        <h1 class="title">${title} ${titleIcon}</h1>
-        ${subtitle ? `<p class="subtitle">${subtitle}</p>` : ""}
-      </div>
+  <main class="screen">
+    <h1 class="title">Payment Successful ✅</h1>
+    <p class="subtitle">Your payment has been completed successfully.</p>
 
-      <div class="status-wrap">
-        <div class="badge ${badgeClass}">
-          <span>Status:</span>
-          <span>${status}</span>
-        </div>
-      </div>
-
-      <div class="body">
-        <div class="actions">
-          ${returnBtn}
-          <a class="btn btn-secondary" href="/">Back to Home</a>
-        </div>
-      </div>
+    <div class="status">
+      <span>Status:</span>
+      <span>Paid</span>
     </div>
-  </div>
+
+    <div class="actions">
+      <a class="btn btn-primary" href="flamingdelivery://payment-return">Return to App</a>
+      <a class="btn btn-secondary" href="/">Back to Home</a>
+    </div>
+
+    <div class="brand">Flaming Delivery</div>
+  </main>
+
+  <script>
+    window.addEventListener("load", function () {
+      setTimeout(function () {
+        window.scrollTo(0, 1);
+      }, 120);
+    });
+  </script>
 </body>
-</html>`;
-}
+</html>
 module.exports = router;
 
