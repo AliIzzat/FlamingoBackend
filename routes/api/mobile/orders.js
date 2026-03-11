@@ -161,6 +161,7 @@ router.post("/create", async (req, res) => {
 
     // ✅ pickup store from first item
     const pickupStoreId = items.find((i) => i.storeId)?.storeId || null;
+    console.log("🧾 pickupStoreId detected:", pickupStoreId);
     console.log("🏪 pickupStoreId =", String(pickupStoreId || ""));
 
     let pickupLocation = { lat: null, lng: null };
