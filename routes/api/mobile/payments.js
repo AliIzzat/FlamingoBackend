@@ -639,6 +639,6 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
     });
   </script>
 </body>
-</html>
+</html>`;
+}
 module.exports = router;
-
