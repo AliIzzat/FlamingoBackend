@@ -175,6 +175,11 @@ router.post("/create", async (req, res) => {
     }
 
     const subtotal = calcSubtotalFromItems(items);
+    // See a debug message 
+    console.log("🧾 normalized items =", JSON.stringify(items, null, 2));
+    console.log("🏪 pickupStoreId =", String(pickupStoreId || ""));
+    console.log("🏪 store doc =", JSON.stringify(store || null, null, 2));
+    console.log("📍 resolved pickup =", pickupLocation);
 
     const orderDoc = await Order.create({
       customer: {
