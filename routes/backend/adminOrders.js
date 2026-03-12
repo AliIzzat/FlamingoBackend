@@ -53,6 +53,7 @@ router.get("/orders/:id", async (req, res) => {
     const order = await Order.findById(req.params.id);
 
     if (!order) {
+      console.log("ORDER DETAILS:", order);
       return res.status(404).send("Order not found");
     }
 

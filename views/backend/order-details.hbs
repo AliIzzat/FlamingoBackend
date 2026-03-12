@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Details</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f7fb;
+      margin: 0;
+      padding: 20px;
+      color: #222;
+    }
+
+    .card {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .label {
+      font-weight: bold;
+      color: #444;
+    }
+
+    .value {
+      color: #111;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 16px;
+      background: #0f172a;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+    }
+
+    .back-btn:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Order Details</h1>
+
+    <div class="row">
+      <div class="label">Order ID</div>
+      <div class="value">{{order._id}}</div>
+    </div>
+
+    <div class="row">
+      <div class="label">Status</div>
+      <div class="value">{{order.status}}</div>
+    </div>
+
+    <div class="row">
+      <div class="label">Total</div>
+      <div class="value">QAR {{order.total}}</div>
+    </div>
+
+    <div class="row">
+      <div class="label">Created At</div>
+      <div class="value">{{order.createdAt}}</div>
+    </div>
+
+    <div class="row">
+      <div class="label">Driver</div>
+      <div class="value">
+        {{#if order.driverId}}
+          {{order.driverId.name}}
+        {{else}}
+          Not assigned
+        {{/if}}
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="label">Restaurant</div>
+      <div class="value">
+        {{#if order.restaurant}}
+          {{order.restaurant.name}}
+        {{else}}
+          N/A
+        {{/if}}
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="label">Store</div>
+      <div class="value">
+        {{#if order.storeId}}
+          {{order.storeId.name}}
+        {{else}}
+          N/A
+        {{/if}}
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="label">Customer Name</div>
+      <div class="value">{{order.customerName}}</div>
+    </div>
+
+    <div class="row">
+      <div class="label">Phone</div>
+      <div class="value">{{order.phone}}</div>
+    </div>
+
+    <div class="row">
+      <div class="label">Address</div>
+      <div class="value">{{order.address}}</div>
+    </div>
+
+    <a href="/admin/orders?filter=unpicked" class="back-btn">Back to Orders</a>
+  </div>
+</body>
+</html>
