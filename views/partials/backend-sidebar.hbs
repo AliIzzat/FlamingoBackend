@@ -26,36 +26,35 @@
     <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">💻</span>Electronics</a>
   
 </div>
-  <hr class="custom-hr"> 
-
+ <hr class="custom-hr"> 
   <nav class="nav">
-<div class="admin-toolbar">
+   <div class="admin-toolbar">
     <div class="admin-actions" >
-    <a href="/admin/categories" class="admin-btn admin-btn-primary">
-      <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">📂</span> 
-      Categories
-    </a>
-    <a href="/admin/stores" class="admin-btn admin-btn-success">
+      <a href="/admin/categories" class="admin-btn admin-btn-primary">
+        <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">📂</span> 
+        Categories
+      </a>
+      <a href="/admin/stores" class="admin-btn admin-btn-success">
         <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">🏬</span> 
         Stores
-        </a>
-        <a href="/admin/products" class="admin-btn admin-btn-info">
+      </a>
+      <a href="/admin/products" class="admin-btn admin-btn-info">
         <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">📦</span>
         Products
-        </a>
-        <a href="/admin/orders?filter=unpicked" class="admin-btn admin-btn-pink">
+      </a>
+      <a href="/admin/orders?filter=unpicked" class="admin-btn admin-btn-pink">
         <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">🚚</span> 
         Orders
-        </a>
-        <a href="/admin/disputes" class="admin-btn admin-btn-warning">
+      </a>
+      <a href="/admin/disputes" class="admin-btn admin-btn-warning">
         <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">⚠️</span> 
         Disputes
-        </a>
-        <a href="/backend/reports/driver-meals" class="admin-btn admin-btn-purple">
+      </a>
+      <a href="/backend/reports/driver-meals" class="admin-btn admin-btn-purple">
         <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">📊</span>
         Drivers Rpt
-        </a>
-        <a href="/auth/logout" class="admin-btn admin-btn-secondary">
+      </a>
+      <a href="/auth/logout" class="admin-btn admin-btn-secondary">
         <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">↩️</span> 
         Logout
       </a>
@@ -100,4 +99,31 @@
 .admin-btn-pink{ background:#e83e8c; }
 .admin-btn-purple{background: #9400d3;}
 .admin-btn:hover{ filter:brightness(0.95); }
+
+.admin-actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;              /* space between buttons */
+  align-items: center;
+}
+.admin-btn{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 150px;           /* same width */
+  height: 40px;           /* same height */
+
+  gap: 8px;
+  padding: 6px 10px;
+
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  color: #fff;
+
+  box-sizing: border-box;
+}
+
+
 </style>
