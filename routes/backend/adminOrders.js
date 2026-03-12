@@ -48,23 +48,21 @@ function buildFilter(filterKey) {
 /* ============================================================
    GET /admin/orders?filter=unpicked
    ============================================================ */
-// router.get("/orders/:id", async (req, res) => {
-//   try {
-//     const order = await Order.findById(req.params.id);
+router.get("/orders/:id", async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
 
-//     if (!order) {
-//       return res.status(404).send("Order not found");
-//     }
+    if (!order) {
+      return res.status(404).send("Order not found");
+    }
 
-//     res.render("backend/order-details", { order });
-//   } catch (err) {
-//     console.error("Error loading order details:", err);
-//     res.status(500).send("Server error");
-//   }
-// });
-router.get("/orders/:id", (req, res) => {
-  res.send(`View route is working. Order ID: ${req.params.id}`);
+    res.render("backend/order-details", { order });
+  } catch (err) {
+    console.error("Error loading order details:", err);
+    res.status(500).send("Server error");
+  }
 });
+
 
 router.get(
   "/orders",
