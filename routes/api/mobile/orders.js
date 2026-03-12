@@ -198,56 +198,6 @@ if (pickupStoreId) {
       storeDoc.address || storeDoc.addressText || storeDoc.name || "";
   }
 }
-
-    // if (pickupStoreId) {
-    //   storeDoc = await Store.findById(pickupStoreId).lean();
-    //   console.log("🏪 store doc =", JSON.stringify(storeDoc || null, null, 2));
-
-    //   if (!storeDoc) {
-    //     console.log("⚠️ Store not found for pickupStoreId =", String(pickupStoreId));
-    //   } else {
-    //     storeName = storeDoc?.name || "Store";
-
-    //     // ✅ support multiple coordinate styles
-    //     const sLat =
-    //       toNumOrNull(storeDoc?.latitude) ??
-    //       toNumOrNull(storeDoc?.location?.lat) ??
-    //       toNumOrNull(storeDoc?.coordinates?.lat) ??
-    //       toNumOrNull(storeDoc?.location?.coordinates?.[1]) ??
-    //       toNumOrNull(storeDoc?.coordinates?.[1]) ??
-    //       null;
-
-    //     const sLng =
-    //       toNumOrNull(storeDoc?.longitude) ??
-    //       toNumOrNull(storeDoc?.location?.lng) ??
-    //       toNumOrNull(storeDoc?.coordinates?.lng) ??
-    //       toNumOrNull(storeDoc?.location?.coordinates?.[0]) ??
-    //       toNumOrNull(storeDoc?.coordinates?.[0]) ??
-    //       null;
-
-    //     console.log(
-    //       "📍 pickup raw:",
-    //       storeDoc?.latitude,
-    //       storeDoc?.longitude,
-    //       storeDoc?.location?.coordinates?.[1],
-    //       storeDoc?.location?.coordinates?.[0]
-    //     );
-
-    //     pickupLocation = { lat: sLat, lng: sLng };
-    //     pickupAddressText =
-    //       storeDoc?.address || storeDoc?.addressText || storeDoc?.name || "";
-
-    //     if (!sLat || !sLng) {
-    //       console.log(
-    //         "⚠️ Store found but pickup coordinates missing for store:",
-    //         String(pickupStoreId)
-    //       );
-    //     }
-    //   }
-    // } else {
-    //   console.log("⚠️ No pickupStoreId found in cart items");
-    // }
-
     console.log("📍 resolved pickup =", pickupLocation);
 
     const subtotal = calcSubtotalFromItems(items);
@@ -295,14 +245,14 @@ if (pickupStoreId) {
 
     const total = Number(orderDoc?.totals?.total || subtotal || 0).toFixed(2);
 
-    await Notification.create({
-      orderId: orderDoc._id,
-      message: `🆕 ${storeName} | ${orderDoc.customer.name} (${orderDoc.customer.phone}) | QAR ${total}`,
-      status: "unpicked",
-      driverId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    // await Notification.create({
+    //   orderId: orderDoc._id,
+    //   message: `🆕 ${storeName} | ${orderDoc.customer.name} (${orderDoc.customer.phone}) | QAR ${total}`,
+    //   status: "unpicked",
+    //   driverId: null,
+    //   createdAt: new Date(),
+    //   updatedAt: new Date(),
+    // });
 
     return res.json({
       ok: true,

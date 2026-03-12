@@ -261,17 +261,52 @@ router.get("/status", async (req, res) => {
     }
 
     // ✅ Update order if paid and not yet finalized
+    // if (order && isPaid && !order.checkout?.isFinalized) {
+    //   await Order.findByIdAndUpdate(order._id, {
+    //     "payment.status": "paid",
+    //     "payment.invoiceId": String(data?.InvoiceId || invoiceId || ""),
+    //     "payment.paymentId": String(
+    //       data?.InvoiceTransactions?.[0]?.PaymentId || paymentId || ""
+    //     ),
+    //     "checkout.isFinalized": true,
+    //     "checkout.finalizedAt": new Date(),
+    //   });
+    // }
+    
     if (order && isPaid && !order.checkout?.isFinalized) {
-      await Order.findByIdAndUpdate(order._id, {
-        "payment.status": "paid",
-        "payment.invoiceId": String(data?.InvoiceId || invoiceId || ""),
-        "payment.paymentId": String(
-          data?.InvoiceTransactions?.[0]?.PaymentId || paymentId || ""
-        ),
-        "checkout.isFinalized": true,
-        "checkout.finalizedAt": new Date(),
-      });
+  await Order.findByIdAndUpdate(order._id, {
+    "payment.status": "paid",
+    "payment.invoiceId": String(data?.InvoiceId || invoiceId || ""),
+    "payment.paymentId": String(
+      data?.InvoiceTransactions?.[0]?.PaymentId || paymentId || ""
+    ),
+    "checkout.isFinalized": true,
+    "checkout.finalizedAt": new Date(),
+  });
+
+  const freshOrder = await Order.findById(order._id).lean();
+
+  const total = Number(freshOrder?.totals?.total || 0).toFixed(2);
+  const storeName =
+    freshOrder?.pickup?.addressText ||
+    "Store";
+
+  await Notification.findOneAndUpdate(
+    { orderId: freshOrder._id },
+    {
+      orderId: freshOrder._id,
+      message: `🆕 ${storeName} | ${freshOrder.customer.name} (${freshOrder.customer.phone}) | QAR ${total}`,
+      status: "unpicked",
+      driverId: null,
+      updatedAt: new Date(),
+    },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
     }
+  );
+}
 
     const updatedOrder = order
     ? await Order.findById(order._id).lean()
