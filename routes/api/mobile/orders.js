@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const router = express.Router();
 
 const Order = require("../../../models/Order");
-const Notification = require("../../../models/Notification");
+// const Notification = require("../../../models/Notification");
 const Store = require("../../../models/Store");
 
 // -------------------------
@@ -244,15 +244,6 @@ if (pickupStoreId) {
     console.log("✅ Saved pickup location:", orderDoc?.pickup?.location);
 
     const total = Number(orderDoc?.totals?.total || subtotal || 0).toFixed(2);
-
-    // await Notification.create({
-    //   orderId: orderDoc._id,
-    //   message: `🆕 ${storeName} | ${orderDoc.customer.name} (${orderDoc.customer.phone}) | QAR ${total}`,
-    //   status: "unpicked",
-    //   driverId: null,
-    //   createdAt: new Date(),
-    //   updatedAt: new Date(),
-    // });
 
     return res.json({
       ok: true,
