@@ -222,78 +222,50 @@ router.post("/myfatoorah/initiate", async (req, res) => {
 router.get("/status", async (req, res) => {
   try {
     if (!MF_TOKEN) {
-      return res.status(500).json({ ok: false, error: "MYFATOORAH_TOKEN missing" });
+      return res.status(500).json({
+        ok: false,
+        error: "MYFATOORAH_TOKEN missing",
+      });
     }
 
     const { invoiceId, paymentId } = req.query || {};
     if (!invoiceId && !paymentId) {
-      return res.status(400).json({ ok: false, error: "invoiceId or paymentId required" });
+      return res.status(400).json({
+        ok: false,
+        error: "invoiceId or paymentId required",
+      });
     }
 
     const Key = paymentId ? String(paymentId) : String(invoiceId);
     const KeyType = paymentId ? "PaymentId" : "InvoiceId";
 
+    console.log("🔎 /status HIT");
+    console.log("🔎 Key =", Key);
+    console.log("🔎 KeyType =", KeyType);
+
     const r = await axios.post(
       `${MF_BASE}/v2/GetPaymentStatus`,
       { Key, KeyType },
-      { headers: mfHeaders(), timeout: 25000, validateStatus: () => true }
+      {
+        headers: mfHeaders(),
+        timeout: 25000,
+        validateStatus: () => true,
+      }
     );
+
+    console.log("🔎 MF /status HTTP =", r.status);
+    console.log("🔎 MF /status body =", JSON.stringify(r.data, null, 2));
 
     const data = r.data?.Data || null;
     const invoiceStatus = data?.InvoiceStatus || "UNKNOWN";
     const isPaid = invoiceStatus === "Paid";
 
-    // ✅ When payment becomes PAID, finalize order and create notification
-if (order && isPaid && !order.checkout?.isFinalized) {
-
-  await Order.findByIdAndUpdate(order._id, {
-    "payment.status": "paid",
-    "payment.invoiceId": String(data?.InvoiceId || invoiceId || ""),
-    "payment.paymentId": String(
-      data?.InvoiceTransactions?.[0]?.PaymentId || paymentId || ""
-    ),
-    "checkout.isFinalized": true,
-    "checkout.finalizedAt": new Date(),
-  });
-
-  const freshOrder = await Order.findById(order._id).lean();
-
-  const total = Number(freshOrder?.totals?.total || 0).toFixed(2);
-
-  const storeName =
-    freshOrder?.pickup?.addressText ||
-    "Store";
-
-  await Notification.findOneAndUpdate(
-    { orderId: freshOrder._id },
-    {
-      $set: {
-        orderId: freshOrder._id,
-        message: `🆕 ${storeName} | ${freshOrder.customer.name} (${freshOrder.customer.phone}) | QAR ${total}`,
-        status: "unpicked",
-        driverId: null,
-        updatedAt: new Date(),
-      },
-      $setOnInsert: {
-        createdAt: new Date(),
-      },
-    },
-    {
-      upsert: true,
-      new: true,
-    }
-  );
-}
-    
-    // ✅ Find the related order in MongoDB
+    // ✅ DECLARE order BEFORE USING IT
     let order = null;
 
     if (paymentId) {
       order = await Order.findOne({
-        $or: [
-          { "payment.paymentId": String(paymentId) },
-          { "payment.provider.transactionId": String(paymentId) },
-        ],
+        "payment.paymentId": String(paymentId),
       });
     }
 
@@ -303,113 +275,73 @@ if (order && isPaid && !order.checkout?.isFinalized) {
       });
     }
 
+    console.log("🔎 matched orderId =", order ? String(order._id) : null);
+
+    // ✅ USE order ONLY AFTER IT HAS BEEN DECLARED AND LOOKED UP
     if (order && isPaid && !order.checkout?.isFinalized) {
-  await Order.findByIdAndUpdate(order._id, {
-    "payment.status": "paid",
-    "payment.invoiceId": String(data?.InvoiceId || invoiceId || ""),
-    "payment.paymentId": String(
-      data?.InvoiceTransactions?.[0]?.PaymentId || paymentId || ""
-    ),
-    "checkout.isFinalized": true,
-    "checkout.finalizedAt": new Date(),
-  });
+      await Order.findByIdAndUpdate(order._id, {
+        "payment.status": "paid",
+        "payment.invoiceId": String(data?.InvoiceId || invoiceId || ""),
+        "payment.paymentId": String(
+          data?.InvoiceTransactions?.[0]?.PaymentId || paymentId || ""
+        ),
+        "checkout.isFinalized": true,
+        "checkout.finalizedAt": new Date(),
+      });
 
-  const freshOrder = await Order.findById(order._id).lean();
+      const freshOrder = await Order.findById(order._id).lean();
+      const total = Number(freshOrder?.totals?.total || 0).toFixed(2);
+      const storeName = freshOrder?.pickup?.addressText || "Store";
 
-  const total = Number(freshOrder?.totals?.total || 0).toFixed(2);
-  const storeName =
-    freshOrder?.pickup?.addressText ||
-    "Store";
-
-  await Notification.findOneAndUpdate(
-    { orderId: freshOrder._id },
-    {
-      $set: {
-        orderId: freshOrder._id,
-        message: `🆕 ${storeName} | ${freshOrder.customer.name} (${freshOrder.customer.phone}) | QAR ${total}`,
-        status: "unpicked",
-        driverId: null,
-        updatedAt: new Date(),
-      },
-      $setOnInsert: {
-        createdAt: new Date(),
-      },
-    },
-    {
-      upsert: true,
-      new: true,
+      await Notification.findOneAndUpdate(
+        { orderId: freshOrder._id },
+        {
+          $set: {
+            orderId: freshOrder._id,
+            message: `🆕 ${storeName} | ${freshOrder.customer.name} (${freshOrder.customer.phone}) | QAR ${total}`,
+            status: "unpicked",
+            driverId: null,
+            updatedAt: new Date(),
+          },
+          $setOnInsert: {
+            createdAt: new Date(),
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+        }
+      );
     }
-  );
-}
 
-  //   if (order && isPaid && !order.checkout?.isFinalized) {
-  //   await Order.findByIdAndUpdate(order._id, {
-  //   "payment.status": "paid",
-  //   "payment.invoiceId": String(data?.InvoiceId || invoiceId || ""),
-  //   "payment.paymentId": String(
-  //     data?.InvoiceTransactions?.[0]?.PaymentId || paymentId || ""
-  //   ),
-  //   "checkout.isFinalized": true,
-  //   "checkout.finalizedAt": new Date(),
-  // });
-
-  const freshOrder = await Order.findById(order._id).lean();
-
-  const total = Number(freshOrder?.totals?.total || 0).toFixed(2);
-  const storeName =
-    freshOrder?.pickup?.addressText ||
-    "Store";
-
-  await Notification.findOneAndUpdate(
-    { orderId: freshOrder._id },
-    {
-      orderId: freshOrder._id,
-      message: `🆕 ${storeName} | ${freshOrder.customer.name} (${freshOrder.customer.phone}) | QAR ${total}`,
-      status: "unpicked",
-      driverId: null,
-      updatedAt: new Date(),
-    },
-    {
-      upsert: true,
-      new: true,
-      setDefaultsOnInsert: true,
-    }
-  );
-
-
-    const updatedOrder = order
-    ? await Order.findById(order._id).lean()
-    : null;
+    const updatedOrder = order ? await Order.findById(order._id).lean() : null;
 
     return res.status(200).json({
-      ok: r.status >= 200 && r.status < 300,
+      ok: true,
       http: r.status,
       Key,
       KeyType,
       status: invoiceStatus,
       paid: isPaid,
       orderId: updatedOrder?._id || order?._id || null,
-
-      // ✅ values from MongoDB after update
       finalized: updatedOrder?.checkout?.isFinalized || false,
       paymentStatusInDb: updatedOrder?.payment?.status || "unpaid",
-
       raw: r.data,
     });
   } catch (err) {
-  console.error("❌ Status check failed");
-  console.error("message =", err?.message);
-  console.error("stack =", err?.stack);
-  console.error("response =", JSON.stringify(err?.response?.data || {}, null, 2));
+    console.error("❌ Status check failed");
+    console.error("message =", err?.message);
+    console.error("stack =", err?.stack);
+    console.error("response =", JSON.stringify(err?.response?.data || {}, null, 2));
 
-  return res.status(500).json({
-    ok: false,
-    error: "Status check failed",
-    details: err?.message || "Unknown error",
-   });
+    return res.status(500).json({
+      ok: false,
+      error: "Status check failed",
+      details: err?.message || "Unknown error",
+    });
   }
 });
-// =========================
+//============================
 // RETURN PAGE (HTML)
 // GET /api/mobile/payments/myfatoorah/return?orderId=...&paymentId=...
 // MyFatoorah redirects here after 3DS
