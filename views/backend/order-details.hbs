@@ -9,128 +9,304 @@
       font-family: Arial, sans-serif;
       background: #f6f7fb;
       margin: 0;
-      padding: 20px;
-      color: #222;
+      padding: 24px;
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
     }
 
     .card {
-      max-width: 900px;
-      margin: 0 auto;
       background: #fff;
-      border-radius: 14px;
+      border-radius: 16px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
       padding: 24px;
-      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
-    }
-
-    h1 {
-      margin-top: 0;
       margin-bottom: 20px;
     }
 
-    .row {
+    h1, h2 {
+      margin-top: 0;
+      margin-bottom: 18px;
+      color: #111827;
+    }
+
+    .grid {
       display: grid;
       grid-template-columns: 220px 1fr;
-      padding: 10px 0;
-      border-bottom: 1px solid #eee;
+      gap: 10px 16px;
     }
 
     .label {
-      font-weight: bold;
-      color: #444;
+      font-weight: 700;
+      color: #374151;
     }
 
     .value {
-      color: #111;
+      color: #111827;
+      word-break: break-word;
     }
 
-    .back-btn {
+    .status-badge {
       display: inline-block;
-      margin-top: 20px;
-      padding: 10px 16px;
-      background: #0f172a;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      font-size: 14px;
     }
 
-    .back-btn:hover {
-      opacity: 0.9;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f9fafb;
+    }
+
+    .actions {
+      margin-top: 20px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 16px;
+      border-radius: 10px;
+      text-decoration: none;
+      border: 1px solid #111827;
+      background: #111827;
+      color: #fff;
+    }
+
+    .muted {
+      color: #6b7280;
+    }
+
+    .section-space {
+      margin-top: 28px;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Order Details</h1>
+  <div class="container">
+    <div class="card">
+      <h1>Order Details</h1>
 
-    <div class="row">
-      <div class="label">Order ID</div>
-      <div class="value">{{order._id}}</div>
-    </div>
+      <div class="grid">
+        <div class="label">Order ID</div>
+        <div class="value">{{order._id}}</div>
 
-    <div class="row">
-      <div class="label">Status</div>
-      <div class="value">{{order.status}}</div>
-    </div>
+        <div class="label">Delivery Status</div>
+        <div class="value">
+          <span class="status-badge">{{order.delivery.status}}</span>
+        </div>
 
-    <div class="row">
-      <div class="label">Total</div>
-      <div class="value">QAR {{order.total}}</div>
-    </div>
+        <div class="label">Created At</div>
+        <div class="value">{{order.createdAt}}</div>
 
-    <div class="row">
-      <div class="label">Created At</div>
-      <div class="value">{{order.createdAt}}</div>
-    </div>
+        <div class="label">Updated At</div>
+        <div class="value">{{order.updatedAt}}</div>
 
-    <div class="row">
-      <div class="label">Driver</div>
-      <div class="value">
-        {{#if order.driverId}}
-          {{order.driverId.name}}
-        {{else}}
-          Not assigned
-        {{/if}}
+        <div class="label">Assigned Driver</div>
+        <div class="value">
+          {{#if order.delivery.assignedDriverId}}
+            {{order.delivery.assignedDriverId.username}}
+          {{else}}
+            Not assigned
+          {{/if}}
+        </div>
+
+        <div class="label">Claimed At</div>
+        <div class="value">
+          {{#if order.delivery.claimedAt}}
+            {{order.delivery.claimedAt}}
+          {{else}}
+            —
+          {{/if}}
+        </div>
+
+        <div class="label">Picked Up At</div>
+        <div class="value">
+          {{#if order.delivery.pickedUpAt}}
+            {{order.delivery.pickedUpAt}}
+          {{else}}
+            —
+          {{/if}}
+        </div>
+
+        <div class="label">Delivered At</div>
+        <div class="value">
+          {{#if order.delivery.deliveredAt}}
+            {{order.delivery.deliveredAt}}
+          {{else}}
+            —
+          {{/if}}
+        </div>
       </div>
     </div>
 
-    <div class="row">
-      <div class="label">Restaurant</div>
-      <div class="value">
-        {{#if order.restaurant}}
-          {{order.restaurant.name}}
-        {{else}}
-          N/A
-        {{/if}}
+    <div class="card">
+      <h2>Customer</h2>
+      <div class="grid">
+        <div class="label">Name</div>
+        <div class="value">{{order.customer.name}}</div>
+
+        <div class="label">Phone</div>
+        <div class="value">{{order.customer.phone}}</div>
+
+        <div class="label">Address</div>
+        <div class="value">{{order.customer.addressText}}</div>
+
+        <div class="label">Location</div>
+        <div class="value">
+          Lat: {{order.customer.location.lat}} ,
+          Lng: {{order.customer.location.lng}}
+        </div>
       </div>
     </div>
 
-    <div class="row">
-      <div class="label">Store</div>
-      <div class="value">
-        {{#if order.storeId}}
-          {{order.storeId.name}}
-        {{else}}
-          N/A
-        {{/if}}
+    <div class="card">
+      <h2>Pickup</h2>
+      <div class="grid">
+        <div class="label">Store</div>
+        <div class="value">
+          {{#if order.pickup.storeId}}
+            {{order.pickup.storeId.name}}
+          {{else}}
+            Not linked
+          {{/if}}
+        </div>
+
+        <div class="label">Pickup Address</div>
+        <div class="value">{{order.pickup.addressText}}</div>
+
+        <div class="label">Pickup Location</div>
+        <div class="value">
+          Lat: {{order.pickup.location.lat}} ,
+          Lng: {{order.pickup.location.lng}}
+        </div>
       </div>
     </div>
 
-    <div class="row">
-      <div class="label">Customer Name</div>
-      <div class="value">{{order.customerName}}</div>
+    <div class="card">
+      <h2>Payment</h2>
+      <div class="grid">
+        <div class="label">Method</div>
+        <div class="value">{{order.payment.method}}</div>
+
+        <div class="label">Status</div>
+        <div class="value">{{order.payment.status}}</div>
+
+        <div class="label">Invoice ID</div>
+        <div class="value">{{order.payment.invoiceId}}</div>
+
+        <div class="label">Payment ID</div>
+        <div class="value">{{order.payment.paymentId}}</div>
+      </div>
     </div>
 
-    <div class="row">
-      <div class="label">Phone</div>
-      <div class="value">{{order.phone}}</div>
+    <div class="card">
+      <h2>Totals</h2>
+      <div class="grid">
+        <div class="label">Subtotal</div>
+        <div class="value">QAR {{order.totals.subtotal}}</div>
+
+        <div class="label">Delivery Fee</div>
+        <div class="value">QAR {{order.totals.deliveryFee}}</div>
+
+        <div class="label">Total</div>
+        <div class="value"><strong>QAR {{order.totals.total}}</strong></div>
+      </div>
     </div>
 
-    <div class="row">
-      <div class="label">Address</div>
-      <div class="value">{{order.address}}</div>
-    </div>
+    <div class="card">
+      <h2>Items</h2>
 
-    <a href="/admin/orders?filter=unpicked" class="back-btn">Back to Orders</a>
+      {{#if order.items.length}}
+
+        <table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Name</th>
+      <th>Category</th>
+      <th>Qty</th>
+      <th>Unit Price</th>
+      <th>Store</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each order.items}}
+      <tr>
+        <td>{{@index}}</td>
+        <td>{{this.name_snapshot}}</td>
+        <td>{{this.category}}</td>
+        <td>{{this.qty}}</td>
+        <td>QAR {{this.price_snapshot}}</td>
+        <td>
+          {{#if this.storeId}}
+            {{this.storeId.name}}
+          {{else}}
+            —
+          {{/if}}
+        </td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>
+
+        {{!-- <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Qty</th>
+              <th>Unit Price</th>
+              <th>Line Total</th>
+              <th>Store</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each order.items}}
+              <tr>
+                <td>{{@index}}</td>
+                <td>{{this.name_snapshot}}</td>
+                <td>{{this.category}}</td>
+                <td>{{this.qty}}</td>
+                <td>QAR {{this.price_snapshot}}</td>
+                <td>QAR {{this.price_snapshot}}</td>
+                <td>
+                  {{#if this.storeId}}
+                    {{this.storeId.name}}
+                  {{else}}
+                    —
+                  {{/if}}
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table> --}}
+        <p class="muted section-space">Note: line total can be improved to qty × unit price with a helper later.</p>
+      {{else}}
+        <p>No items found.</p>
+      {{/if}}
+
+      <div class="actions">
+        {{!-- <a href="/admin/orders?filter=unpicked" class="btn">Back to Orders</a> --}}
+        <a href="/admin/orders" class="btn">Back to Orders</a>
+      </div>
+    </div>
   </div>
 </body>
 </html>

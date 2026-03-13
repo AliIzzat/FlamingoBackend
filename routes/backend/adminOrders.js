@@ -48,21 +48,27 @@ function buildFilter(filterKey) {
 /* ============================================================
    GET /admin/orders?filter=unpicked
    ============================================================ */
-router.get("/orders/:id", async (req, res) => {
+  router.get("/orders/:id", async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id)
+      .populate("pickup.storeId")
+      .populate("delivery.assignedDriverId")
+      .populate("items.productId")
+      .populate("items.storeId");
 
     if (!order) {
       return res.status(404).send("Order not found");
     }
-    console.log("ORDER DETAILS:", order);
-    res.render("backend/order-details", { order });
+
+    res.render("backend/order-details", {
+      title: "Order Details",
+      order
+    });
   } catch (err) {
     console.error("Error loading order details:", err);
     res.status(500).send("Server error");
   }
 });
-
 
 router.get(
   "/orders",
