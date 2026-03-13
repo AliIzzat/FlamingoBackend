@@ -397,12 +397,16 @@ if (order && isPaid && !order.checkout?.isFinalized) {
       raw: r.data,
     });
   } catch (err) {
-    console.error("Status check failed:", err?.message);
-    return res.status(500).json({
-      ok: false,
-      error: "Status check failed",
-      details: err?.message,
-    });
+  console.error("❌ Status check failed");
+  console.error("message =", err?.message);
+  console.error("stack =", err?.stack);
+  console.error("response =", JSON.stringify(err?.response?.data || {}, null, 2));
+
+  return res.status(500).json({
+    ok: false,
+    error: "Status check failed",
+    details: err?.message || "Unknown error",
+   });
   }
 });
 // =========================
