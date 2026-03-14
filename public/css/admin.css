@@ -1,0 +1,18 @@
+ .DashBtn{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:solid 2px #810cef;
+  padding:6px 12px;
+  border-radius:8px;
+
+  background:#fdfcfd;
+  color:#810cef;          /* FIXED */
+
+  font-weight:700;
+  text-decoration:none;
+}
+
+.DashBtn:hover{
+  text-decoration:none;
+}

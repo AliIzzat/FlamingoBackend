@@ -1,4 +1,11 @@
 <h1>{{title}}</h1>
+<a href="/admin/dashboard" class="DashBtn">
+    ← Return to Dashboard
+</a>
+<br><br>
+<head>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
 <form method="GET" action="/backend/reports/driver-meals" style="margin:12px 0; display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
   <div>
     <label>From</label><br/>
@@ -57,6 +64,7 @@
           <th>Order ID</th>
           <th>Status</th>
           <th>Date</th>
+          <th>Driver</th>
           <th>Customer</th>
           <th>Phone</th>
           <th>Address</th>
@@ -74,6 +82,7 @@
             <td>{{orderId}}</td>
             <td>{{status}}</td>
             <td>{{createdAt}}</td>
+            <td>{{driverName}}</td>
             <td>{{customerName}}</td>
             <td>{{customerMobile}}</td>
             <td>{{customerAddress}}</td>

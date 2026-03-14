@@ -39,35 +39,82 @@ function attachCoordinateAliases(orders) {
  * Helper: sync notification with real order state
  */
 async function syncNotification(order, driverId = null) {
-  if (!order) return;
+  if (!order?._id) return;
+  
+  let notifStatus = "unpicked";
 
-  let notificationStatus = null;
-
-  if (order.delivery?.status === "Pending") {
-    notificationStatus = "unpicked";
-  } else if (
-    order.delivery?.status === "Claimed" ||
-    order.delivery?.status === "PickedUp"
-  ) {
-    notificationStatus = "picked";
-  } else if (order.delivery?.status === "Delivered") {
-    notificationStatus = "delivered";
+  switch (order.delivery?.status) {
+    case "Claimed":
+      notifStatus = "claimed";
+      break;
+    case "PickedUp":
+      notifStatus = "picked";
+      break;
+    case "Delivered":
+      notifStatus = "delivered";
+      break;
+    case "Cancelled":
+      notifStatus = "cancelled";
+      break;
+    default:
+      notifStatus = "unpicked";
   }
 
-  if (!notificationStatus) return;
+  const finalDriverId = driverId || order.delivery?.assignedDriverId || null;
 
   await Notification.findOneAndUpdate(
     { orderId: order._id },
     {
       $set: {
-        status: notificationStatus,
-        driverId: driverId || order.delivery?.assignedDriverId || null,
+        status: notifStatus,
+        driverId: finalDriverId,
         updatedAt: new Date(),
+        message:
+          notifStatus === "claimed"
+            ? "🚚 Order claimed by driver"
+            : notifStatus === "picked"
+            ? "📦 Order picked up"
+            : notifStatus === "delivered"
+            ? "✅ Order delivered"
+            : notifStatus === "cancelled"
+            ? "❌ Order cancelled"
+            : "🆕 New order awaiting driver",
       },
     },
     { new: true }
   );
 }
+
+// async function syncNotification(order, driverId = null) {
+//   if (!order?._id) return;
+
+//   let notificationStatus = null;
+
+//   if (order.delivery?.status === "Pending") {
+//     notificationStatus = "unpicked";
+//   } else if (
+//     order.delivery?.status === "Claimed" ||
+//     order.delivery?.status === "PickedUp"
+//   ) {
+//     notificationStatus = "picked";
+//   } else if (order.delivery?.status === "Delivered") {
+//     notificationStatus = "delivered";
+//   }
+
+//   if (!notificationStatus) return;
+
+//   await Notification.findOneAndUpdate(
+//     { orderId: order._id },
+//     {
+//       $set: {
+//         status: notificationStatus,
+//         driverId: driverId || order.delivery?.assignedDriverId || null,
+//         updatedAt: new Date(),
+//       },
+//     },
+//     { new: true }
+//   );
+// }
 
 /* ============================================================
    WEB VIEWS (Driver)

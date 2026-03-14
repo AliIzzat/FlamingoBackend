@@ -1,13 +1,12 @@
-<div style="margin-bottom: 16px; display:flex; gap:10px;">
-  <a href="/admin/dashboard" class="admin-btn admin-btn-secondary">
-    ← Return to Dashboard
-  </a>
-</div>
-
+<link rel="stylesheet" href="/css/admin.css"> 
+ 
+<div style="margin-bottom: 16px; display:flex; gap:10px;"></div>
 <div class="admin-page">
   <section class="admin-content">
     <h1>Products</h1>
-    
+  <a href="/admin/dashboard" class="DashBtn">
+    ← Return to Dashboard
+  </a>  
     {{#if selectedStore}}
       <!-- ✅ Create Product -->
     <form action="/admin/products/create" method="POST" enctype="multipart/form-data" class="card product-form">

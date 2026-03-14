@@ -264,46 +264,12 @@
     {{/each}}
   </tbody>
 </table>
-
-        {{!-- <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Qty</th>
-              <th>Unit Price</th>
-              <th>Line Total</th>
-              <th>Store</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{#each order.items}}
-              <tr>
-                <td>{{@index}}</td>
-                <td>{{this.name_snapshot}}</td>
-                <td>{{this.category}}</td>
-                <td>{{this.qty}}</td>
-                <td>QAR {{this.price_snapshot}}</td>
-                <td>QAR {{this.price_snapshot}}</td>
-                <td>
-                  {{#if this.storeId}}
-                    {{this.storeId.name}}
-                  {{else}}
-                    —
-                  {{/if}}
-                </td>
-              </tr>
-            {{/each}}
-          </tbody>
-        </table> --}}
         <p class="muted section-space">Note: line total can be improved to qty × unit price with a helper later.</p>
       {{else}}
         <p>No items found.</p>
       {{/if}}
 
       <div class="actions">
-        {{!-- <a href="/admin/orders?filter=unpicked" class="btn">Back to Orders</a> --}}
         <a href="/admin/orders" class="btn">Back to Orders</a>
       </div>
     </div>
