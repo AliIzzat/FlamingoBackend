@@ -39,8 +39,11 @@ function attachCoordinateAliases(orders) {
  * Helper: sync notification with real order state
  */
 async function syncNotification(order, driverId = null) {
-  if (!order?._id) return;
-  
+  if (!order?._id) {
+    console.log("🔔 syncNotification skipped: missing order._id");
+    return;
+  }
+
   let notifStatus = "unpicked";
 
   switch (order.delivery?.status) {
@@ -56,14 +59,18 @@ async function syncNotification(order, driverId = null) {
     case "Cancelled":
       notifStatus = "cancelled";
       break;
+    case "Pending":
     default:
       notifStatus = "unpicked";
+      break;
   }
 
   const finalDriverId = driverId || order.delivery?.assignedDriverId || null;
 
-  await Notification.findOneAndUpdate(
-    { orderId: order._id },
+  const result = await Notification.findOneAndUpdate(
+    {
+      orderId: new mongoose.Types.ObjectId(order._id),
+    },
     {
       $set: {
         status: notifStatus,
@@ -80,42 +87,24 @@ async function syncNotification(order, driverId = null) {
             ? "❌ Order cancelled"
             : "🆕 New order awaiting driver",
       },
+      $setOnInsert: {
+        createdAt: new Date(),
+      },
     },
-    { new: true }
+    {
+      new: true,
+      upsert: true, // ✅ very important
+    }
   );
+
+  console.log("🔔 syncNotification result:", {
+    orderId: String(order._id),
+    orderStatus: order.delivery?.status,
+    notifStatus,
+    driverId: finalDriverId ? String(finalDriverId) : null,
+    notificationId: result?._id ? String(result._id) : null,
+  });
 }
-
-// async function syncNotification(order, driverId = null) {
-//   if (!order?._id) return;
-
-//   let notificationStatus = null;
-
-//   if (order.delivery?.status === "Pending") {
-//     notificationStatus = "unpicked";
-//   } else if (
-//     order.delivery?.status === "Claimed" ||
-//     order.delivery?.status === "PickedUp"
-//   ) {
-//     notificationStatus = "picked";
-//   } else if (order.delivery?.status === "Delivered") {
-//     notificationStatus = "delivered";
-//   }
-
-//   if (!notificationStatus) return;
-
-//   await Notification.findOneAndUpdate(
-//     { orderId: order._id },
-//     {
-//       $set: {
-//         status: notificationStatus,
-//         driverId: driverId || order.delivery?.assignedDriverId || null,
-//         updatedAt: new Date(),
-//       },
-//     },
-//     { new: true }
-//   );
-// }
-
 /* ============================================================
    WEB VIEWS (Driver)
    ============================================================ */
