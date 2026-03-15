@@ -66,14 +66,6 @@ function getPublicBaseUrl() {
   return "http://localhost:4000";
 }
 
-// function deepLinkReturn({ orderId, paymentId, status }) {
-//   return `${APP_SCHEME}://payment-return?orderId=${encodeURIComponent(
-//     orderId || ""
-//   )}&paymentId=${encodeURIComponent(paymentId || "")}&status=${encodeURIComponent(
-//     status || ""
-//   )}`;
-// }
-
 function deepLinkReturn({ orderId, paymentId, status }) {
   const scheme = String(APP_SCHEME || "flamingdelivery").trim().replace("://", "");
   return `${scheme}://payment-return?orderId=${encodeURIComponent(
@@ -155,6 +147,7 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       PaymentMethodId: methodId,
       InvoiceValue: Number(totalAmount),
       CustomerName: customerName || "Customer",
+      CurrencyIso: "QAR",
       DisplayCurrencyIso: "QAR",
       MobileCountryCode: "+974",
       CustomerMobile: customerMobile || "00000000",
