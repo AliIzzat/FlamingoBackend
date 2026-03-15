@@ -1,286 +1,48 @@
-<div class="dashboard-page">
-  <h1 class="dashboard-title">Admin Dashboard</h1>
+<div class="backend-shell">
+    {{> backend-sidebar}}
+<div class="notifications-card">
+  <div class="notifications-header">
+    <h2 class="notifications-title">Notifications</h2>
 
-  <div class="stats-grid">
-    <div class="stat-card">
-      <h3>Pending Orders</h3>
-      <p id="pendingOrdersCount">{{pendingOrders}}</p>
-    </div>
-
-    <div class="stat-card">
-      <h3>Picked Up</h3>
-      <p id="pickedOrdersCount">{{pickedOrders}}</p>
-    </div>
-
-    <div class="stat-card">
-      <h3>Delivered</h3>
-      <p id="deliveredOrdersCount">{{deliveredOrders}}</p>
-    </div>
-
-    <div class="stat-card">
-      <h3>Total Orders</h3>
-      <p id="totalOrdersCount">{{totalOrders}}</p>
+    <div class="notifications-meta">
+      <span id="lastUpdated">Last updated: --</span>
+      <span class="refresh-indicator">
+        <span id="refreshDot" class="dot"></span>
+        <span id="refreshText">Live</span>
+      </span>
     </div>
   </div>
 
-  <div class="dashboard-section">
-    <div class="section-header">
-      <h2>Latest Orders</h2>
-    </div>
+  <div class="notifications-wrapper">
+    <table class="notifications-table">
+      <thead>
+        <tr>
+          <th class="col-message">Message</th>
+          <th class="col-status">Status</th>
+          <th class="col-date">Date</th>
+        </tr>
+      </thead>
 
-    <div class="table-responsive">
-      <table class="dashboard-table">
-        <thead>
-          <tr>
-            <th>Order ID</th>
-            <th>Customer</th>
-            <th>Store / Restaurant</th>
-            <th>Status</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody id="latestOrdersTableBody">
-          {{#if latestOrders.length}}
-            {{#each latestOrders}}
-              <tr>
-                <td>{{this._id}}</td>
-                <td>
-                  {{#if this.customer.name}}
-                    {{this.customer.name}}
-                  {{else}}
-                    -
-                  {{/if}}
-                </td>
-                <td>
-               {{#if this.items}}
-                {{#with (lookup this.items 0)}}
-                  {{#if storeId.name}}
-                    {{storeId.name}}
-                  {{else}}
-                    -
-                  {{/if}}
-                {{/with}}
+      <tbody id="notificationsBody">
+        {{#each notifications}}
+          <tr data-id="{{_id}}">
+            <td class="msg">{{message}}</td>
+
+            <td>
+              {{!-- badge mapping --}}
+              {{#if (eq status "picked")}}
+                <span class="badge badge-picked">Picked</span>
+              {{else if (eq status "delivered")}}
+                <span class="badge badge-delivered">Delivered</span>
               {{else}}
-                -
+                <span class="badge badge-pending">{{status}}</span>
               {{/if}}
-                </td>
-                <td>
-                  <span class="status-badge status-{{this.status}}">
-                    {{this.status}}
-                  </span>
-                </td>
-                <td>{{this.createdAt}}</td>
-              </tr>
-            {{/each}}
-          {{else}}
-            <tr>
-              <td colspan="5" class="empty-row">No orders found.</td>
-            </tr>
-          {{/if}}
-        </tbody>
-      </table>
-    </div>
+            </td>
+
+            <td>{{createdAt}}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
   </div>
 </div>
-
-<style>
-  .dashboard-page {
-    padding: 20px;
-  }
-
-  .dashboard-title {
-    margin-bottom: 20px;
-    font-size: 28px;
-    font-weight: 700;
-    color: #222;
-  }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px;
-    margin-bottom: 28px;
-  }
-
-  .stat-card {
-    background: #fff;
-    border-radius: 14px;
-    padding: 20px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-    border: 1px solid #eee;
-  }
-
-  .stat-card h3 {
-    margin: 0 0 10px;
-    font-size: 16px;
-    color: #555;
-  }
-
-  .stat-card p {
-    margin: 0;
-    font-size: 30px;
-    font-weight: 700;
-    color: #111;
-  }
-
-  .dashboard-section {
-    background: #fff;
-    border-radius: 14px;
-    padding: 20px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-    border: 1px solid #eee;
-  }
-
-  .section-header {
-    margin-bottom: 16px;
-  }
-
-  .section-header h2 {
-    margin: 0;
-    font-size: 22px;
-    color: #222;
-  }
-
-  .table-responsive {
-    overflow-x: auto;
-  }
-
-  .dashboard-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .dashboard-table th,
-  .dashboard-table td {
-    padding: 12px 14px;
-    border-bottom: 1px solid #eee;
-    text-align: left;
-    font-size: 14px;
-  }
-
-  .dashboard-table th {
-    background: #f8f9fa;
-    color: #333;
-    font-weight: 700;
-  }
-
-  .dashboard-table tr:hover {
-    background: #fafafa;
-  }
-
-  .status-badge {
-    display: inline-block;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-  }
-
-  .status-Pending {
-    background: #fff3cd;
-    color: #856404;
-  }
-
-  .status-Picked\ Up,
-  .status-PickedUp {
-    background: #d1ecf1;
-    color: #0c5460;
-  }
-
-  .status-Delivered {
-    background: #d4edda;
-    color: #155724;
-  }
-
-  .empty-row {
-    text-align: center;
-    color: #777;
-    padding: 20px;
-  }
-
-  .flash-new {
-    animation: flashRow 1.2s ease-in-out;
-  }
-
-  @keyframes flashRow {
-    0% { background-color: #fff3cd; }
-    100% { background-color: transparent; }
-  }
-</style>
-
-<script>
-  async function refreshDashboardData() {
-    try {
-      const response = await fetch("/admin/dashboard/live", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Requested-With": "XMLHttpRequest"
-        }
-      });
-
-      const data = await response.json();
-
-      if (!data.success) return;
-
-      const pendingEl = document.getElementById("pendingOrdersCount");
-      const pickedEl = document.getElementById("pickedOrdersCount");
-      const deliveredEl = document.getElementById("deliveredOrdersCount");
-      const totalEl = document.getElementById("totalOrdersCount");
-
-      if (pendingEl) pendingEl.textContent = data.stats.pendingOrders ?? 0;
-      if (pickedEl) pickedEl.textContent = data.stats.pickedOrders ?? 0;
-      if (deliveredEl) deliveredEl.textContent = data.stats.deliveredOrders ?? 0;
-      if (totalEl) totalEl.textContent = data.stats.totalOrders ?? 0;
-
-      const tableBody = document.getElementById("latestOrdersTableBody");
-      if (!tableBody) return;
-
-      tableBody.innerHTML = "";
-
-      if (!data.latestOrders || data.latestOrders.length === 0) {
-        tableBody.innerHTML = `
-          <tr>
-            <td colspan="5" class="empty-row">No orders found.</td>
-          </tr>
-        `;
-        return;
-      }
-
-      data.latestOrders.forEach(order => {
-        const tr = document.createElement("tr");
-
-        const customerName = order.customer?.name || "-";
-        const storeName =
-        order.items?.[0]?.storeId?.name ||
-         "-";
-
-        const createdAt = order.createdAt
-          ? new Date(order.createdAt).toLocaleString()
-          : "-";
-
-        const safeStatus = order.status || "-";
-        const statusClass = String(safeStatus).replace(/\s+/g, "");
-
-        tr.innerHTML = `
-          <td>${order._id || "-"}</td>
-          <td>${customerName}</td>
-          <td>${storeName}</td>
-          <td>
-            <span class="status-badge status-${statusClass}">
-              ${safeStatus}
-            </span>
-          </td>
-          <td>${createdAt}</td>
-        `;
-
-        tr.classList.add("flash-new");
-        tableBody.appendChild(tr);
-      });
-    } catch (error) {
-      console.error("Dashboard auto-refresh failed:", error);
-    }
-  }
-
-  setInterval(refreshDashboardData, 10000);
-</script>
