@@ -279,40 +279,71 @@ router.get("/status", async (req, res) => {
 
     // ✅ USE order ONLY AFTER IT HAS BEEN DECLARED AND LOOKED UP
     if (order && isPaid && !order.checkout?.isFinalized) {
-      await Order.findByIdAndUpdate(order._id, {
-        "payment.status": "paid",
-        "payment.invoiceId": String(data?.InvoiceId || invoiceId || ""),
-        "payment.paymentId": String(
-          data?.InvoiceTransactions?.[0]?.PaymentId || paymentId || ""
-        ),
-        "checkout.isFinalized": true,
-        "checkout.finalizedAt": new Date(),
-      });
+  await Order.findByIdAndUpdate(order._id, {
+    "payment.status": "paid",
+    "payment.invoiceId": String(data?.InvoiceId || invoiceId || ""),
+    "payment.paymentId": String(
+      data?.InvoiceTransactions?.[0]?.PaymentId || paymentId || ""
+    ),
+    "checkout.isFinalized": true,
+    "checkout.finalizedAt": new Date(),
+  });
 
-      const freshOrder = await Order.findById(order._id).lean();
-      const total = Number(freshOrder?.totals?.total || 0).toFixed(2);
-      const storeName = freshOrder?.pickup?.addressText || "Store";
+  const freshOrder = await Order.findById(order._id);
+  const total = Number(freshOrder?.totals?.total || 0).toFixed(2);
+  const storeName = freshOrder?.pickup?.addressText || "Store";
 
-      await Notification.findOneAndUpdate(
-        { orderId: freshOrder._id },
-        {
-          $set: {
-            orderId: freshOrder._id,
-            message: `🆕 ${storeName} | ${freshOrder.customer.name} (${freshOrder.customer.phone}) | QAR ${total}`,
-            status: "unpicked",
-            driverId: null,
-            updatedAt: new Date(),
-          },
-          $setOnInsert: {
-            createdAt: new Date(),
-          },
-        },
-        {
-          upsert: true,
-          new: true,
-        }
-      );
+  await Notification.findOneAndUpdate(
+    { orderId: freshOrder._id },
+    {
+      $set: {
+        orderId: freshOrder._id,
+        message: `🆕 ${storeName} | ${freshOrder.customer.name} (${freshOrder.customer.phone}) | QAR ${total}`,
+        status: "unpicked",
+        driverId: null,
+        updatedAt: new Date(),
+      },
+      $setOnInsert: {
+        createdAt: new Date(),
+      },
+    },
+    {
+      upsert: true,
+      new: true,
     }
+  );
+
+  // 🖨️ Print once after successful payment verification
+  if (!freshOrder.storePrint?.printed) {
+    try {
+      console.log("🖨️ Triggering store print for order:", String(freshOrder._id));
+
+      const printResult = await printOrderToStore(freshOrder);
+
+      freshOrder.storePrint = {
+        printed: true,
+        printedAt: new Date(),
+        lastError: "",
+      };
+
+      await freshOrder.save();
+
+      console.log("✅ Store ticket printed:", printResult);
+    } catch (printErr) {
+      console.error("❌ Store print failed:", printErr.message);
+
+      freshOrder.storePrint = {
+        printed: false,
+        printedAt: null,
+        lastError: printErr.message || "Print failed",
+      };
+
+      await freshOrder.save();
+    }
+  } else {
+    console.log("ℹ️ Store ticket already printed for order:", String(freshOrder._id));
+  }
+}
 
     const updatedOrder = order ? await Order.findById(order._id).lean() : null;
 
@@ -447,6 +478,9 @@ router.get("/myfatoorah/return", async (req, res) => {
 
     const invoiceStatus = r.data?.Data?.InvoiceStatus || "UNKNOWN";
     const isPaid = invoiceStatus === "Paid";
+
+    console.log("🔎 invoiceStatus =", invoiceStatus);
+    console.log("🔎 isPaid =", isPaid);
     const invoiceIdFromMF = r.data?.Data?.InvoiceId ? String(r.data.Data.InvoiceId) : "";
 
     // Update DB
