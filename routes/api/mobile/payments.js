@@ -138,6 +138,11 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     const baseUrl = getPublicBaseUrl();
     const methodId = Number(paymentMethodId || 2);
 
+    console.log("🌐 baseUrl =", baseUrl);
+    console.log("🆔 orderId =", orderId);
+    console.log("💰 totalAmount =", totalAmount);
+    console.log("💳 paymentMethodId =", methodId);
+
     const CallBackUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${orderId}`;
     const ErrorUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${orderId}`;
 
@@ -157,6 +162,7 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       ErrorUrl,
       Language: "en",
     };
+    console.log("📦 ExecutePayment payload =", JSON.stringify(payload, null, 2));
 
     const r = await axios.post(`${MF_BASE}/v2/ExecutePayment`, payload, {
       headers: mfHeaders(),
@@ -341,25 +347,56 @@ router.get("/status", async (req, res) => {
 // MyFatoorah redirects here after 3DS
 // =========================
 router.get("/myfatoorah/return", async (req, res) => {
+
   const orderId = req.query.orderId || "";
+
   const paymentId =
-    req.query.paymentId || req.query.PaymentId || req.query.Id || req.query.paymentID || "";
+    req.query.paymentId ||
+    req.query.PaymentId ||
+    req.query.Id ||
+    req.query.paymentID ||
+    "";
 
   try {
-    console.log("✅ RETURN HIT", req.originalUrl);
+
+    console.log("====================================");
+    console.log("✅ RETURN HIT");
+    console.log("🌐 Full URL =", req.originalUrl);
+    console.log("🌍 Host =", req.headers.host);
+    console.log("📦 Query =", req.query);
+    console.log("🆔 orderId =", orderId);
+    console.log("💳 paymentId =", paymentId);
+    console.log("====================================");
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
 
     if (!MF_TOKEN) {
-      return res
-        .status(200)
-        .send(renderReturnPage({ title: "Payment completed", status: "UNKNOWN", orderId, paymentId, note: "Server token missing (MYFATOORAH_TOKEN)" }));
+      console.log("❌ MYFATOORAH_TOKEN missing");
+
+      return res.status(200).send(
+        renderReturnPage({
+          title: "Payment completed",
+          status: "UNKNOWN",
+          orderId,
+          paymentId,
+          note: "Server token missing (MYFATOORAH_TOKEN)"
+        })
+      );
     }
 
     if (!orderId) {
-      return res
-        .status(200)
-        .send(renderReturnPage({ title: "Payment completed", status: "UNKNOWN", orderId: "-", paymentId, note: "Missing orderId in return URL" }));
+
+      console.log("⚠️ orderId missing in return URL");
+
+      return res.status(200).send(
+        renderReturnPage({
+          title: "Payment completed",
+          status: "UNKNOWN",
+          orderId: "-",
+          paymentId,
+          note: "Missing orderId in return URL"
+        })
+      );
     }
 
     // If paymentId is missing, fallback to invoiceId stored in DB
@@ -367,23 +404,40 @@ router.get("/myfatoorah/return", async (req, res) => {
     let keyType = paymentId ? "PaymentId" : "";
 
     if (!key) {
+
+      console.log("⚠️ paymentId missing, falling back to invoiceId");
+
       const order = await Order.findById(orderId).lean();
-      const invoiceId = order?.payment?.invoiceId ? String(order.payment.invoiceId) : "";
+
+      console.log("🔎 Loaded order from DB =", order ? order._id : "NOT FOUND");
+
+      const invoiceId = order?.payment?.invoiceId
+        ? String(order.payment.invoiceId)
+        : "";
+
+      console.log("📄 invoiceId from DB =", invoiceId);
+
       if (!invoiceId) {
-        return res
-          .status(200)
-          .send(renderReturnPage({
+
+        console.log("❌ No paymentId and no invoiceId");
+
+        return res.status(200).send(
+          renderReturnPage({
             title: "Payment processing…",
             status: "PENDING",
             orderId,
             paymentId: "-",
-            note: "No paymentId in return URL and no invoiceId stored for this order.",
-          }));
+            note: "No paymentId in return URL and no invoiceId stored for this order."
+          })
+        );
       }
+
       key = invoiceId;
       keyType = "InvoiceId";
     }
 
+    console.log("🔑 Using verification key =", key);
+    console.log("🔑 KeyType =", keyType);
     // Call MyFatoorah GetPaymentStatus
     const r = await axios.post(
       `${MF_BASE}/v2/GetPaymentStatus`,
