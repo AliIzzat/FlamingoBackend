@@ -138,8 +138,8 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     const baseUrl = getPublicBaseUrl();
     const methodId = Number(paymentMethodId || 2);
 
-    const CallBackUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${encodeURIComponent(orderId)}`;
-    const ErrorUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${encodeURIComponent(orderId)}`;
+    const CallBackUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${orderId}`;
+    const ErrorUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${orderId}`;
 
     console.log("✅ MF CallBackUrl =", CallBackUrl);
     console.log("✅ MF ErrorUrl =", ErrorUrl);
@@ -397,56 +397,56 @@ router.get("/myfatoorah/return", async (req, res) => {
 
     // Update DB
     const order = await Order.findByIdAndUpdate(
-  orderId,
-  {
-    "payment.status": isPaid ? "paid" : "unpaid",
-    "payment.paymentId": paymentId ? String(paymentId) : "",
-    "payment.invoiceId": invoiceIdFromMF || "",
-    "payment.method": "myfatoorah",
-    "provider.name": "myfatoorah",
-    "provider.invoiceStatus": invoiceStatus,
-    "provider.verifiedAt": new Date(),
-  },
-  { new: true }
-);
+      orderId,
+      {
+        "payment.status": isPaid ? "paid" : "unpaid",
+        "payment.paymentId": paymentId ? String(paymentId) : "",
+        "payment.invoiceId": invoiceIdFromMF || "",
+        "payment.method": "myfatoorah",
+        "provider.name": "myfatoorah",
+        "provider.invoiceStatus": invoiceStatus,
+        "provider.verifiedAt": new Date(),
+      },
+      { new: true }
+    );
 
-// Print to store once, only after successful payment
-if (isPaid && order) {
-  if (!order.storePrint?.printed) {
-    try {
-      const printResult = await printOrderToStore(order);
+    // Print to store once, only after successful payment
+    if (isPaid && order) {
+      if (!order.storePrint?.printed) {
+        try {
+          const printResult = await printOrderToStore(order);
 
-      order.storePrint = {
-        printed: true,
-        printedAt: new Date(),
-        lastError: "",
-      };
+          order.storePrint = {
+            printed: true,
+            printedAt: new Date(),
+            lastError: "",
+          };
 
-      await order.save();
-      console.log("✅ Store ticket printed:", printResult);
-    } catch (printErr) {
-      console.error("❌ Store print failed:", printErr.message);
+          await order.save();
+          console.log("✅ Store ticket printed:", printResult);
+        } catch (printErr) {
+          console.error("❌ Store print failed:", printErr.message);
 
-      order.storePrint = {
-        printed: false,
-        printedAt: null,
-        lastError: printErr.message || "Print failed",
-      };
+          order.storePrint = {
+            printed: false,
+            printedAt: null,
+            lastError: printErr.message || "Print failed",
+          };
 
-      await order.save();
+          await order.save();
+        }
+      } else {
+        console.log("ℹ️ Store ticket already printed for order:", orderId);
+      }
     }
-  } else {
-    console.log("ℹ️ Store ticket already printed for order:", orderId);
-  }
-}
     // Render user-friendly page
     return res.status(200).send(
       renderReturnPage({
         title: isPaid
-           ? "Payment Successful"
-           : invoiceStatus === "Failed"
-           ? "Payment Failed"
-           : "Payment Completed",
+          ? "Payment Successful"
+          : invoiceStatus === "Failed"
+            ? "Payment Failed"
+            : "Payment Completed",
         status: invoiceStatus,
         orderId,
         paymentId: paymentId || "-",
@@ -478,13 +478,13 @@ router.get("/myfatoorah/verify", async (req, res) => {
     // 1) Load order and get invoiceId/paymentId
     const order = await Order.findById(orderId);
     if (!order) {
-       return res.status(404).json({ ok: false, error: "Order not found" });
+      return res.status(404).json({ ok: false, error: "Order not found" });
     }
     if (order.payment?.status === "paid") {
-       return res.status(400).json({
-       ok: false,
-       error: "This order is already paid",
-     });
+      return res.status(400).json({
+        ok: false,
+        error: "This order is already paid",
+      });
     }
     const invoiceId = order?.payment?.invoiceId || "";
     const paymentId = order?.payment?.paymentId || "";
@@ -550,8 +550,8 @@ function renderReturnPage({ title, status, orderId, paymentId, note, deepLink })
   const subtitle = isPaid
     ? ""
     : isFailed
-    ? "Your payment could not be completed."
-    : "Your payment is being processed.";
+      ? "Your payment could not be completed."
+      : "Your payment is being processed.";
 
   const returnBtn = deepLink
     ? `<a class="btn btn-primary" href="${deepLink}">Return to App</a>`
