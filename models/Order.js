@@ -1,7 +1,6 @@
 // models/Order.js
 const mongoose = require("mongoose");
 const { DELIVERY_FEE } = require("../config/pricing");
-
 const OrderItemSchema = new mongoose.Schema(
   {
     productId: {
@@ -75,36 +74,42 @@ const OrderSchema = new mongoose.Schema(
       invoiceId: { type: String, default: "" },
       paymentId: { type: String, default: "" },
     },
-      checkout: {
-       isFinalized: { type: Boolean, default: false, index: true },
-       finalizedAt: { type: Date, default: null },
-     },
-      // ✅ provider details belong INSIDE payment
-      provider: {
-        name: { type: String, default: "myfatoorah" },
-        trackId: { type: String, default: "" },
-        referenceId: { type: String, default: "" },
-        transactionId: { type: String, default: "" },
-        authorizationId: { type: String, default: "" },
-        gateway: { type: String, default: "" },
-        currency: { type: String, default: "" },
-        amount: { type: Number, default: 0 },
 
-        invoiceStatus: { type: String, default: "" },
-        transactionStatus: { type: String, default: "" },
-        verifiedAt: { type: Date, default: null },
+    checkout: {
+      isFinalized: { type: Boolean, default: false, index: true },
+      finalizedAt: { type: Date, default: null },
+    },
 
-        card: {
-          brand: { type: String, default: "" },
-          issuer: { type: String, default: "" },
-          issuerCountry: { type: String, default: "" },
-          fundingMethod: { type: String, default: "" },
-          maskedNumber: { type: String, default: "" },
-          nameOnCard: { type: String, default: "" },
-        },
+    provider: {
+      name: { type: String, default: "myfatoorah" },
+      trackId: { type: String, default: "" },
+      referenceId: { type: String, default: "" },
+      transactionId: { type: String, default: "" },
+      authorizationId: { type: String, default: "" },
+      gateway: { type: String, default: "" },
+      currency: { type: String, default: "" },
+      amount: { type: Number, default: 0 },
+
+      invoiceStatus: { type: String, default: "" },
+      transactionStatus: { type: String, default: "" },
+      verifiedAt: { type: Date, default: null },
+
+      card: {
+        brand: { type: String, default: "" },
+        issuer: { type: String, default: "" },
+        issuerCountry: { type: String, default: "" },
+        fundingMethod: { type: String, default: "" },
+        maskedNumber: { type: String, default: "" },
+        nameOnCard: { type: String, default: "" },
       },
+    },
 
-    // ✅ Delivery workflow
+    storePrint: {
+      printed: { type: Boolean, default: false },
+      printedAt: { type: Date, default: null },
+      lastError: { type: String, default: "" },
+    },
+
     delivery: {
       status: {
         type: String,
@@ -123,7 +128,6 @@ const OrderSchema = new mongoose.Schema(
       deliveredAt: { type: Date, default: null },
     },
 
-    // ✅ Disputes & refunds
     dispute: {
       status: {
         type: String,

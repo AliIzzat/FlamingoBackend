@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const StoreSchema = new mongoose.Schema(
   {
     type: {
-      type: String,        // ← category.key
+      type: String,
       required: true,
       index: true,
     },
@@ -16,6 +16,17 @@ const StoreSchema = new mongoose.Schema(
     },
     logo: { type: String, default: "" },
     isActive: { type: Boolean, default: true },
+
+    printer: {
+      enabled: { type: Boolean, default: true },
+      ipAddress: { type: String, default: "" },
+      port: { type: Number, default: 9100 },
+      paperWidth: {
+        type: String,
+        enum: ["58mm", "80mm"],
+        default: "80mm",
+      },
+    },
   },
   { timestamps: true }
 );

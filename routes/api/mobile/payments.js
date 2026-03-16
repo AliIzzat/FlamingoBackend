@@ -4,6 +4,7 @@ const router = express.Router();
 const axios = require("axios");
 const Order = require("../../../models/Order");
 const Notification = require("../../../models/Notification");
+const { printOrderToStore } = require("../../../services/storePrinter");
 
 // Adding getPaymentStatus
 async function getPaymentStatusFromMF({ invoiceId, paymentId }) {
@@ -395,13 +396,49 @@ router.get("/myfatoorah/return", async (req, res) => {
     const invoiceIdFromMF = r.data?.Data?.InvoiceId ? String(r.data.Data.InvoiceId) : "";
 
     // Update DB
-    await Order.findByIdAndUpdate(orderId, {
-      "payment.status": isPaid ? "paid" : "unpaid",
-      "payment.paymentId": paymentId ? String(paymentId) : undefined,
-      "payment.invoiceId": invoiceIdFromMF || undefined,
-      "payment.method": "myfatoorah",
-    });
+    const order = await Order.findByIdAndUpdate(
+  orderId,
+  {
+    "payment.status": isPaid ? "paid" : "unpaid",
+    "payment.paymentId": paymentId ? String(paymentId) : "",
+    "payment.invoiceId": invoiceIdFromMF || "",
+    "payment.method": "myfatoorah",
+    "provider.name": "myfatoorah",
+    "provider.invoiceStatus": invoiceStatus,
+    "provider.verifiedAt": new Date(),
+  },
+  { new: true }
+);
 
+// Print to store once, only after successful payment
+if (isPaid && order) {
+  if (!order.storePrint?.printed) {
+    try {
+      const printResult = await printOrderToStore(order);
+
+      order.storePrint = {
+        printed: true,
+        printedAt: new Date(),
+        lastError: "",
+      };
+
+      await order.save();
+      console.log("✅ Store ticket printed:", printResult);
+    } catch (printErr) {
+      console.error("❌ Store print failed:", printErr.message);
+
+      order.storePrint = {
+        printed: false,
+        printedAt: null,
+        lastError: printErr.message || "Print failed",
+      };
+
+      await order.save();
+    }
+  } else {
+    console.log("ℹ️ Store ticket already printed for order:", orderId);
+  }
+}
     // Render user-friendly page
     return res.status(200).send(
       renderReturnPage({
@@ -431,6 +468,7 @@ router.get("/myfatoorah/return", async (req, res) => {
     );
   }
 });
+
 
 router.get("/myfatoorah/verify", async (req, res) => {
   try {
