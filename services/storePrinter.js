@@ -66,7 +66,8 @@ function buildStoreTicket(order, store) {
   const customerName = order?.customer?.name || "Customer";
   const customerPhone = order?.customer?.phone || "";
   const addressText = order?.customer?.addressText || "";
-  const paymentStatus = order?.payment?.status || "unknown";
+  const paymentStatus = (order?.payment?.status || "unknown").toUpperCase();
+  const storeName = store?.name || "STORE";
 
   const items = Array.isArray(order?.items) ? order.items : [];
 
@@ -75,27 +76,37 @@ function buildStoreTicket(order, store) {
     total += Number(item?.price_snapshot || 0) * Number(item?.qty || 0);
   }
 
+  function fitRight(left, right, maxWidth = width) {
+    const l = String(left ?? "");
+    const r = String(right ?? "");
+    const spaces = Math.max(1, maxWidth - l.length - r.length);
+    return l + " ".repeat(spaces) + r;
+  }
+
   const lines = [];
 
   lines.push(center("FLAMANGO DELIVERY", width));
-  lines.push(center(store?.name || "STORE", width));
+  lines.push(center(storeName.toUpperCase(), width));
   lines.push(divider(width));
-  lines.push(line(`ORDER: ${orderNo}`, width));
-  lines.push(line(`DATE : ${createdAt}`, width));
-  lines.push(line(`PAY  : ${paymentStatus.toUpperCase()}`, width));
+
+  lines.push(fitRight("ORDER NO", `#${orderNo}`, width));
+  lines.push(fitRight("DATE", createdAt, width));
+  lines.push(fitRight("PAYMENT", paymentStatus, width));
+
   lines.push(divider(width));
-  lines.push(line(`CUSTOMER: ${customerName}`, width));
+
+  lines.push(line(`CUSTOMER : ${customerName}`, width));
 
   if (customerPhone) {
-    lines.push(line(`PHONE   : ${customerPhone}`, width));
+    lines.push(line(`PHONE    : ${customerPhone}`, width));
   }
 
   if (addressText) {
-    lines.push(line(`ADDRESS : ${addressText}`, width));
+    lines.push(line(`ADDRESS  : ${addressText}`, width));
   }
 
   lines.push(divider(width));
-  lines.push(line("ITEMS", width));
+  lines.push(center("ORDER ITEMS", width));
   lines.push(divider(width));
 
   for (const item of items) {
@@ -105,19 +116,22 @@ function buildStoreTicket(order, store) {
     const itemTotal = qty * price;
 
     lines.push(line(`${qty} x ${name}`, width));
-    lines.push(line(`    QAR ${money(price)}   =   QAR ${money(itemTotal)}`, width));
+    lines.push(fitRight(`QAR ${money(price)}`, `QAR ${money(itemTotal)}`, width));
+    lines.push("");
   }
 
   lines.push(divider(width));
-  lines.push(line(`TOTAL: QAR ${money(total)}`, width));
+  lines.push(fitRight("TOTAL", `QAR ${money(total)}`, width));
+  lines.push(divider(width));
 
   if (order?.notes) {
+    lines.push("NOTES");
     lines.push(divider(width));
-    lines.push(line("NOTES:", width));
     lines.push(line(String(order.notes), width));
+    lines.push(divider(width));
   }
 
-  lines.push(divider(width));
+  lines.push(center("PAID ONLINE", width));
   lines.push(center("DRIVER PICKUP", width));
   lines.push("");
   lines.push("");
