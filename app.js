@@ -1,7 +1,7 @@
 require("dotenv").config();
 
-console.log("🚀 APP.JS LOADED - VERSION 2026-02-25 B");
-console.log("🔐 MF TOKEN length =", process.env.MYFATOORAH_TOKEN?.length);
+// console.log("🚀 APP.JS LOADED - VERSION 2026-02-25 B");
+// console.log("🔐 MF TOKEN length =", process.env.MYFATOORAH_TOKEN?.length);
 const path = require("path");
 const express = require("express");
 const compression = require("compression");
@@ -12,8 +12,8 @@ const cors = require("cors");
 const exphbs = require("express-handlebars");
 const Handlebars = require("handlebars");
 const Product = require("./models/Product");
+const mobileSearchRoutes = require("./routes/api/mobile/search");
 
-// API Routers (these exist and are needed on Railway)
 const customerApiRouter = require("./routes/api/customer");
 const driverApi = require("./routes/api/driver");
 const customerDisputes = require("./routes/api/customerDisputes");
@@ -173,6 +173,7 @@ app.use("/api/mobile/products", mobileProducts);
 app.use("/api/mobile/payments", paymentsRoutes);
 app.use("/api/mobile/orders", mobileOrders);
 app.use("/api/mobile/categories", require("./routes/api/mobile/categories"));
+app.use("/api/mobile/search", mobileSearchRoutes);
 
 if (ENABLE_WEB) {
   app.use("/order", orderRoutes);
@@ -277,12 +278,12 @@ app.use((err, req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error("💥 UNHANDLED ERROR:", err);
+  //console.error("💥 UNHANDLED ERROR:", err);
   res.status(500).json({ ok: false, error: "Server error", debug: err?.message });
 });
 
 process.on("SIGTERM", () => {
-  console.log("⚠️ SIGTERM received — Railway is stopping the container");
+  //console.log("⚠️ SIGTERM received — Railway is stopping the container");
   process.exit(0);
 });
 
