@@ -31,6 +31,17 @@ router.get("/", async (req, res) => {
       storeFilter.type = category;
     }
 
+    // 1) Find matching stores first
+    const stores = await Store.find(storeFilter)
+      .sort({ name: 1 })
+      .limit(20)
+      .lean();
+
+    const matchedStoreIds = stores.map((s) => s._id);
+
+    // 2) Find products that match either:
+    //    - their own fields
+    //    - OR belong to matched stores
     const productFilter = {
       isActive: true,
       $or: [
@@ -38,17 +49,15 @@ router.get("/", async (req, res) => {
         { name_ar: regex },
         { details: regex },
         { details_ar: regex },
+        ...(matchedStoreIds.length > 0 ? [{ storeId: { $in: matchedStoreIds } }] : []),
       ],
     };
 
-    const [stores, products] = await Promise.all([
-      Store.find(storeFilter).sort({ name: 1 }).limit(20).lean(),
-      Product.find(productFilter)
-        .populate("storeId", "name name_ar address type logo")
-        .sort({ name: 1 })
-        .limit(30)
-        .lean(),
-    ]);
+    const products = await Product.find(productFilter)
+      .populate("storeId", "name name_ar address type logo")
+      .sort({ name: 1 })
+      .limit(50)
+      .lean();
 
     const filteredProducts = category
       ? products.filter((p) => String(p?.storeId?.type || "") === category)
