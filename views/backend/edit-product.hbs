@@ -1,0 +1,87 @@
+<div class="container">
+  <h2>Edit Product</h2>
+
+  <form action="/backend/products/edit/{{product._id}}" method="POST" enctype="multipart/form-data" class="product-form">
+    
+    <div class="form-group">
+      <label>Product Name (EN)</label>
+      <input type="text" name="name" value="{{product.name}}" required>
+    </div>
+
+    <div class="form-group">
+      <label>Product Name (AR)</label>
+      <input type="text" name="name_ar" value="{{product.name_ar}}">
+    </div>
+
+    <div class="form-group">
+      <label>Description (EN)</label>
+      <textarea name="description">{{product.description}}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Description (AR)</label>
+      <textarea name="description_ar">{{product.description_ar}}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Price</label>
+      <input type="number" step="0.01" name="price" value="{{product.price}}" required>
+    </div>
+
+    <div class="form-group">
+      <label>
+        <input type="checkbox" name="hasOffer" {{#if product.hasOffer}}checked{{/if}}>
+        Has Offer
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label>Offer Price</label>
+      <input type="number" step="0.01" name="offerPrice" value="{{product.offerPrice}}">
+    </div>
+
+    <div class="form-group">
+      <label>Store</label>
+      <select name="storeId" required>
+        {{#each stores}}
+          <option value="{{this._id}}" {{#ifEquals this._id ../product.storeId}}selected{{/ifEquals}}>
+            {{this.name}}
+          </option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Category</label>
+      <select name="category" required>
+        {{#each categories}}
+          <option value="{{this.key}}" {{#ifEquals this.key ../product.category}}selected{{/ifEquals}}>
+            {{this.name}}
+          </option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>
+        <input type="checkbox" name="inStock" {{#if product.inStock}}checked{{/if}}>
+        In Stock
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label>Current Image</label><br>
+      {{#if product.image}}
+        <img src="{{product.image}}" alt="{{product.name}}" width="120">
+      {{/if}}
+    </div>
+
+    <div class="form-group">
+      <label>Replace Image</label>
+      <input type="file" name="image" accept="image/*">
+    </div>
+
+    <button type="submit" class="btn btn-success">Update Product</button>
+    <a href="/backend/products/store/{{product.storeId}}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>

@@ -1,7 +1,4 @@
 require("dotenv").config();
-
-// console.log("🚀 APP.JS LOADED - VERSION 2026-02-25 B");
-// console.log("🔐 MF TOKEN length =", process.env.MYFATOORAH_TOKEN?.length);
 const path = require("path");
 const express = require("express");
 const compression = require("compression");
@@ -13,7 +10,7 @@ const exphbs = require("express-handlebars");
 const Handlebars = require("handlebars");
 const Product = require("./models/Product");
 const mobileSearchRoutes = require("./routes/api/mobile/search");
-
+const productsRoutes = require("./routes/backend/products");
 const customerApiRouter = require("./routes/api/customer");
 const driverApi = require("./routes/api/driver");
 const customerDisputes = require("./routes/api/customerDisputes");
@@ -26,7 +23,6 @@ const orderRoutes = require("./routes/frontend/order");
 const mobileOrders = require("./routes/api/mobile/orders");
 // Helpers
 const distanceHelper = require("./utils/distance");
-
 const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
 
 const MONGODB_URI =
@@ -64,7 +60,6 @@ if (isProd) app.set("trust proxy", 1);
 
 // Middleware
 app.use(cors({ origin: true, credentials: true }));
-
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -75,7 +70,6 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Static
 app.use(express.static(path.join(__dirname, "public"), { maxAge: isProd ? "1d" : 0 }));
-
 
 // Sessions (needed for admin + web flows; harmless for API)
 if (ENABLE_WEB || ENABLE_ADMIN) {
@@ -104,7 +98,6 @@ app.use((req, res, next) => {
   res.locals.user = req.session?.user || null;
   next();
 });
-
 
 // View engine (only really needed if you render pages)
 app.engine(
@@ -135,7 +128,6 @@ app.get("/", (req, res) => {
 });
 
 // Health
-// --- HEALTH (keep ONE copy only) ---
 app.get("/health", (_req, res) => {
   res.json({
     ok: true,
@@ -174,6 +166,7 @@ app.use("/api/mobile/payments", paymentsRoutes);
 app.use("/api/mobile/orders", mobileOrders);
 app.use("/api/mobile/categories", require("./routes/api/mobile/categories"));
 app.use("/api/mobile/search", mobileSearchRoutes);
+app.use("/admin/products", productsRoutes);
 
 if (ENABLE_WEB) {
   app.use("/order", orderRoutes);
@@ -278,12 +271,10 @@ app.use((err, req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
-  //console.error("💥 UNHANDLED ERROR:", err);
   res.status(500).json({ ok: false, error: "Server error", debug: err?.message });
 });
 
 process.on("SIGTERM", () => {
-  //console.log("⚠️ SIGTERM received — Railway is stopping the container");
   process.exit(0);
 });
 
