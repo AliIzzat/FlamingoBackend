@@ -237,7 +237,6 @@ router.post("/myfatoorah/initiate", async (req, res) => {
 // =========================
 router.get("/status", async (req, res) => {
   console.log("router.get status");
-  router.post(router.get("/status"));
   try {
     if (!MF_TOKEN) {
       return res.status(500).json({
