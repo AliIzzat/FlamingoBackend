@@ -231,7 +231,7 @@ router.post("/myfatoorah/initiate", async (req, res) => {
 // GET /api/mobile/payments/status?invoiceId=... or ?paymentId=...
 // =========================
 router.get("/status", async (req, res) => {
-  console.log("router.get("/status")");
+  console.log("router.get status");
   router.post(router.get("/status"));
   try {
     if (!MF_TOKEN) {
@@ -391,7 +391,7 @@ router.get("/status", async (req, res) => {
 // MyFatoorah redirects here after 3DS
 // =========================
 router.get("/myfatoorah/return", async (req, res) => {
-  console.log("router.get("/myfatoorah/return")");
+  console.log("router.get/myfatoorah/return");
   router.get("/myfatoorah/return");
 
   const orderId = req.query.orderId || "";
