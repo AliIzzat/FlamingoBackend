@@ -31,7 +31,7 @@
         <option value="">All Drivers</option>
         {{#each driversList}}
           <option value="{{_id}}" {{#if (eq _id ../filters.driverId)}}selected{{/if}}>
-            {{username}}
+            {{name}}
           </option>
         {{/each}}
       </select>

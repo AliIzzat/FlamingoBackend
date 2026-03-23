@@ -1,4 +1,5 @@
 // routes/api/mobile/payments.js
+console.log("INSIDE PAYMENT.JS");
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
@@ -49,7 +50,7 @@ const MF_BASE_RAW =
   "https://apitest.myfatoorah.com";
 
 const MF_BASE = String(MF_BASE_RAW).replace(/\/+$/, "").replace(/\/v2$/, "");
-console.log("🌐 payments.js MF_BASE =", MF_BASE);
+//console.log("🌐 payments.js MF_BASE =", MF_BASE);
 
 // Deep link scheme (optional; will NOT work reliably on Expo Go)
 const APP_SCHEME = process.env.MOBILE_SCHEME || "flamingdelivery";
@@ -138,7 +139,7 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     const baseUrl = getPublicBaseUrl();
     const methodId = Number(paymentMethodId || 2);
 
-    console.log("🌐 baseUrl =", baseUrl);
+    //console.log("🌐 baseUrl =", baseUrl);
     console.log("🆔 orderId =", orderId);
     console.log("💰 totalAmount =", totalAmount);
     console.log("💳 paymentMethodId =", methodId);
@@ -148,10 +149,16 @@ router.post("/myfatoorah/initiate", async (req, res) => {
 
     console.log("✅ MF CallBackUrl =", CallBackUrl);
     console.log("✅ MF ErrorUrl =", ErrorUrl);
-
+   
+    const DELIVERY_FEE = 10;
+    const subtotal = Number(totalAmount) || 0;
+    const finalAmount = subtotal + DELIVERY_FEE;
+    console.log("💰 totalAmount =", Number(totalAmount));
+    console.log("💰 subtotal =", subtotal);
+    console.log("💰 finalAmount =", finalAmount);
     const payload = {
       PaymentMethodId: methodId,
-      InvoiceValue: Number(totalAmount),
+      InvoiceValue: finalAmount,
       CustomerName: customerName || "Customer",
       CurrencyIso: "QAR",
       DisplayCurrencyIso: "QAR",
@@ -392,7 +399,7 @@ router.get("/myfatoorah/return", async (req, res) => {
 
     console.log("====================================");
     console.log("✅ RETURN HIT");
-    console.log("🌐 Full URL =", req.originalUrl);
+    //console.log("🌐 Full URL =", req.originalUrl);
     console.log("🌍 Host =", req.headers.host);
     console.log("📦 Query =", req.query);
     console.log("🆔 orderId =", orderId);
