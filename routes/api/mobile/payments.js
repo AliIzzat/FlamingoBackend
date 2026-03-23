@@ -9,6 +9,7 @@ const { printOrderToStore } = require("../../../services/storePrinter");
 
 // Adding getPaymentStatus
 async function getPaymentStatusFromMF({ invoiceId, paymentId }) {
+  console.log("INSIDE FUNCTION GETPAYMENTSTATUSFROMMF");
   if (!MF_TOKEN) throw new Error("MYFATOORAH_TOKEN missing");
 
   if (!invoiceId && !paymentId) {
@@ -58,6 +59,7 @@ console.log("📱 payments.js APP_SCHEME =", APP_SCHEME);
 
 // Public base URL used in CallBackUrl/ErrorUrl
 function getPublicBaseUrl() {
+  console.log("function getPublicBaseUrl()");
   const appBase = process.env.APP_BASE_URL;
   if (appBase) return String(appBase).replace(/\/+$/, "");
 
@@ -69,6 +71,7 @@ function getPublicBaseUrl() {
 }
 
 function deepLinkReturn({ orderId, paymentId, status }) {
+    console.log("function deepLinkReturn");
   const scheme = String(APP_SCHEME || "flamingdelivery").trim().replace("://", "");
   return `${scheme}://payment-return?orderId=${encodeURIComponent(
     orderId || ""
@@ -89,6 +92,7 @@ function mfHeaders() {
 // POST /api/mobile/payments/myfatoorah/initiate
 // =========================
 router.post("/myfatoorah/initiate", async (req, res) => {
+  console.log("INSIDE router.post(/myfatoorah/initiate");
   try {
     if (!MF_TOKEN) {
       return res.status(500).json({
@@ -227,6 +231,8 @@ router.post("/myfatoorah/initiate", async (req, res) => {
 // GET /api/mobile/payments/status?invoiceId=... or ?paymentId=...
 // =========================
 router.get("/status", async (req, res) => {
+  console.log("router.get("/status")");
+  router.post(router.get("/status"));
   try {
     if (!MF_TOKEN) {
       return res.status(500).json({
@@ -385,6 +391,8 @@ router.get("/status", async (req, res) => {
 // MyFatoorah redirects here after 3DS
 // =========================
 router.get("/myfatoorah/return", async (req, res) => {
+  console.log("router.get("/myfatoorah/return")");
+  router.get("/myfatoorah/return");
 
   const orderId = req.query.orderId || "";
 
@@ -637,6 +645,7 @@ router.get("/myfatoorah/verify", async (req, res) => {
 // HTML TEMPLATE
 // =========================
 function renderReturnPage({ title, status, orderId, paymentId, note, deepLink }) {
+  console.log("function renderReturnPage");
   const isPaid = status === "Paid";
   const isFailed = status === "Failed";
 
