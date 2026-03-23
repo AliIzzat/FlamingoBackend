@@ -157,6 +157,11 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     const DELIVERY_FEE = 10;
     const subtotal = Number(totalAmount) || 0;
     const finalAmount = subtotal + DELIVERY_FEE;
+    order.totals = order.totals || {};
+    order.totals.subtotal = subtotal;
+    order.totals.deliveryFee = DELIVERY_FEE;
+    order.totals.total = finalAmount;
+    await order.save();
     console.log("💰 totalAmount =", Number(totalAmount));
     console.log("💰 subtotal =", subtotal);
     console.log("💰 finalAmount =", finalAmount);
@@ -525,7 +530,7 @@ router.get("/myfatoorah/return", async (req, res) => {
             lastError: "",
           };
 
-          await order.save();
+         // await order.save();
           console.log("✅ Store ticket printed:", printResult);
         } catch (printErr) {
           console.error("❌ Store print failed:", printErr.message);
