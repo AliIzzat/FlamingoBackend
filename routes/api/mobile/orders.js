@@ -161,8 +161,8 @@ router.post("/create", async (req, res) => {
 
     // ✅ pickup store from first item
     const pickupStoreId = items.find((i) => i.storeId)?.storeId || null;
-    console.log("🧾 pickupStoreId detected:", pickupStoreId);
-    console.log("🏪 pickupStoreId =", String(pickupStoreId || ""));
+    // console.log("🧾 pickupStoreId detected:", pickupStoreId);
+    // console.log("🏪 pickupStoreId =", String(pickupStoreId || ""));
 
     let pickupLocation = { lat: null, lng: null };
     let pickupAddressText = "";
@@ -172,7 +172,7 @@ router.post("/create", async (req, res) => {
 if (pickupStoreId) {
   const storeDoc = await Store.findById(pickupStoreId).lean();
 
-  console.log("🏪 store doc =", JSON.stringify(storeDoc || null, null, 2));
+  // console.log("🏪 store doc =", JSON.stringify(storeDoc || null, null, 2));
 
   if (!storeDoc) {
     console.log("⚠️ Store not found for pickupStoreId =", String(pickupStoreId));
