@@ -40,7 +40,7 @@ const app = express();
 
 // check request is reaching Node server
 app.use((req, res, next) => {
-  console.log("➡️", req.method, req.originalUrl);
+ // console.log("➡️", req.method, req.originalUrl);
   next();
 });
 // Feature flags
