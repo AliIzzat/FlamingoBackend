@@ -267,217 +267,334 @@ async function findOrderByPaymentRef({ invoiceId, paymentId }) {
   return null;
 }
 
-function renderReturnPage({ title, status, orderId, paymentId, note, deepLink }) {
+function renderReturnPage({ title, status, deepLink }) {
   const normalizedStatus = String(status || "UNKNOWN");
   const isPaid = normalizedStatus === "Paid";
   const isFailed = normalizedStatus === "Failed";
 
   const badgeClass = isPaid ? "success" : isFailed ? "danger" : "warning";
   const titleIcon = isPaid ? "✅" : isFailed ? "❌" : "⏳";
-  const subtitle = isPaid
-    ? "Your payment has been completed successfully."
-    : isFailed
-      ? "Your payment could not be completed."
-      : "Your payment is being processed or needs confirmation.";
 
   const returnBtn = deepLink
     ? `<a class="btn btn-primary" href="${deepLink}">Return to App</a>`
     : "";
 
-  const safeOrderId = orderId || "-";
-  const safePaymentId = paymentId || "-";
-  const safeNote = note || "";
-
   return `
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>${title}</title>
-  <style>
-    :root{
-      --bg1:#fbfcfe;
-      --bg2:#f3f5fa;
-      --text:#1b1b1f;
-      --muted:#7a8190;
-      --primary:#520582;
-      --primary-dark:#3d0461;
-      --success-bg:#eef8f1;
-      --success-text:#1c7a45;
-      --danger-bg:#fdeeee;
-      --danger-text:#9f1d1d;
-      --warning-bg:#fff7e8;
-      --warning-text:#9a6700;
-      --secondary-bg:#eef1f6;
-      --secondary-text:#1f2937;
-      --card:#ffffff;
-      --border:#e8ebf2;
-    }
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>${title}</title>
 
-    *{
-      box-sizing:border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+<style>
+  body {
+    margin:0;
+    font-family: system-ui, -apple-system, sans-serif;
+    background:#f4f6fb;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+  }
 
-    html, body{
-      margin:0;
-      padding:0;
-      min-height:100dvh;
-    }
+  .card {
+    width:90%;
+    max-width:320px;
+    background:#fff;
+    border-radius:18px;
+    padding:20px 16px;
+    text-align:center;
+    box-shadow:0 8px 20px rgba(0,0,0,0.06);
+  }
 
-    body{
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
-      color: var(--text);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:20px 16px calc(20px + env(safe-area-inset-bottom));
-    }
+  .title {
+    font-size:16px; /* 👈 smaller */
+    font-weight:700;
+    margin:0;
+  }
 
-    .screen{
-      width:100%;
-      max-width:360px;
-      text-align:center;
-    }
+  .status {
+    margin-top:16px;
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+  }
 
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:20px;
-      padding:22px 18px;
-      box-shadow:0 8px 30px rgba(26,32,44,.06);
-    }
+  .status.success {
+    background:#e8f6ee;
+    color:#1f7a4c;
+  }
 
-    .title{
-      margin:0;
-      font-size:18px;
-      font-weight:700;
-      line-height:1.35;
-      letter-spacing:-0.01em;
-    }
+  .status.danger {
+    background:#fdecec;
+    color:#a61d24;
+  }
 
-    .subtitle{
-      margin:8px 0 0;
-      font-size:13px;
-      color:var(--muted);
-      line-height:1.6;
-    }
+  .status.warning {
+    background:#fff4e5;
+    color:#996600;
+  }
 
-    .status{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      margin-top:14px;
-      padding:7px 12px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:700;
-    }
+  .actions {
+    margin-top:18px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
 
-    .status.success{
-      background:var(--success-bg);
-      color:var(--success-text);
-    }
+  .btn {
+    padding:8px 10px; /* 👈 smaller buttons */
+    border-radius:10px;
+    font-size:12px;
+    font-weight:600;
+    text-decoration:none;
+  }
 
-    .status.danger{
-      background:var(--danger-bg);
-      color:var(--danger-text);
-    }
+  .btn-primary {
+    background:#520582;
+    color:#fff;
+  }
 
-    .status.warning{
-      background:var(--warning-bg);
-      color:var(--warning-text);
-    }
+  .btn-secondary {
+    background:#eef1f6;
+    color:#333;
+  }
 
-    .meta{
-      margin-top:16px;
-      text-align:left;
-      background:#fafbfe;
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:12px;
-      font-size:12px;
-      line-height:1.7;
-    }
-
-    .meta strong{
-      display:inline-block;
-      min-width:78px;
-    }
-
-    .actions{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      margin-top:18px;
-    }
-
-    .btn{
-      display:block;
-      width:100%;
-      padding:11px 12px;
-      border:none;
-      border-radius:12px;
-      text-decoration:none;
-      text-align:center;
-      font-size:12px;
-      font-weight:700;
-      line-height:1.2;
-    }
-
-    .btn-primary{
-      background:var(--primary);
-      color:#fff;
-    }
-
-    .btn-primary:active{
-      background:var(--primary-dark);
-    }
-
-    .btn-secondary{
-      background:var(--secondary-bg);
-      color:var(--secondary-text);
-    }
-
-    .brand{
-      margin-top:12px;
-      font-size:10px;
-      color:#a0a7b4;
-      letter-spacing:.03em;
-    }
-  </style>
+</style>
 </head>
+
 <body>
-  <main class="screen">
-    <div class="card">
-      <h1 class="title">${title} ${titleIcon}</h1>
-      <p class="subtitle">${subtitle}</p>
+  <div class="card">
+    <h1 class="title">${title} ${titleIcon}</h1>
 
-      <div class="status ${badgeClass}">
-        <span>Status:</span>
-        <span>${normalizedStatus}</span>
-      </div>
-
-      <div class="meta">
-        <div><strong>Order ID:</strong> ${safeOrderId}</div>
-        <div><strong>Payment ID:</strong> ${safePaymentId}</div>
-        ${safeNote ? `<div><strong>Note:</strong> ${safeNote}</div>` : ""}
-      </div>
-
-      <div class="actions">
-        ${returnBtn}
-        <a class="btn btn-secondary" href="/">Back to Home</a>
-      </div>
+    <div class="status ${badgeClass}">
+      Status: ${normalizedStatus}
     </div>
 
-    <div class="brand">Powered by FlamingDelivery</div>
-  </main>
+    <div class="actions">
+      ${returnBtn}
+      <a class="btn btn-secondary" href="/">Home</a>
+    </div>
+  </div>
 </body>
-</html>`;
+</html>
+`;
 }
+
+// function renderReturnPage({ title, status, orderId, paymentId, note, deepLink }) {
+//   const normalizedStatus = String(status || "UNKNOWN");
+//   const isPaid = normalizedStatus === "Paid";
+//   const isFailed = normalizedStatus === "Failed";
+
+//   const badgeClass = isPaid ? "success" : isFailed ? "danger" : "warning";
+//   const titleIcon = isPaid ? "✅" : isFailed ? "❌" : "⏳";
+//   const subtitle = isPaid
+//     ? "Your payment has been completed successfully."
+//     : isFailed
+//       ? "Your payment could not be completed."
+//       : "Your payment is being processed or needs confirmation.";
+
+//   const returnBtn = deepLink
+//     ? `<a class="btn btn-primary" href="${deepLink}">Return to App</a>`
+//     : "";
+
+//   const safeOrderId = orderId || "-";
+//   const safePaymentId = paymentId || "-";
+//   const safeNote = note || "";
+
+//   return `
+// <!doctype html>
+// <html lang="en">
+// <head>
+//   <meta charset="utf-8" />
+//   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+//   <meta name="apple-mobile-web-app-capable" content="yes">
+//   <title>${title}</title>
+//   <style>
+//     :root{
+//       --bg1:#fbfcfe;
+//       --bg2:#f3f5fa;
+//       --text:#1b1b1f;
+//       --muted:#7a8190;
+//       --primary:#520582;
+//       --primary-dark:#3d0461;
+//       --success-bg:#eef8f1;
+//       --success-text:#1c7a45;
+//       --danger-bg:#fdeeee;
+//       --danger-text:#9f1d1d;
+//       --warning-bg:#fff7e8;
+//       --warning-text:#9a6700;
+//       --secondary-bg:#eef1f6;
+//       --secondary-text:#1f2937;
+//       --card:#ffffff;
+//       --border:#e8ebf2;
+//     }
+
+//     *{
+//       box-sizing:border-box;
+//       -webkit-tap-highlight-color: transparent;
+//     }
+
+//     html, body{
+//       margin:0;
+//       padding:0;
+//       min-height:100dvh;
+//     }
+
+//     body{
+//       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+//       background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+//       color: var(--text);
+//       display:flex;
+//       align-items:center;
+//       justify-content:center;
+//       padding:20px 16px calc(20px + env(safe-area-inset-bottom));
+//     }
+
+//     .screen{
+//       width:100%;
+//       max-width:360px;
+//       text-align:center;
+//     }
+
+//     .card{
+//       background:var(--card);
+//       border:1px solid var(--border);
+//       border-radius:20px;
+//       padding:22px 18px;
+//       box-shadow:0 8px 30px rgba(26,32,44,.06);
+//     }
+
+//     .title{
+//       margin:0;
+//       font-size:18px;
+//       font-weight:700;
+//       line-height:1.35;
+//       letter-spacing:-0.01em;
+//     }
+
+//     .subtitle{
+//       margin:8px 0 0;
+//       font-size:13px;
+//       color:var(--muted);
+//       line-height:1.6;
+//     }
+
+//     .status{
+//       display:inline-flex;
+//       align-items:center;
+//       gap:6px;
+//       margin-top:14px;
+//       padding:7px 12px;
+//       border-radius:999px;
+//       font-size:12px;
+//       font-weight:700;
+//     }
+
+//     .status.success{
+//       background:var(--success-bg);
+//       color:var(--success-text);
+//     }
+
+//     .status.danger{
+//       background:var(--danger-bg);
+//       color:var(--danger-text);
+//     }
+
+//     .status.warning{
+//       background:var(--warning-bg);
+//       color:var(--warning-text);
+//     }
+
+//     .meta{
+//       margin-top:16px;
+//       text-align:left;
+//       background:#fafbfe;
+//       border:1px solid var(--border);
+//       border-radius:14px;
+//       padding:12px;
+//       font-size:12px;
+//       line-height:1.7;
+//     }
+
+//     .meta strong{
+//       display:inline-block;
+//       min-width:78px;
+//     }
+
+//     .actions{
+//       display:flex;
+//       flex-direction:column;
+//       gap:10px;
+//       margin-top:18px;
+//     }
+
+//     .btn{
+//       display:block;
+//       width:100%;
+//       padding:11px 12px;
+//       border:none;
+//       border-radius:12px;
+//       text-decoration:none;
+//       text-align:center;
+//       font-size:12px;
+//       font-weight:700;
+//       line-height:1.2;
+//     }
+
+//     .btn-primary{
+//       background:var(--primary);
+//       color:#fff;
+//     }
+
+//     .btn-primary:active{
+//       background:var(--primary-dark);
+//     }
+
+//     .btn-secondary{
+//       background:var(--secondary-bg);
+//       color:var(--secondary-text);
+//     }
+
+//     .brand{
+//       margin-top:12px;
+//       font-size:10px;
+//       color:#a0a7b4;
+//       letter-spacing:.03em;
+//     }
+//   </style>
+// </head>
+// <body>
+//   <main class="screen">
+//     <div class="card">
+//       <h1 class="title">${title} ${titleIcon}</h1>
+//       <p class="subtitle">${subtitle}</p>
+
+//       <div class="status ${badgeClass}">
+//         <span>Status:</span>
+//         <span>${normalizedStatus}</span>
+//       </div>
+
+//       <div class="meta">
+//         <div><strong>Order ID:</strong> ${safeOrderId}</div>
+//         <div><strong>Payment ID:</strong> ${safePaymentId}</div>
+//         ${safeNote ? `<div><strong>Note:</strong> ${safeNote}</div>` : ""}
+//       </div>
+
+//       <div class="actions">
+//         ${returnBtn}
+//         <a class="btn btn-secondary" href="/">Back to Home</a>
+//       </div>
+//     </div>
+
+//     <div class="brand">Powered by FlamingDelivery</div>
+//   </main>
+// </body>
+// </html>`;
+// }
 
 // =========================
 // INITIATE PAYMENT
