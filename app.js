@@ -21,6 +21,8 @@ const mobileProducts = require("./routes/api/mobileProducts");
 const paymentsRoutes = require("./routes/api/mobile/payments");
 const orderRoutes = require("./routes/frontend/order");
 const mobileOrders = require("./routes/api/mobile/orders");
+const usersRoutes = require("./routes/api/users");
+const mobileAuthRoutes = require("./routes/api/mobile/auth");
 // Helpers
 const distanceHelper = require("./utils/distance");
 const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
@@ -167,7 +169,8 @@ app.use("/api/mobile/orders", mobileOrders);
 app.use("/api/mobile/categories", require("./routes/api/mobile/categories"));
 app.use("/api/mobile/search", mobileSearchRoutes);
 app.use("/admin/products", productsRoutes);
-
+app.use("/api/users", usersRoutes);
+app.use("/api/mobile/auth", mobileAuthRoutes);
 if (ENABLE_WEB) {
   app.use("/order", orderRoutes);
 }
