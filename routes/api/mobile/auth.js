@@ -5,6 +5,8 @@ const User = require("../../../models/User");
 // POST /api/mobile/auth/register
 router.post("/register", async (req, res) => {
   try {
+    console.log("🔥 HIT /api/mobile/auth/register");
+    console.log("BODY:", req.body);
     const mobile = String(req.body.mobile || "")
       .replace(/\s+/g, "")
       .trim();
