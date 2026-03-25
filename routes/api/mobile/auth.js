@@ -7,6 +7,7 @@ router.post("/register", async (req, res) => {
   try {
     console.log("🔥 HIT /api/mobile/auth/register");
     console.log("BODY:", req.body);
+
     const mobile = String(req.body.mobile || "")
       .replace(/\s+/g, "")
       .trim();
@@ -14,6 +15,8 @@ router.post("/register", async (req, res) => {
     const name = String(req.body.name || "").trim();
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "").trim();
+
+    console.log("NORMALIZED VALUES:", { name, email, mobile });
 
     if (!name || !mobile || !password) {
       return res.status(400).json({
@@ -23,6 +26,7 @@ router.post("/register", async (req, res) => {
     }
 
     const existingUser = await User.findOne({ mobile });
+    console.log("EXISTING USER BY MOBILE:", existingUser);
 
     if (existingUser) {
       return res.status(409).json({
@@ -73,15 +77,23 @@ router.post("/register", async (req, res) => {
     console.error("❌ Mobile register error:", err);
 
     if (err?.code === 11000) {
+      console.log("Duplicate keyPattern:", err.keyPattern);
+      console.log("Duplicate keyValue:", err.keyValue);
+
+      const duplicateField = Object.keys(err.keyPattern || {})[0] || "field";
+      const duplicateValue = err.keyValue?.[duplicateField];
+
       return res.status(409).json({
         ok: false,
-        message: "Mobile already exists",
+        message: `${duplicateField} already exists`,
+        field: duplicateField,
+        value: duplicateValue,
       });
     }
 
     return res.status(500).json({
       ok: false,
-      message: "Server error",
+      message: err?.message || "Server error",
     });
   }
 });
