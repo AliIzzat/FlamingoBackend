@@ -77,4 +77,22 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/search", async (req, res) => {
+  try {
+    const q = String(req.query.q || "").trim();
+
+    const products = await Product.find({
+      name: { $regex: q, $options: "i" }
+    }).lean();
+
+    res.render("frontend/search", {
+      products,
+      cart: req.session.cart || [],
+    });
+  } catch (err) {
+    console.error("Search error:", err);
+    res.status(500).send("Server error");
+  }
+});
+
 module.exports = router;

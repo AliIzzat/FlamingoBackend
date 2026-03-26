@@ -158,41 +158,76 @@
   {{else}}
     <p>Your cart is empty.</p>
   {{/if}}
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.quantity-input').forEach(input => {
-    input.addEventListener('input', () => { const itemId = input.dataset.id;
-    const quantity = parseInt(input.value) || 1;
-  </script>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll(".quantity-wrapper").forEach(wrapper => { const
-    input = wrapper.querySelector(".quantity-input"); const incrementBtn =
-    wrapper.querySelector(".increment"); const decrementBtn =
-    wrapper.querySelector(".decrement"); incrementBtn.addEventListener("click",
-    () => { let current = parseInt(input.value) || 1; if (current < 100)
-    input.value = current + 1; }); decrementBtn.addEventListener("click", () =>
-    { let current = parseInt(input.value) || 1; if (current > 1) input.value =
-    current - 1; }); }); });
-  </script>
+ <script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.quantity-input').forEach(input => {
+    input.addEventListener('input', () => {
+      const itemId = input.dataset.id;
+      const quantity = parseInt(input.value) || 1;
 
-  <script>
-    let navigationType = null; // Detect type of navigation after the page loads
-    window.addEventListener("load", () => { const nav =
-    performance.getEntriesByType("navigation")[0]; if (nav?.type === "reload") {
-    navigationType = "refresh"; } else if (nav?.type === "navigate") {
-    navigationType = "navigation"; } else { navigationType = "initial-load"; }
-    }); // Detect user clicking internal links (navigating within the site)
-    document.addEventListener("click", function (e) { if (e.target.tagName ===
-    'A' && e.target.origin === location.origin) { navigationType = "navigation";
-    } }); // Final trigger before leaving page
-    window.addEventListener("beforeunload", function () { if (navigationType ===
-    "refresh") { console.log("🔄 Refreshing cart page"); // 👉 Optional: send
-    activity ping or skip } else if (navigationType === "navigation") {
-    console.log("➡️ Navigating away from cart"); // 👉 Optional: nothing to do,
-    or save cart timestamp } else { console.log("❌ Closing tab/browser on cart
-    page"); navigator.sendBeacon("/session/clear-cart"); } });
-  </script>
+      console.log("Item:", itemId, "Quantity:", quantity);
+
+      // 👉 You can call your update route here
+    });
+  });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".quantity-wrapper").forEach(wrapper => {
+    const input = wrapper.querySelector(".quantity-input");
+    const incrementBtn = wrapper.querySelector(".increment");
+    const decrementBtn = wrapper.querySelector(".decrement");
+
+    incrementBtn.addEventListener("click", () => {
+      let current = parseInt(input.value) || 1;
+      if (current < 100) input.value = current + 1;
+    });
+
+    decrementBtn.addEventListener("click", () => {
+      let current = parseInt(input.value) || 1;
+      if (current > 1) input.value = current - 1;
+    });
+  });
+});
+</script>
+
+<script>
+let navigationType = null;
+
+// Detect navigation type
+window.addEventListener("load", () => {
+  const nav = performance.getEntriesByType("navigation")[0];
+
+  if (nav?.type === "reload") {
+    navigationType = "refresh";
+  } else if (nav?.type === "navigate") {
+    navigationType = "navigation";
+  } else {
+    navigationType = "initial-load";
+  }
+});
+
+// Detect internal link clicks
+document.addEventListener("click", function (e) {
+  if (e.target.tagName === "A" && e.target.origin === location.origin) {
+    navigationType = "navigation";
+  }
+});
+
+// Before leaving page
+window.addEventListener("beforeunload", function () {
+  if (navigationType === "refresh") {
+    console.log("🔄 Refreshing cart page");
+  } else if (navigationType === "navigation") {
+    console.log("➡️ Navigating away from cart");
+  } else {
+    console.log("❌ Closing tab/browser on cart page");
+    navigator.sendBeacon("/session/clear-cart");
+  }
+});
+</script>
 
   <script>
   document.addEventListener("DOMContentLoaded", () => {
