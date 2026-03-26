@@ -7,10 +7,12 @@
   <button type="submit">Search</button>
 </form>
 
-<div style="display:flex; gap:20px; align-items:flex-start;">
+{{!-- <div style="display:flex; gap:20px; align-items:flex-start;"> --}}
+<div style="display:flex; gap:20px; align-items:flex-start; justify-content:space-between; width:100%;">
 
   <!-- LEFT: PRODUCTS -->
-  <div style="flex:1;">
+  {{!-- <div style="flex:1;"> --}}
+  <div style="flex:1; min-width:0;">
     {{#if products.length}}
       {{#each products}}
         <div style="border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:8px;">
@@ -29,7 +31,14 @@
   </div>
 
   <!-- RIGHT: CART -->
-  <div style="width:300px; border:1px solid #ccc; padding:15px; border-radius:10px;">
+  {{!-- <div style="width:300px; border:1px solid #ccc; padding:15px; border-radius:10px;">  --}}
+  {{!-- <div style="width:300px; min-width:300px; border:2px solid #ccc; padding:15px; border-radius:10px; background:#fafafa;"> --}}
+
+  <div style="width:300px; min-width:300px; border:2px solid #ccc; padding:15px; border-radius:10px; background:#fafafa;">
+  <div style="background:yellow; padding:8px; margin-bottom:10px;">
+    CART COUNT: {{cart.length}}
+  </div>
+  
     <h3>Your Cart</h3>
 
     {{#if cart.length}}
