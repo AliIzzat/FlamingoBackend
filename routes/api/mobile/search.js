@@ -88,7 +88,6 @@ router.get("/search", async (req, res) => {
     const products = await Product.find(filter).lean();
 
     res.render("frontend/search", {
-      layout: "frontend-layout",
       products,
       query: q,
       cart: req.session.cart || [],
