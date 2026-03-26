@@ -1,0 +1,48 @@
+<h1>Search Results</h1>
+
+<form method="GET" action="/search" style="margin-bottom:20px;">
+  <input type="text" name="q" value="{{query}}" placeholder="Search..." />
+  <button type="submit">Search</button>
+</form>
+
+<div style="display:flex; gap:20px; align-items:flex-start;">
+
+  <!-- LEFT: PRODUCTS -->
+  <div style="flex:1;">
+    {{#if products.length}}
+      {{#each products}}
+        <div style="border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:8px;">
+          <h3>{{this.name}}</h3>
+          <p>QAR {{this.price}}</p>
+
+          <form action="/cart/add" method="POST">
+            <input type="hidden" name="productId" value="{{this._id}}">
+            <button type="submit">Add to Cart</button>
+          </form>
+        </div>
+      {{/each}}
+    {{else}}
+      <p>No products found</p>
+    {{/if}}
+  </div>
+
+  <!-- RIGHT: CART -->
+  <div style="width:300px; border:1px solid #ccc; padding:15px; border-radius:10px;">
+    <h3>Your Cart</h3>
+
+    {{#if cart.length}}
+      {{#each cart}}
+        <div style="border-bottom:1px solid #eee; padding:8px 0;">
+          <strong>{{this.name}}</strong>
+          <div>Qty: {{this.quantity}}</div>
+          <div>QAR {{this.price}}</div>
+        </div>
+      {{/each}}
+
+      <a href="/cart/view">Go to Cart</a>
+    {{else}}
+      <p>Cart is empty</p>
+    {{/if}}
+  </div>
+
+</div>
