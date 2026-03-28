@@ -373,11 +373,6 @@ function renderReturnPage({ title, status, deepLink }) {
     <div class="status ${badgeClass}">
       Status: ${normalizedStatus}
     </div>
-
-    <div class="actions">
-      ${returnBtn}
-      <a class="btn btn-secondary" href="/">Home</a>
-    </div>
   </div>
 </body>
 </html>

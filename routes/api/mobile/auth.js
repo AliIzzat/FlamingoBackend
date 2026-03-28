@@ -114,7 +114,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ mobile, password });
+    const user = await User.findOne({ mobile, password, role: "customer" });
 
     if (!user) {
       return res.status(401).json({
