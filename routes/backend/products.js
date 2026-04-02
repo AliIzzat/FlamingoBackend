@@ -72,19 +72,18 @@ router.get("/products/edit/:id", async (req, res) => {
 });
 
 // Save edited product
-router.post("/products/edit/:id", upload.single("imageFile"), async (req, res) => {
+router.post("/update/:id", upload.single("image"), async (req, res) => {
   try {
     const {
       name,
       name_ar,
-      description,
-      description_ar,
+      details,
+      details_ar,
       price,
       offerPrice,
-      hasOffer,
-      storeId,
-      category,
-      inStock,
+      offer,
+      isActive,
+      returnTo,
     } = req.body;
 
     const product = await Product.findById(req.params.id);
@@ -92,16 +91,14 @@ router.post("/products/edit/:id", upload.single("imageFile"), async (req, res) =
       return res.status(404).send("Product not found");
     }
 
-    product.name = name?.trim() || product.name;
-    product.name_ar = name_ar?.trim() || "";
-    product.description = description?.trim() || "";
-    product.description_ar = description_ar?.trim() || "";
+    product.name = (name || "").trim();
+    product.name_ar = (name_ar || "").trim();
+    product.details = (details || "").trim();
+    product.details_ar = (details_ar || "").trim();
     product.price = Number(price) || 0;
-    product.offerPrice = hasOffer === "on" ? Number(offerPrice) || 0 : 0;
-    product.hasOffer = hasOffer === "on";
-    product.storeId = storeId || null;
-    product.category = category || product.category;
-    product.inStock = inStock === "on";
+    product.offer = String(offer) === "true";
+    product.offerPrice = product.offer ? Number(offerPrice) || 0 : 0;
+    product.isActive = String(isActive) === "true";
 
     if (req.file) {
       product.image = `/uploads/${req.file.filename}`;
@@ -109,9 +106,9 @@ router.post("/products/edit/:id", upload.single("imageFile"), async (req, res) =
 
     await product.save();
 
-    res.redirect(`/backend/products/store/${product.storeId}`);
+    return res.redirect(returnTo || "/admin/products");
   } catch (err) {
-    console.error("POST edit product error:", err);
+    console.error("❌ POST /admin/products/update/:id error:", err);
     res.status(500).send("Server error");
   }
 });
