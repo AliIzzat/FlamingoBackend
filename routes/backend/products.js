@@ -74,6 +74,11 @@ router.get("/products/edit/:id", async (req, res) => {
 // Save edited product
 router.post("/update/:id", upload.single("image"), async (req, res) => {
   try {
+
+    console.log("REQ BODY:", req.body);
+    console.log("REQ FILE:", req.file);
+    console.log("PRODUCT ID:", req.params.id);
+    
     const {
       name,
       name_ar,
