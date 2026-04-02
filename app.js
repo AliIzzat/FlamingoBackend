@@ -126,25 +126,50 @@ app.engine(
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
-const Category = require("./models/Category");
+const Store = require("./models/Store");
 
-app.get("/seed-categories", async (req, res) => {
+app.get("/seed-stores", async (req, res) => {
   try {
-    const categories = [
-      { key: "restaurant", name_en: "Restaurants", name_ar: "مطاعم", icon: "🍽️", sortOrder: 1 },
-      { key: "grocery", name_en: "Grocery", name_ar: "بقالة", icon: "🛒", sortOrder: 2 },
-      { key: "pharmacy", name_en: "Pharmacy", name_ar: "صيدلية", icon: "💊", sortOrder: 3 },
-      { key: "child_care", name_en: "Child Care", name_ar: "رعاية الأطفال", icon: "👶", sortOrder: 4 },
-      { key: "flower", name_en: "Flowers", name_ar: "زهور", icon: "🌸", sortOrder: 5 },
-      { key: "nutrition", name_en: "Nutrition", name_ar: "تغذية", icon: "🥗", sortOrder: 6 },
-      { key: "electronics", name_en: "Electronics", name_ar: "إلكترونيات", icon: "💻", sortOrder: 7 },
+    const stores = [
+      {
+        type: "restaurant",
+        name: "Pizza Palace",
+        name_ar: "قصر البيتزا",
+        address: "Doha - West Bay",
+        location: { type: "Point", coordinates: [51.5310, 25.2854] },
+        logo: "",
+      },
+      {
+        type: "restaurant",
+        name: "Burger Hub",
+        name_ar: "برجر هب",
+        address: "Doha - Al Sadd",
+        location: { type: "Point", coordinates: [51.4980, 25.2867] },
+        logo: "",
+      },
+      {
+        type: "grocery",
+        name: "Fresh Market",
+        name_ar: "السوق الطازج",
+        address: "Doha - Bin Mahmoud",
+        location: { type: "Point", coordinates: [51.5200, 25.2800] },
+        logo: "",
+      },
+      {
+        type: "pharmacy",
+        name: "Health Pharmacy",
+        name_ar: "صيدلية الصحة",
+        address: "Doha - Lusail",
+        location: { type: "Point", coordinates: [51.5205, 25.3750] },
+        logo: "",
+      },
     ];
 
     const results = [];
 
-    for (const item of categories) {
-      const doc = await Category.findOneAndUpdate(
-        { key: item.key },
+    for (const item of stores) {
+      const doc = await Store.findOneAndUpdate(
+        { name: item.name },
         { $set: item },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
@@ -153,11 +178,11 @@ app.get("/seed-categories", async (req, res) => {
 
     res.json({
       success: true,
-      message: "Categories seeded successfully",
+      message: "Stores seeded successfully",
       count: results.length,
     });
   } catch (err) {
-    console.error(err);
+    console.error("Seed stores error:", err);
     res.status(500).json({ error: err.message });
   }
 });
