@@ -126,6 +126,32 @@ app.engine(
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
+app.get("/test-db", async (req, res) => {
+  try {
+    const mongoose = require("mongoose");
+
+    const TestSchema = new mongoose.Schema({
+      name: String,
+      createdAt: { type: Date, default: Date.now },
+    });
+
+    const Test = mongoose.model("Test", TestSchema);
+
+    const doc = await Test.create({
+      name: "ONEGO TEST RECORD",
+    });
+
+    res.json({
+      success: true,
+      message: "Test data inserted",
+      data: doc,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get("/", (req, res) => {
   if (ENABLE_ADMIN) return res.redirect("/auth/login");
   return res.json({ ok: true, message: "FlamingoBackend API running" });
