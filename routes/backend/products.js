@@ -7,8 +7,9 @@ const upload = require("../../middleware/upload"); // if you already use multer
 
 router.get("/", async (req, res) => {
   try {
-    const selectedType = (req.query.type || "").trim();
-    const selectedStoreId = (req.query.storeId || "").trim();
+    const firstValue = (v) => Array.isArray(v) ? v[0] : v;
+    const selectedType = String(firstValue(req.query.type) || "").trim();
+    const selectedStoreId = String(firstValue(req.query.storeId) || "").trim();
 
     const categories = await Category.find({ isActive: true })
       .sort({ name_en: 1 })
@@ -74,11 +75,10 @@ router.get("/products/edit/:id", async (req, res) => {
 // Save edited product
 router.post("/update/:id", upload.single("image"), async (req, res) => {
   try {
-
     console.log("REQ BODY:", req.body);
     console.log("REQ FILE:", req.file);
     console.log("PRODUCT ID:", req.params.id);
-    
+
     const {
       name,
       name_ar,
@@ -105,13 +105,20 @@ router.post("/update/:id", upload.single("image"), async (req, res) => {
     product.offerPrice = product.offer ? Number(offerPrice) || 0 : 0;
     product.isActive = String(isActive) === "true";
 
+    // ✅ FIX: SAVE IMAGE HERE
     if (req.file) {
       product.image = `/uploads/${req.file.filename}`;
     }
 
+    // ✅ SAVE PRODUCT
     await product.save();
 
-    return res.redirect(returnTo || "/admin/products");
+    // ✅ SAFE REDIRECT
+    const firstValue = (v) => Array.isArray(v) ? v[0] : v;
+    const safeReturnTo = firstValue(returnTo) || "/admin/products";
+
+    return res.redirect(safeReturnTo);
+
   } catch (err) {
     console.error("❌ POST /admin/products/update/:id error:", err);
     res.status(500).send("Server error");
