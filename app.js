@@ -129,7 +129,6 @@ app.set("views", path.join(__dirname, "views"));
 const Order = require("./models/Order");
 const User = require("./models/User");
 const Store = require("./models/Store");
-const Product = require("./models/Product");
 
 app.get("/seed-orders", async (req, res) => {
   try {
