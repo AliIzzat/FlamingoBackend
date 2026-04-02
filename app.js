@@ -125,74 +125,155 @@ app.engine(
 );
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
-const User = require("./models/User");
 
-app.get("/seed-users", async (req, res) => {
+const Order = require("./models/Order");
+const User = require("./models/User");
+const Store = require("./models/Store");
+const Product = require("./models/Product");
+
+app.get("/seed-orders", async (req, res) => {
   try {
-    const users = [
+    const customer = await User.findOne({ role: "customer" });
+    const driver = await User.findOne({ role: "driver" });
+
+    const pizza = await Product.findOne({ name: "Pepperoni Pizza" });
+    const burger = await Product.findOne({ name: "Beef Burger" });
+
+    if (!customer || !driver || !pizza || !burger) {
+      return res.status(400).json({
+        success: false,
+        message: "Seed users/products first",
+      });
+    }
+
+    const orders = [
       {
-        username: "admin",
-        name: "System Admin",
-        email: "admin@onego.com",
-        mobile: "70000001",
-        password: "123456",
-        role: "admin",
+        customer: {
+          name: customer.name,
+          phone: customer.mobile,
+          addressText: "Doha - West Bay",
+          location: { lat: 25.2854, lng: 51.5310 },
+        },
+
+        pickup: {
+          storeId: pizza.storeId,
+          addressText: pizza.storeSnapshot.address,
+          location: { lat: 25.2854, lng: 51.5310 },
+        },
+
+        items: [
+          {
+            productId: pizza._id,
+            storeId: pizza.storeId,
+            category: pizza.category,
+            name_snapshot: pizza.name,
+            price_snapshot: pizza.offer ? pizza.offerPrice : pizza.price,
+            qty: 2,
+            image_snapshot: pizza.image || "",
+          },
+        ],
+
+        totals: {
+          subtotal:
+            (pizza.offer ? pizza.offerPrice : pizza.price) * 2,
+        },
+
+        payment: {
+          method: "cash",
+          status: "unpaid",
+        },
+
+        checkout: {
+          isFinalized: true,
+          finalizedAt: new Date(),
+        },
+
+        delivery: {
+          status: "Pending",
+          assignedDriverId: driver._id,
+        },
       },
+
       {
-        username: "data_entry",
-        name: "Data Entry",
-        email: "data@onego.com",
-        mobile: "70000002",
-        password: "123456",
-        role: "data_entry",
-      },
-      {
-        username: "support",
-        name: "Support User",
-        email: "support@onego.com",
-        mobile: "70000003",
-        password: "123456",
-        role: "support",
-      },
-      {
-        username: "driver1",
-        name: "Driver One",
-        email: "driver@onego.com",
-        mobile: "70000004",
-        password: "123456",
-        role: "driver",
-      },
-      {
-        username: "customer1",
-        name: "Customer One",
-        email: "customer@onego.com",
-        mobile: "70000005",
-        password: "123456",
-        role: "customer",
+        customer: {
+          name: customer.name,
+          phone: customer.mobile,
+          addressText: "Doha - Al Sadd",
+          location: { lat: 25.2867, lng: 51.4980 },
+        },
+
+        pickup: {
+          storeId: burger.storeId,
+          addressText: burger.storeSnapshot.address,
+          location: { lat: 25.2867, lng: 51.4980 },
+        },
+
+        items: [
+          {
+            productId: burger._id,
+            storeId: burger.storeId,
+            category: burger.category,
+            name_snapshot: burger.name,
+            price_snapshot: burger.offer ? burger.offerPrice : burger.price,
+            qty: 1,
+            image_snapshot: burger.image || "",
+          },
+        ],
+
+        totals: {
+          subtotal:
+            burger.offer ? burger.offerPrice : burger.price,
+        },
+
+        payment: {
+          method: "myfatoorah",
+          status: "paid",
+          invoiceId: "TEST-INV-1001",
+          paymentId: "TEST-PAY-1001",
+        },
+
+        provider: {
+          gateway: "MyFatoorah",
+          currency: "QAR",
+          amount:
+            (burger.offer ? burger.offerPrice : burger.price) + 10,
+          invoiceStatus: "Paid",
+          transactionStatus: "Success",
+          verifiedAt: new Date(),
+        },
+
+        checkout: {
+          isFinalized: true,
+          finalizedAt: new Date(),
+        },
+
+        delivery: {
+          status: "Claimed",
+          assignedDriverId: driver._id,
+          claimedAt: new Date(),
+        },
       },
     ];
 
     const results = [];
 
-    for (const item of users) {
-      const doc = await User.findOneAndUpdate(
-        { mobile: item.mobile },
-        { $set: item },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-      );
+    for (const item of orders) {
+      const doc = await Order.create(item);
       results.push(doc);
     }
 
     res.json({
       success: true,
-      message: "Users seeded successfully",
+      message: "Orders seeded successfully",
       count: results.length,
     });
   } catch (err) {
-    console.error("Seed users error:", err);
+    console.error("Seed orders error:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
+
 app.get("/", (req, res) => {
   if (ENABLE_ADMIN) return res.redirect("/auth/login");
   return res.json({ ok: true, message: "FlamingoBackend API running" });
