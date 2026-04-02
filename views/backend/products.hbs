@@ -126,12 +126,20 @@
       {{#each products}}
       <tr>
         <td>
-          <div class="img-cell">
+          <form id="updateForm-{{_id}}" action="/admin/products/update/{{_id}}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="returnTo" value="/admin/products?type={{../selectedStore.type}}&storeId={{../selectedStore._id}}">
+                <div class="img-cell">
+                  <div class="thumb-box">
+                    {{#if image}}<img src="{{image}}" alt="" class="thumb" />{{/if}}
+                  </div>
+                  <input type="file" name="image" accept="image/*" class="file-input" />
+                </div>
+          {{!-- <div class="img-cell">
             <div class="thumb-box">
               {{#if image}}<img src="{{image}}" alt="" class="thumb" />{{/if}}
             </div>
             <input type="file" name="image" accept="image/*" form="updateForm-{{_id}}" class="file-input" />
-          </div>
+          </div> --}}
         </td>
 
         <td>
