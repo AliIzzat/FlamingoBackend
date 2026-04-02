@@ -126,6 +126,41 @@ app.engine(
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
+const Category = require("./models/Category");
+
+app.get("/seed-categories", async (req, res) => {
+  try {
+    const categories = [
+      { key: "restaurant", name_en: "Restaurants", name_ar: "مطاعم", icon: "🍽️", sortOrder: 1 },
+      { key: "grocery", name_en: "Grocery", name_ar: "بقالة", icon: "🛒", sortOrder: 2 },
+      { key: "pharmacy", name_en: "Pharmacy", name_ar: "صيدلية", icon: "💊", sortOrder: 3 },
+      { key: "child_care", name_en: "Child Care", name_ar: "رعاية الأطفال", icon: "👶", sortOrder: 4 },
+      { key: "flower", name_en: "Flowers", name_ar: "زهور", icon: "🌸", sortOrder: 5 },
+      { key: "nutrition", name_en: "Nutrition", name_ar: "تغذية", icon: "🥗", sortOrder: 6 },
+      { key: "electronics", name_en: "Electronics", name_ar: "إلكترونيات", icon: "💻", sortOrder: 7 },
+    ];
+
+    const results = [];
+
+    for (const item of categories) {
+      const doc = await Category.findOneAndUpdate(
+        { key: item.key },
+        { $set: item },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      results.push(doc);
+    }
+
+    res.json({
+      success: true,
+      message: "Categories seeded successfully",
+      count: results.length,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
 app.get("/", (req, res) => {
   if (ENABLE_ADMIN) return res.redirect("/auth/login");
   return res.json({ ok: true, message: "FlamingoBackend API running" });
