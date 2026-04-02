@@ -125,7 +125,6 @@ app.engine(
 );
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
-const Product = require("./models/Product");
 const Store = require("./models/Store");
 
 app.get("/seed-products", async (req, res) => {
