@@ -125,190 +125,58 @@ app.engine(
 );
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
-const Store = require("./models/Store");
+const User = require("./models/User");
 
-app.get("/seed-products", async (req, res) => {
+app.get("/seed-users", async (req, res) => {
   try {
-    const pizzaPalace = await Store.findOne({ name: "Pizza Palace" });
-    const burgerHub = await Store.findOne({ name: "Burger Hub" });
-    const freshMarket = await Store.findOne({ name: "Fresh Market" });
-    const healthPharmacy = await Store.findOne({ name: "Health Pharmacy" });
-
-    if (!pizzaPalace || !burgerHub || !freshMarket || !healthPharmacy) {
-      return res.status(400).json({
-        success: false,
-        message: "Seed stores first before products.",
-      });
-    }
-
-    const products = [
+    const users = [
       {
-        category: "restaurant",
-        storeId: pizzaPalace._id,
-        storeSnapshot: {
-          type: pizzaPalace.type,
-          name: pizzaPalace.name,
-          name_ar: pizzaPalace.name_ar,
-          logo: pizzaPalace.logo,
-          address: pizzaPalace.address,
-        },
-        name: "Pepperoni Pizza",
-        name_ar: "بيتزا بيبروني",
-        details: "Classic pepperoni pizza with mozzarella cheese",
-        details_ar: "بيتزا بيبروني كلاسيكية مع جبنة موزاريلا",
-        price: 35,
-        offer: true,
-        offerPrice: 29,
-        image: "",
-        isActive: true,
+        username: "admin",
+        name: "System Admin",
+        email: "admin@onego.com",
+        mobile: "70000001",
+        password: "123456",
+        role: "admin",
       },
       {
-        category: "restaurant",
-        storeId: pizzaPalace._id,
-        storeSnapshot: {
-          type: pizzaPalace.type,
-          name: pizzaPalace.name,
-          name_ar: pizzaPalace.name_ar,
-          logo: pizzaPalace.logo,
-          address: pizzaPalace.address,
-        },
-        name: "Margherita Pizza",
-        name_ar: "بيتزا مارجريتا",
-        details: "Fresh tomato sauce, basil, and mozzarella",
-        details_ar: "صلصة طماطم طازجة وريحان وجبنة موزاريلا",
-        price: 30,
-        offer: false,
-        offerPrice: 0,
-        image: "",
-        isActive: true,
+        username: "data_entry",
+        name: "Data Entry",
+        email: "data@onego.com",
+        mobile: "70000002",
+        password: "123456",
+        role: "data_entry",
       },
       {
-        category: "restaurant",
-        storeId: burgerHub._id,
-        storeSnapshot: {
-          type: burgerHub.type,
-          name: burgerHub.name,
-          name_ar: burgerHub.name_ar,
-          logo: burgerHub.logo,
-          address: burgerHub.address,
-        },
-        name: "Beef Burger",
-        name_ar: "برجر لحم",
-        details: "Grilled beef burger with cheese and fries",
-        details_ar: "برجر لحم مشوي مع جبنة وبطاطس",
-        price: 28,
-        offer: true,
-        offerPrice: 24,
-        image: "",
-        isActive: true,
+        username: "support",
+        name: "Support User",
+        email: "support@onego.com",
+        mobile: "70000003",
+        password: "123456",
+        role: "support",
       },
       {
-        category: "restaurant",
-        storeId: burgerHub._id,
-        storeSnapshot: {
-          type: burgerHub.type,
-          name: burgerHub.name,
-          name_ar: burgerHub.name_ar,
-          logo: burgerHub.logo,
-          address: burgerHub.address,
-        },
-        name: "Chicken Burger",
-        name_ar: "برجر دجاج",
-        details: "Crispy chicken burger with lettuce and sauce",
-        details_ar: "برجر دجاج مقرمش مع خس وصلصة",
-        price: 25,
-        offer: false,
-        offerPrice: 0,
-        image: "",
-        isActive: true,
+        username: "driver1",
+        name: "Driver One",
+        email: "driver@onego.com",
+        mobile: "70000004",
+        password: "123456",
+        role: "driver",
       },
       {
-        category: "grocery",
-        storeId: freshMarket._id,
-        storeSnapshot: {
-          type: freshMarket.type,
-          name: freshMarket.name,
-          name_ar: freshMarket.name_ar,
-          logo: freshMarket.logo,
-          address: freshMarket.address,
-        },
-        name: "Fresh Milk 1L",
-        name_ar: "حليب طازج 1 لتر",
-        details: "Full cream fresh milk",
-        details_ar: "حليب طازج كامل الدسم",
-        price: 7,
-        offer: false,
-        offerPrice: 0,
-        image: "",
-        isActive: true,
-      },
-      {
-        category: "grocery",
-        storeId: freshMarket._id,
-        storeSnapshot: {
-          type: freshMarket.type,
-          name: freshMarket.name,
-          name_ar: freshMarket.name_ar,
-          logo: freshMarket.logo,
-          address: freshMarket.address,
-        },
-        name: "Brown Bread",
-        name_ar: "خبز أسمر",
-        details: "Healthy brown bread loaf",
-        details_ar: "رغيف خبز أسمر صحي",
-        price: 5,
-        offer: true,
-        offerPrice: 4,
-        image: "",
-        isActive: true,
-      },
-      {
-        category: "pharmacy",
-        storeId: healthPharmacy._id,
-        storeSnapshot: {
-          type: healthPharmacy.type,
-          name: healthPharmacy.name,
-          name_ar: healthPharmacy.name_ar,
-          logo: healthPharmacy.logo,
-          address: healthPharmacy.address,
-        },
-        name: "Vitamin C Tablets",
-        name_ar: "أقراص فيتامين سي",
-        details: "Vitamin C supplement tablets",
-        details_ar: "أقراص مكمل غذائي فيتامين سي",
-        price: 22,
-        offer: false,
-        offerPrice: 0,
-        image: "",
-        isActive: true,
-      },
-      {
-        category: "pharmacy",
-        storeId: healthPharmacy._id,
-        storeSnapshot: {
-          type: healthPharmacy.type,
-          name: healthPharmacy.name,
-          name_ar: healthPharmacy.name_ar,
-          logo: healthPharmacy.logo,
-          address: healthPharmacy.address,
-        },
-        name: "Pain Relief Spray",
-        name_ar: "بخاخ مسكن للألم",
-        details: "Topical spray for muscle pain relief",
-        details_ar: "بخاخ موضعي لتخفيف آلام العضلات",
-        price: 18,
-        offer: true,
-        offerPrice: 15,
-        image: "",
-        isActive: true,
+        username: "customer1",
+        name: "Customer One",
+        email: "customer@onego.com",
+        mobile: "70000005",
+        password: "123456",
+        role: "customer",
       },
     ];
 
     const results = [];
 
-    for (const item of products) {
-      const doc = await Product.findOneAndUpdate(
-        { name: item.name, storeId: item.storeId },
+    for (const item of users) {
+      const doc = await User.findOneAndUpdate(
+        { mobile: item.mobile },
         { $set: item },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
@@ -317,12 +185,12 @@ app.get("/seed-products", async (req, res) => {
 
     res.json({
       success: true,
-      message: "Products seeded successfully",
+      message: "Users seeded successfully",
       count: results.length,
     });
   } catch (err) {
-    console.error("Seed products error:", err);
-    res.status(500).json({ success: false, error: err.message });
+    console.error("Seed users error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 app.get("/", (req, res) => {
