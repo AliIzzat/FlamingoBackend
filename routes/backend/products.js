@@ -79,46 +79,34 @@ router.post("/update/:id", upload.single("image"), async (req, res) => {
     console.log("REQ FILE:", req.file);
     console.log("PRODUCT ID:", req.params.id);
 
-    const {
-      name,
-      name_ar,
-      details,
-      details_ar,
-      price,
-      offerPrice,
-      offer,
-      isActive,
-      returnTo,
-    } = req.body;
+    const firstValue = (v) => Array.isArray(v) ? v[0] : v;
+    const asText = (v) => String(firstValue(v) || "").trim();
+    const asBool = (v) => String(firstValue(v)) === "true";
+    const asNumber = (v) => Number(firstValue(v) || 0) || 0;
+
+    const returnTo = firstValue(req.body.returnTo) || "/admin/products";
 
     const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).send("Product not found");
     }
 
-    product.name = (name || "").trim();
-    product.name_ar = (name_ar || "").trim();
-    product.details = (details || "").trim();
-    product.details_ar = (details_ar || "").trim();
-    product.price = Number(price) || 0;
-    product.offer = String(offer) === "true";
-    product.offerPrice = product.offer ? Number(offerPrice) || 0 : 0;
-    product.isActive = String(isActive) === "true";
+    product.name = asText(req.body.name);
+    product.name_ar = asText(req.body.name_ar);
+    product.details = asText(req.body.details);
+    product.details_ar = asText(req.body.details_ar);
+    product.price = asNumber(req.body.price);
+    product.offer = asBool(req.body.offer);
+    product.offerPrice = product.offer ? asNumber(req.body.offerPrice) : 0;
+    product.isActive = asBool(req.body.isActive);
 
-    // ✅ FIX: SAVE IMAGE HERE
     if (req.file) {
-      product.image = `/uploads/seed/${req.file.filename}`;
+      product.image = `/uploads/${req.file.filename}`;
     }
 
-    // ✅ SAVE PRODUCT
     await product.save();
 
-    // ✅ SAFE REDIRECT
-    const firstValue = (v) => Array.isArray(v) ? v[0] : v;
-    const safeReturnTo = firstValue(returnTo) || "/admin/products";
-
-    return res.redirect(safeReturnTo);
-
+    return res.redirect(returnTo);
   } catch (err) {
     console.error("❌ POST /admin/products/update/:id error:", err);
     res.status(500).send("Server error");
