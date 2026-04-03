@@ -73,18 +73,12 @@ router.get("/products/edit/:id", async (req, res) => {
 });
 
 // Save edited product
-router.post("/update/:id", upload.single("image"), async (req, res) => {
+router.post("/update/:id", async (req, res) => {
   try {
-    console.log("REQ BODY:", req.body);
-    console.log("REQ FILE:", req.file);
-    console.log("PRODUCT ID:", req.params.id);
-
     const firstValue = (v) => Array.isArray(v) ? v[0] : v;
     const asText = (v) => String(firstValue(v) || "").trim();
     const asBool = (v) => String(firstValue(v)) === "true";
     const asNumber = (v) => Number(firstValue(v) || 0) || 0;
-
-    const returnTo = firstValue(req.body.returnTo) || "/admin/products";
 
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -100,12 +94,12 @@ router.post("/update/:id", upload.single("image"), async (req, res) => {
     product.offerPrice = product.offer ? asNumber(req.body.offerPrice) : 0;
     product.isActive = asBool(req.body.isActive);
 
-    if (req.file) {
-      product.image = `/uploads/${req.file.filename}`;
-    }
+    // simple image path
+    product.image = asText(req.body.image);
 
     await product.save();
 
+    const returnTo = firstValue(req.body.returnTo) || "/admin/products";
     return res.redirect(returnTo);
   } catch (err) {
     console.error("❌ POST /admin/products/update/:id error:", err);

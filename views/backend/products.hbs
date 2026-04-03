@@ -133,7 +133,12 @@
           <div class="thumb-box">
             {{#if image}}<img src="{{image}}" alt="" class="thumb" />{{/if}}
           </div>
-          <input type="file" name="image" accept="image/*" class="file-input" />
+          <input
+              name="image"
+              value="{{image}}"
+              placeholder="/uploads/seed/restaurant-6.png"
+              style="width:220px; height:30px;"
+            />
         </div>
       </td>
 
