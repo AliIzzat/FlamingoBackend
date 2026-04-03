@@ -7,8 +7,9 @@ const upload = require("../../middleware/upload"); // if you already use multer
 
 router.get("/", async (req, res) => {
   try {
-    const selectedType = (req.query.type || "").trim();
-    const selectedStoreId = (req.query.storeId || "").trim();
+    const firstValue = (v) => Array.isArray(v) ? v[0] : v;
+    const selectedType = String(firstValue(req.query.type) || "").trim();
+    const selectedStoreId = String(firstValue(req.query.storeId) || "").trim();
 
     const categories = await Category.find({ isActive: true })
       .sort({ name_en: 1 })
@@ -72,46 +73,36 @@ router.get("/products/edit/:id", async (req, res) => {
 });
 
 // Save edited product
-router.post("/products/edit/:id", upload.single("image"), async (req, res) => {
+router.post("/update/:id", async (req, res) => {
   try {
-    const {
-      name,
-      name_ar,
-      description,
-      description_ar,
-      price,
-      offerPrice,
-      hasOffer,
-      storeId,
-      category,
-      inStock,
-    } = req.body;
+    const firstValue = (v) => Array.isArray(v) ? v[0] : v;
+    const asText = (v) => String(firstValue(v) || "").trim();
+    const asBool = (v) => String(firstValue(v)) === "true";
+    const asNumber = (v) => Number(firstValue(v) || 0) || 0;
 
     const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).send("Product not found");
     }
 
-    product.name = name?.trim() || product.name;
-    product.name_ar = name_ar?.trim() || "";
-    product.description = description?.trim() || "";
-    product.description_ar = description_ar?.trim() || "";
-    product.price = Number(price) || 0;
-    product.offerPrice = hasOffer === "on" ? Number(offerPrice) || 0 : 0;
-    product.hasOffer = hasOffer === "on";
-    product.storeId = storeId || null;
-    product.category = category || product.category;
-    product.inStock = inStock === "on";
+    product.name = asText(req.body.name);
+    product.name_ar = asText(req.body.name_ar);
+    product.details = asText(req.body.details);
+    product.details_ar = asText(req.body.details_ar);
+    product.price = asNumber(req.body.price);
+    product.offer = asBool(req.body.offer);
+    product.offerPrice = product.offer ? asNumber(req.body.offerPrice) : 0;
+    product.isActive = asBool(req.body.isActive);
 
-    if (req.file) {
-      product.image = `/uploads/${req.file.filename}`;
-    }
+    // simple image path
+    product.image = asText(req.body.image);
 
     await product.save();
 
-    res.redirect(`/backend/products/store/${product.storeId}`);
+    const returnTo = firstValue(req.body.returnTo) || "/admin/products";
+    return res.redirect(returnTo);
   } catch (err) {
-    console.error("POST edit product error:", err);
+    console.error("❌ POST /admin/products/update/:id error:", err);
     res.status(500).send("Server error");
   }
 });
