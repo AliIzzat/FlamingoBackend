@@ -107,7 +107,7 @@ router.post("/update/:id", upload.single("image"), async (req, res) => {
 
     // ✅ FIX: SAVE IMAGE HERE
     if (req.file) {
-      product.image = `/uploads/${req.file.filename}`;
+      product.image = `/uploads/seed/${req.file.filename}`;
     }
 
     // ✅ SAVE PRODUCT
