@@ -124,88 +124,78 @@
 
     <tbody>
       {{#each products}}
-      <tr>
-        <td>
-          <div class="img-cell">
-            <div class="thumb-box">
-              {{#if image}}<img src="{{image}}" alt="" class="thumb" />{{/if}}
-            </div>
-            <input type="file" name="image" accept="image/*" form="updateForm-{{_id}}" class="file-input" />
+    <tr>
+    <form id="updateForm-{{_id}}" action="/admin/products/update/{{_id}}" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="returnTo" value="/admin/products?type={{../selectedStore.type}}&storeId={{../selectedStore._id}}">
+
+      <td>
+        <div class="img-cell">
+          <div class="thumb-box">
+            {{#if image}}<img src="{{image}}" alt="" class="thumb" />{{/if}}
           </div>
-        </td>
+          <input
+              name="image"
+              value="{{image}}"
+              placeholder="/uploads/seed/restaurant-6.png"
+              style="width:220px; height:30px;"
+            />
+        </div>
+      </td>
 
-        <td>
-          <form id="updateForm-{{_id}}" action="/admin/products/update/{{_id}}" method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="returnTo" value="/admin/products?type={{../selectedStore.type}}&storeId={{../selectedStore._id}}">
-          </form>
+      <td>
+        <input name="name" value="{{name}}" required style="width:180px; height:30px;" />
+      </td>
 
-          <input name="name" value="{{name}}" required form="updateForm-{{_id}}" style="width:180px; height:30px;" />
-        </td>
+      <td>
+        <input name="name_ar" value="{{name_ar}}" style="width:160px; height:30px;" />
+      </td>
 
-        <td>
-          <input name="name_ar" value="{{name_ar}}" form="updateForm-{{_id}}" style="width:160px; height:30px;" />
-        </td>
+      <td>
+        <input name="price" value="{{price}}" type="number" step="0.01" style="width:70px; height:30px;" />
+      </td>
 
-        <td>
-          <input name="price" value="{{price}}" type="number" step="0.01" form="updateForm-{{_id}}" style="width:70px; height:30px;" />
-        </td>
+      <td>
+        <select name="offer" style="height:30px;">
+          <option value="true" {{#if offer}}selected{{/if}}>Yes</option>
+          <option value="false" {{#unless offer}}selected{{/unless}}>No</option>
+        </select>
+      </td>
 
-        <td>
-          <select name="offer" form="updateForm-{{_id}}" style="height:30px;">
-            <option value="true" {{#if offer}}selected{{/if}}>Yes</option>
-            <option value="false" {{#unless offer}}selected{{/unless}}>No</option>
-          </select>
-        </td>
+      <td>
+        <input name="offerPrice" value="{{offerPrice}}" type="number" step="0.01" style="width:70px; height:30px;" />
+      </td>
 
-        <td>
-          <input name="offerPrice" value="{{offerPrice}}" type="number" step="0.01" form="updateForm-{{_id}}" style="width:70px; height:30px;" />
-        </td>
+      <td>
+        <select name="isActive" style="height:30px;">
+          <option value="true" {{#if isActive}}selected{{/if}}>Yes</option>
+          <option value="false" {{#unless isActive}}selected{{/unless}}>No</option>
+        </select>
+      </td>
 
-        <td>
-          <select name="isActive" form="updateForm-{{_id}}" style="height:30px;">
-            <option value="true" {{#if isActive}}selected{{/if}}>Yes</option>
-            <option value="false" {{#unless isActive}}selected{{/unless}}>No</option>
-          </select>
-        </td>
+      <td class="actions-cell">
+        <div class="actions-row">
+          <button type="submit" class="btn-save">Save</button>
+        </div>
+      </td>
+    </form>
+  </tr>
 
-        <td class="actions-cell">
-          <div class="actions-row">
-            <button type="submit" form="updateForm-{{_id}}" class="btn-save">
-              Save
-            </button>
-
-            <form action="/admin/products/toggle/{{_id}}" method="POST" class="inline-form">
-              <input type="hidden" name="returnTo" value="/admin/products?type={{../selectedStore.type}}&storeId={{../selectedStore._id}}">
-              <button type="submit" class="btn-toggle">
-                {{#if isActive}}Disable{{else}}Enable{{/if}}
-              </button>
-            </form>
-
-            <form action="/admin/products/delete/{{_id}}" method="POST" class="inline-form" onsubmit="return confirm('Delete this product?');">
-              <input type="hidden" name="returnTo" value="/admin/products?type={{../selectedStore.type}}&storeId={{../selectedStore._id}}">
-              <button type="submit" class="btn-delete">
-                Delete
-              </button>
-            </form>
-          </div>
-        </td>
-      </tr>
-
-      <tr>
-        <td colspan="8" class="details-row">
-          <div class="details-grid">
-            <div>
-              <label>Details (EN):</label>
-              <textarea name="details" form="updateForm-{{_id}}" rows="2" style="width:100%;">{{details}}</textarea>
-            </div>
-            <div>
-              <label>Details (AR):</label>
-              <textarea name="details_ar" form="updateForm-{{_id}}" rows="2" style="width:100%;">{{details_ar}}</textarea>
-            </div>
-          </div>
-        </td>
-      </tr>
-      {{/each}}
+  <tr>
+    <td colspan="8" class="details-row">
+      <div class="details-grid">
+        <div>
+          <label>Details (EN):</label>
+          <textarea name="details" form="updateForm-{{_id}}" rows="2" style="width:100%;">{{details}}</textarea>
+        </div>
+        <div>
+          <label>Details (AR):</label>
+          <textarea name="details_ar" form="updateForm-{{_id}}" rows="2" style="width:100%;">{{details_ar}}</textarea>
+        </div>
+      </div>
+    </td>
+  </tr>
+  {{/each}}
+      
     </tbody>
   </table>
   {{else}}
