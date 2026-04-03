@@ -1,5 +1,4 @@
 require("dotenv").config();
-const path = require("path");
 const express = require("express");
 const compression = require("compression");
 const mongoose = require("mongoose");
@@ -69,9 +68,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Static files (logos / uploads)
-app.use("/logos", express.static(path.join(__dirname, "logos")));
+const path = require("path");
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
-
+app.use("/seed", express.static(path.join(__dirname, "public", "seed")));
+app.use("/logos", express.static(path.join(__dirname, "logos")));
 // Static
 app.use(express.static(path.join(__dirname, "public"), { maxAge: isProd ? "1d" : 0 }));
 
