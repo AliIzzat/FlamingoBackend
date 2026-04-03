@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "name": "onego-backend",
+=======
+  "name": "OneGoDB",
+>>>>>>> 70a77951d5015219d831ba5f41122ace8d610d6e
   "version": "1.0.0",
   "main": "app.js",
   "dependencies": {

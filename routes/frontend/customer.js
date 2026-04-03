@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Customer = require('../../models/Customer'); // adjust path if needed
+const User = require('../../models/User'); // adjust path if needed
 
 // Lookup customer by phone
 router.post('/lookup', async (req, res) => {

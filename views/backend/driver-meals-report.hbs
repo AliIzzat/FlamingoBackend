@@ -9,17 +9,17 @@
 <form method="GET" action="/backend/reports/driver-meals" style="margin:12px 0; display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
   <div>
     <label>From</label><br/>
-    <input type="date" name="from" value="{{filters.from}}">
+    <input type="date" name="from" value="{{filters.from}}" style="height: 30px;">
   </div>
 
   <div>
     <label>To</label><br/>
-    <input type="date" name="to" value="{{filters.to}}">
+    <input type="date" name="to" value="{{filters.to}}" style="height: 30px;">
   </div>
 
   <div>
     <label>Mode</label><br/>
-    <select name="mode">
+    <select name="mode" style="height: 30px;">
       <option value="created" {{#if (eq filters.mode "created")}}selected{{/if}}>Order Created</option>
       <option value="delivered" {{#if (eq filters.mode "delivered")}}selected{{/if}}>Delivered At</option>
     </select>
@@ -27,18 +27,18 @@
 
   <div>
       <label>Driver</label><br/>
-      <select name="driverId" style="width:260px;">
+      <select name="driverId" style="width:260px;height: 30px;">
         <option value="">All Drivers</option>
         {{#each driversList}}
           <option value="{{_id}}" {{#if (eq _id ../filters.driverId)}}selected{{/if}}>
-            {{username}}
+            {{name}}
           </option>
         {{/each}}
       </select>
     </div>
 
 
-  <button type="submit">Filter</button>
+  <button type="submit" class="DashBtn">Filter</button>
 </form>
 
 <hr/>

@@ -28,7 +28,6 @@ const ProductSchema = new mongoose.Schema(
     offerPrice: { type: Number, default: null },
     details: { type: String, default: "" },
     details_ar: { type: String, default: "" },
-    stockQty: { type: Number, default: null },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

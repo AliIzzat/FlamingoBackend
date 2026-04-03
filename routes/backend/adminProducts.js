@@ -178,7 +178,8 @@ router.get("/create", async (req, res) => {
 /* =========================================================
    POST /admin/products/create
 ========================================================= */
-router.post("/create", upload.single("imageFile"), async (req, res) => {
+
+router.post("/create", upload.single("image"), async (req, res) => {
   try {
     const storeId = safeObjectId(req.body.storeId);
     if (!storeId) return res.status(400).send("Invalid storeId");
@@ -186,7 +187,6 @@ router.post("/create", upload.single("imageFile"), async (req, res) => {
     const store = await Store.findById(storeId).lean();
     if (!store) return res.status(400).send("Store not found");
 
-    // Validate store.type is active category
     const cat = await Category.findOne({ key: store.type, isActive: true }).lean();
     if (!cat) return res.status(400).send("Store category is disabled. Enable category first.");
 
@@ -208,20 +208,15 @@ router.post("/create", upload.single("imageFile"), async (req, res) => {
     const payload = {
       category: store.type,
       storeId: store._id,
-
       name,
       name_ar,
       price,
       image,
-
       offer,
       offerPrice: offer ? offerPrice : null,
-
       details,
       details_ar,
-
       isActive: toBool(req.body.isActive, true),
-
       storeSnapshot: {
         type: store.type,
         name: store.name,
@@ -230,10 +225,6 @@ router.post("/create", upload.single("imageFile"), async (req, res) => {
         address: store.address || "",
       },
     };
-
-    // optional stockQty (safe even if field removed from UI)
-    const stockQty = toNumOrNull(req.body.stockQty);
-    if (stockQty !== null) payload.stockQty = stockQty;
 
     await Product.create(payload);
 
@@ -394,9 +385,6 @@ router.post("/update/:id", upload.single("image"), async (req, res) => {
 
     const after = await Product.findById(id).select("category storeSnapshot.type").lean();
     console.log("🟩 after.category =", after.category, "snapshot.type =", after.storeSnapshot?.type);
-
-    const stockQty = toNumOrNull(req.body.stockQty);
-    if (stockQty !== null) update.stockQty = stockQty;
 
     if (req.file) update.image = "/uploads/" + req.file.filename;
 

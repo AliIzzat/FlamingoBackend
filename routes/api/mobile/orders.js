@@ -57,6 +57,7 @@ function fingerprintOrder({ cartItems = [], phone = "" }) {
 // -------------------------
 // CREATE ORDER
 // POST /api/mobile/orders/create
+// Splits cart into separate orders per store
 // -------------------------
 router.post("/create", async (req, res) => {
   console.log("📦 ORDER CREATE HIT:", JSON.stringify(req.body, null, 2));
@@ -78,7 +79,7 @@ router.post("/create", async (req, res) => {
       });
     }
 
-    // ✅ duplicate recent-order guard
+    // Duplicate recent-order guard
     const newFingerprint = fingerprintOrder({
       cartItems,
       phone: customer.phone,
@@ -128,15 +129,14 @@ router.post("/create", async (req, res) => {
       });
     }
 
-    // ✅ customer GPS
+    // Customer GPS
     const customerLat = toNumOrNull(customer?.location?.lat);
     const customerLng = toNumOrNull(customer?.location?.lng);
 
-    console.log("👤 customer raw:", customer?.location?.lat, customer?.location?.lng);
     console.log("👤 customer parsed:", customerLat, customerLng);
 
-    // ✅ normalize items
-    const items = cartItems.map((x) => {
+    // Normalize items
+    const normalizedItems = cartItems.map((x) => {
       const rawId = x.productId || x._id || x.id;
 
       const productId =
@@ -157,106 +157,138 @@ router.post("/create", async (req, res) => {
       };
     });
 
-    console.log("🧾 normalized items =", JSON.stringify(items, null, 2));
+    console.log("🧾 normalizedItems =", JSON.stringify(normalizedItems, null, 2));
 
-    // ✅ pickup store from first item
-    const pickupStoreId = items.find((i) => i.storeId)?.storeId || null;
-    console.log("🧾 pickupStoreId detected:", pickupStoreId);
-    console.log("🏪 pickupStoreId =", String(pickupStoreId || ""));
+    // Guard: every item must belong to a store
+    const itemsWithoutStore = normalizedItems.filter((it) => !it.storeId);
+    if (itemsWithoutStore.length > 0) {
+      return res.status(400).json({
+        ok: false,
+        error: "Some cart items are missing storeId",
+        badItems: itemsWithoutStore.map((it) => ({
+          productId: String(it.productId || ""),
+          name: it.name_snapshot,
+        })),
+      });
+    }
 
-    let pickupLocation = { lat: null, lng: null };
-    let pickupAddressText = "";
-    let storeName = "Store";
-    let storeDoc = null;
+    // Group by storeId
+    const itemsByStore = new Map();
 
-if (pickupStoreId) {
-  const storeDoc = await Store.findById(pickupStoreId).lean();
+    for (const item of normalizedItems) {
+      const key = String(item.storeId);
+      if (!itemsByStore.has(key)) {
+        itemsByStore.set(key, []);
+      }
+      itemsByStore.get(key).push(item);
+    }
 
-  console.log("🏪 store doc =", JSON.stringify(storeDoc || null, null, 2));
+    console.log("🏪 store groups count =", itemsByStore.size);
 
-  if (!storeDoc) {
-    console.log("⚠️ Store not found for pickupStoreId =", String(pickupStoreId));
-  } else {
-    storeName = storeDoc.name || "Store";
+    const createdOrders = [];
 
-    // GeoJSON format: [lng, lat]
-    const sLng = toNumOrNull(storeDoc?.location?.coordinates?.[0]);
-    const sLat = toNumOrNull(storeDoc?.location?.coordinates?.[1]);
+    for (const [storeIdStr, storeItems] of itemsByStore.entries()) {
+      const pickupStoreId = new mongoose.Types.ObjectId(storeIdStr);
 
-    console.log("📍 pickup raw:", sLat, sLng);
+      let pickupLocation = { lat: null, lng: null };
+      let pickupAddressText = "";
+      let storeName = "Store";
 
-    if (sLat && sLng) {
-      pickupLocation = { lat: sLat, lng: sLng };
-    } else {
+      const storeDoc = await Store.findById(pickupStoreId).lean();
+
+      if (!storeDoc) {
+        console.log("⚠️ Store not found for pickupStoreId =", storeIdStr);
+        return res.status(400).json({
+          ok: false,
+          error: `Store not found for storeId ${storeIdStr}`,
+        });
+      }
+
+      storeName = storeDoc.name || "Store";
+
+      // GeoJSON format: [lng, lat]
+      const sLng = toNumOrNull(storeDoc?.location?.coordinates?.[0]);
+      const sLat = toNumOrNull(storeDoc?.location?.coordinates?.[1]);
+
+      if (sLat != null && sLng != null) {
+        pickupLocation = { lat: sLat, lng: sLng };
+      } else {
+        console.log("⚠️ Store exists but has no valid coordinates:", storeIdStr);
+      }
+
+      pickupAddressText =
+        storeDoc.address || storeDoc.addressText || storeDoc.name || "";
+
+      const subtotal = calcSubtotalFromItems(storeItems);
+
+      const orderDoc = await Order.create({
+        customer: {
+          name: String(customer.name).trim(),
+          phone: String(customer.phone).trim(),
+          addressText: String(customer.addressText).trim(),
+          location: {
+            lat: customerLat,
+            lng: customerLng,
+          },
+        },
+
+        pickup: {
+          storeId: pickupStoreId,
+          addressText: pickupAddressText,
+          location: pickupLocation,
+        },
+
+        items: storeItems,
+
+        totals: {
+          subtotal,
+        },
+
+        delivery: {
+          status: "Pending",
+        },
+
+        payment: {
+          method: "myfatoorah",
+          status: "unpaid",
+        },
+
+        checkout: {
+          isFinalized: false,
+          finalizedAt: null,
+        },
+      });
+
+      createdOrders.push({
+        orderId: orderDoc._id,
+        storeId: pickupStoreId,
+        storeName,
+        subtotal,
+        itemCount: storeItems.length,
+      });
+
       console.log(
-        "⚠️ Store exists but has no valid coordinates:",
-        String(pickupStoreId)
+        `✅ Order created for ${storeName}:`,
+        String(orderDoc._id),
+        `items=${storeItems.length}`
       );
     }
 
-    pickupAddressText =
-      storeDoc.address || storeDoc.addressText || storeDoc.name || "";
-  }
-}
-    console.log("📍 resolved pickup =", pickupLocation);
-
-    const subtotal = calcSubtotalFromItems(items);
-
-    const orderDoc = await Order.create({
-      customer: {
-        name: String(customer.name).trim(),
-        phone: String(customer.phone).trim(),
-        addressText: String(customer.addressText).trim(),
-        location: {
-          lat: customerLat,
-          lng: customerLng,
-        },
-      },
-
-      pickup: {
-        storeId: pickupStoreId,
-        addressText: pickupAddressText,
-        location: pickupLocation,
-      },
-
-      items,
-
-      totals: {
-        subtotal,
-      },
-
-      delivery: {
-        status: "Pending",
-      },
-
-      payment: {
-        method: "myfatoorah",
-        status: "unpaid",
-      },
-
-      checkout: {
-        isFinalized: false,
-        finalizedAt: null,
-      },
-    });
-
-    console.log("✅ Order created:", String(orderDoc._id));
-    console.log("✅ Saved pickup location:", orderDoc?.pickup?.location);
-
-    const total = Number(orderDoc?.totals?.total || subtotal || 0).toFixed(2);
-
     return res.json({
       ok: true,
-      orderId: orderDoc._id,
+      split: createdOrders.length > 1,
+      orderCount: createdOrders.length,
+      orderIds: createdOrders.map((o) => o.orderId),
+      orders: createdOrders,
     });
   } catch (err) {
     console.log("❌ /orders/create error:", err?.message);
     console.log(err?.stack);
+
     return res.status(500).json({
       ok: false,
       error: "Server error",
     });
   }
 });
-
 module.exports = router;

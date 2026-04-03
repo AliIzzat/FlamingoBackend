@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 const User = require("../../models/User");
 const Order = require("../../models/Order");
 
@@ -7,8 +8,8 @@ const Order = require("../../models/Order");
 router.get("/driver-meals", async (req, res) => {
   try {
     const driversList = await User.find({ role: "driver" })
-      .select("_id username name")
-      .sort({ username: 1 })
+      .select("_id name")
+      .sort({ name: 1 })
       .lean();
 
     const { from, to, driverId, mode } = req.query;
@@ -21,10 +22,8 @@ router.get("/driver-meals", async (req, res) => {
       "payment.status": "paid",
     };
 
-    // ✅ ensure ObjectId
     if (driverId && mongoose.Types.ObjectId.isValid(driverId)) {
-      query["delivery.assignedDriverId"] =
-        new mongoose.Types.ObjectId(driverId);
+      query["delivery.assignedDriverId"] = new mongoose.Types.ObjectId(driverId);
     }
 
     if (from || to) {
@@ -37,24 +36,18 @@ router.get("/driver-meals", async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({
         path: "delivery.assignedDriverId",
-        select: "username name",
+        select: "name",
       })
       .lean();
 
     const map = {};
 
     for (const order of orders) {
-
       const drv = order.delivery?.assignedDriverId;
       if (!drv) continue;
 
       const dId = String(drv._id);
-
-      // ✅ reliable driver name
-      const driverName =
-        drv.name?.trim() ||
-        drv.username?.trim() ||
-        "Unknown Driver";
+      const driverName = drv.name?.trim() || "Unknown Driver";
 
       if (!map[dId]) {
         map[dId] = {
@@ -67,7 +60,6 @@ router.get("/driver-meals", async (req, res) => {
       const items = Array.isArray(order.items) ? order.items : [];
 
       for (const item of items) {
-
         const quantity = Number(item.qty || 0);
         const price = Number(item.price_snapshot || 0);
         const lineTotal = quantity * price;
@@ -75,22 +67,17 @@ router.get("/driver-meals", async (req, res) => {
         map[dId].orders.push({
           orderId: String(order._id || ""),
           status: order.delivery?.status || "",
-
           createdAt: order.createdAt
             ? new Date(order.createdAt).toLocaleString("en-GB")
             : "",
-
           driverName,
-
           customerName: order.customer?.name || "",
           customerMobile: order.customer?.phone || "",
           customerAddress: order.customer?.addressText || "",
-
           mealName: item.name_snapshot || "",
           quantity,
           price,
           lineTotal,
-
           totalAmount: Number(order.totals?.total || 0),
         });
       }
@@ -134,7 +121,6 @@ router.get("/driver-meals", async (req, res) => {
       grandLineTotal,
       grandOrderTotal,
     });
-
   } catch (err) {
     console.error("❌ driver-meals report:", err);
     return res.status(500).send(err.message);

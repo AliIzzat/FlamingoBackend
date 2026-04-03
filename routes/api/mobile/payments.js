@@ -1,80 +1,24 @@
 // routes/api/mobile/payments.js
 const express = require("express");
-const router = express.Router();
 const axios = require("axios");
+const router = express.Router();
+
 const Order = require("../../../models/Order");
 const Notification = require("../../../models/Notification");
 const { printOrderToStore } = require("../../../services/storePrinter");
 
-// Adding getPaymentStatus
-async function getPaymentStatusFromMF({ invoiceId, paymentId }) {
-  if (!MF_TOKEN) throw new Error("MYFATOORAH_TOKEN missing");
-
-  if (!invoiceId && !paymentId) {
-    throw new Error("invoiceId or paymentId is required");
-  }
-
-  const Key = paymentId ? String(paymentId) : String(invoiceId);
-  const KeyType = paymentId ? "PaymentId" : "InvoiceId";
-
-  const r = await axios.post(
-    `${MF_BASE}/v2/GetPaymentStatus`,
-    { Key, KeyType },
-    { headers: mfHeaders(), timeout: 25000, validateStatus: () => true }
-  );
-
-  // If MyFatoorah returns HTTP error, still return details
-  if (r.status < 200 || r.status >= 300) {
-    const msg = r.data?.Message || `MF GetPaymentStatus failed (HTTP ${r.status})`;
-    throw new Error(msg);
-  }
-
-  const data = r.data?.Data;
-  if (!data) {
-    const msg = r.data?.Message || "MF response missing Data";
-    throw new Error(msg);
-  }
-
-  return data; // <- this is MyFatoorah Data (InvoiceStatus, InvoiceTransactions, etc.)
-}
-
-// =========================
-const MF_TOKEN = process.env.MYFATOORAH_TOKEN || "";
-console.log("🔐 payments.js MYFATOORAH_TOKEN length =", MF_TOKEN.length);
-
-// Base URL (test by default)
+const MF_TOKEN = process.env.MYFATOORAH_TOKEN || process.env.MF_TOKEN || "";
 const MF_BASE_RAW =
   process.env.MYFATOORAH_API_URL ||
   process.env.MF_API_URL ||
   "https://apitest.myfatoorah.com";
 
 const MF_BASE = String(MF_BASE_RAW).replace(/\/+$/, "").replace(/\/v2$/, "");
-console.log("🌐 payments.js MF_BASE =", MF_BASE);
+const APP_SCHEME = String(process.env.MOBILE_SCHEME || "flamingdelivery")
+  .trim()
+  .replace("://", "");
 
-// Deep link scheme (optional; will NOT work reliably on Expo Go)
-const APP_SCHEME = process.env.MOBILE_SCHEME || "flamingdelivery";
-console.log("📱 payments.js APP_SCHEME =", APP_SCHEME);
-
-// Public base URL used in CallBackUrl/ErrorUrl
-function getPublicBaseUrl() {
-  const appBase = process.env.APP_BASE_URL;
-  if (appBase) return String(appBase).replace(/\/+$/, "");
-
-  const pub = process.env.RAILWAY_PUBLIC_DOMAIN;
-  if (pub) return `https://${pub}`;
-
-  // local fallback
-  return "http://localhost:4000";
-}
-
-function deepLinkReturn({ orderId, paymentId, status }) {
-  const scheme = String(APP_SCHEME || "flamingdelivery").trim().replace("://", "");
-  return `${scheme}://payment-return?orderId=${encodeURIComponent(
-    orderId || ""
-  )}&paymentId=${encodeURIComponent(paymentId || "")}&status=${encodeURIComponent(
-    status || ""
-  )}`;
-}
+const DELIVERY_FEE = 10;
 
 function mfHeaders() {
   return {
@@ -83,95 +27,458 @@ function mfHeaders() {
   };
 }
 
+function ensureToken() {
+  if (!MF_TOKEN) {
+    throw new Error("MYFATOORAH_TOKEN missing");
+  }
+}
+
+function getPublicBaseUrl() {
+  const appBase = process.env.APP_BASE_URL;
+  if (appBase) return String(appBase).replace(/\/+$/, "");
+
+  const pub = process.env.RAILWAY_PUBLIC_DOMAIN;
+  if (pub) return `https://${pub}`;
+
+  return "http://localhost:4000";
+}
+
+function deepLinkReturn({ orderId, paymentId, status }) {
+  return `${APP_SCHEME}://payment-return?orderId=${encodeURIComponent(
+    orderId || ""
+  )}&paymentId=${encodeURIComponent(paymentId || "")}&status=${encodeURIComponent(
+    status || ""
+  )}`;
+}
+
+function getStatusKey({ invoiceId, paymentId }) {
+  if (paymentId) {
+    return {
+      key: String(paymentId),
+      keyType: "PaymentId",
+    };
+  }
+
+  if (invoiceId) {
+    return {
+      key: String(invoiceId),
+      keyType: "InvoiceId",
+    };
+  }
+
+  throw new Error("invoiceId or paymentId is required");
+}
+
+async function getPaymentStatusFromMF({ invoiceId, paymentId }) {
+  ensureToken();
+
+  const { key, keyType } = getStatusKey({ invoiceId, paymentId });
+
+  const r = await axios.post(
+    `${MF_BASE}/v2/GetPaymentStatus`,
+    { Key: key, KeyType: keyType },
+    {
+      headers: mfHeaders(),
+      timeout: 25000,
+      validateStatus: () => true,
+    }
+  );
+
+  if (r.status < 200 || r.status >= 300) {
+    const msg = r.data?.Message || `MF GetPaymentStatus failed (HTTP ${r.status})`;
+    throw new Error(msg);
+  }
+
+  const data = r.data?.Data;
+  if (!data) {
+    throw new Error(r.data?.Message || "MF response missing Data");
+  }
+
+  return {
+    httpStatus: r.status,
+    raw: r.data,
+    data,
+    key,
+    keyType,
+    invoiceStatus: data?.InvoiceStatus || "UNKNOWN",
+    isPaid: data?.InvoiceStatus === "Paid",
+    invoiceId: data?.InvoiceId ? String(data.InvoiceId) : "",
+    tx: data?.InvoiceTransactions?.[0] || {},
+  };
+}
+
+async function saveOrderTotals(order, totalAmount) {
+  const subtotal = Number(totalAmount) || 0;
+  const total = subtotal + DELIVERY_FEE;
+
+  order.totals = order.totals || {};
+  order.totals.subtotal = subtotal;
+  order.totals.deliveryFee = DELIVERY_FEE;
+  order.totals.total = total;
+
+  await order.save();
+
+  return { subtotal, total };
+}
+
+async function updateOrderPaymentFields(orderId, verification, fallback = {}) {
+  const paymentId =
+    verification?.tx?.PaymentId || fallback.paymentId || "";
+
+  const invoiceId =
+    verification?.invoiceId || fallback.invoiceId || "";
+
+  const update = {
+    "payment.status": verification.isPaid ? "paid" : "unpaid",
+    "payment.paymentId": String(paymentId || ""),
+    "payment.invoiceId": String(invoiceId || ""),
+    "payment.method": "myfatoorah",
+
+    "provider.name": "myfatoorah",
+    "provider.invoiceStatus": verification.invoiceStatus,
+    "provider.verifiedAt": new Date(),
+
+    "payment.provider.trackId": String(verification?.tx?.TrackId || ""),
+    "payment.provider.referenceId": String(verification?.tx?.ReferenceId || ""),
+    "payment.provider.transactionId": String(verification?.tx?.TransactionId || ""),
+    "payment.provider.authorizationId": String(verification?.tx?.AuthorizationId || ""),
+    "payment.provider.gateway": String(verification?.tx?.PaymentGateway || ""),
+    "payment.provider.currency": String(
+      verification?.tx?.PaidCurrency || verification?.tx?.Currency || ""
+    ),
+    "payment.provider.amount": Number(verification?.tx?.TransationValue || 0),
+    "payment.provider.invoiceStatus": String(verification.invoiceStatus || ""),
+    "payment.provider.transactionStatus": String(
+      verification?.tx?.TransactionStatus || ""
+    ),
+    "payment.provider.verifiedAt": new Date(),
+    "payment.provider.card.brand": String(verification?.tx?.Card?.Brand || ""),
+    "payment.provider.card.issuer": String(verification?.tx?.Card?.Issuer || ""),
+    "payment.provider.card.issuerCountry": String(
+      verification?.tx?.Card?.IssuerCountry || ""
+    ),
+    "payment.provider.card.fundingMethod": String(
+      verification?.tx?.Card?.FundingMethod || ""
+    ),
+    "payment.provider.card.maskedNumber": String(
+      verification?.tx?.CardNumber || ""
+    ),
+    "payment.provider.card.nameOnCard": String(
+      verification?.tx?.Card?.NameOnCard || ""
+    ),
+  };
+
+  if (verification.isPaid) {
+    update["checkout.isFinalized"] = true;
+    update["checkout.finalizedAt"] = new Date();
+  }
+
+  return Order.findByIdAndUpdate(orderId, update, { new: true });
+}
+
+async function createOrUpdateNotification(order) {
+  const total = Number(order?.totals?.total || 0).toFixed(2);
+  const storeName = order?.pickup?.addressText || "Store";
+
+  await Notification.findOneAndUpdate(
+    { orderId: order._id },
+    {
+      $set: {
+        orderId: order._id,
+        message: `🆕 ${storeName} | ${order.customer.name} (${order.customer.phone}) | QAR ${total}`,
+        status: "unpicked",
+        driverId: null,
+        updatedAt: new Date(),
+      },
+      $setOnInsert: {
+        createdAt: new Date(),
+      },
+    },
+    {
+      upsert: true,
+      new: true,
+    }
+  );
+}
+
+async function printToStoreOnce(order) {
+  if (!order || order.storePrint?.printed) return order;
+
+  try {
+    const printResult = await printOrderToStore(order);
+
+    order.storePrint = {
+      printed: true,
+      printedAt: new Date(),
+      lastError: "",
+    };
+
+    await order.save();
+    console.log("✅ Store ticket printed:", printResult);
+  } catch (printErr) {
+    console.error("❌ Store print failed:", printErr.message);
+
+    order.storePrint = {
+      printed: false,
+      printedAt: null,
+      lastError: printErr.message || "Print failed",
+    };
+
+    await order.save();
+  }
+
+  return order;
+}
+
+async function finalizePaidOrder(orderId, verification, fallback = {}) {
+  let order = await updateOrderPaymentFields(orderId, verification, fallback);
+
+  if (!order) return null;
+  if (!verification.isPaid) return order;
+
+  await createOrUpdateNotification(order);
+
+  if (!order.checkout?.isFinalized) {
+    order.checkout = order.checkout || {};
+    order.checkout.isFinalized = true;
+    order.checkout.finalizedAt = new Date();
+    await order.save();
+  }
+
+  order = await printToStoreOnce(order);
+  return order;
+}
+
+async function findOrderByPaymentRef({ invoiceId, paymentId }) {
+  if (paymentId) {
+    const byPaymentId = await Order.findOne({
+      "payment.paymentId": String(paymentId),
+    });
+    if (byPaymentId) return byPaymentId;
+  }
+
+  if (invoiceId) {
+    const byInvoiceId = await Order.findOne({
+      "payment.invoiceId": String(invoiceId),
+    });
+    if (byInvoiceId) return byInvoiceId;
+  }
+
+  return null;
+}
+
+function renderReturnPage({ title, status, deepLink }) {
+  const normalizedStatus = String(status || "UNKNOWN");
+  const isPaid = normalizedStatus === "Paid";
+  const isFailed = normalizedStatus === "Failed";
+
+  const badgeClass = isPaid ? "success" : isFailed ? "danger" : "warning";
+  const titleIcon = isPaid ? "✅" : isFailed ? "❌" : "⏳";
+
+  const returnBtn = deepLink
+    ? `<a class="btn btn-primary" href="${deepLink}">Return to App</a>`
+    : "";
+
+  return `
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>${title}</title>
+
+<style>
+  body {
+    margin:0;
+    font-family: system-ui, -apple-system, sans-serif;
+    background:#f4f6fb;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+  }
+
+  .card {
+    width:90%;
+    max-width:320px;
+    background:#fff;
+    border-radius:18px;
+    padding:20px 16px;
+    text-align:center;
+    box-shadow:0 8px 20px rgba(0,0,0,0.06);
+  }
+
+  .title {
+    font-size:16px; /* 👈 smaller */
+    font-weight:700;
+    margin:0;
+  }
+
+  .status {
+    margin-top:16px;
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+  }
+
+  .status.success {
+    background:#e8f6ee;
+    color:#1f7a4c;
+  }
+
+  .status.danger {
+    background:#fdecec;
+    color:#a61d24;
+  }
+
+  .status.warning {
+    background:#fff4e5;
+    color:#996600;
+  }
+
+  .actions {
+    margin-top:18px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .btn {
+    padding:8px 10px; /* 👈 smaller buttons */
+    border-radius:10px;
+    font-size:12px;
+    font-weight:600;
+    text-decoration:none;
+  }
+
+  .btn-primary {
+    background:#520582;
+    color:#fff;
+  }
+
+  .btn-secondary {
+    background:#eef1f6;
+    color:#333;
+  }
+
+</style>
+</head>
+
+<body>
+  <div class="card">
+    <h1 class="title">${title} ${titleIcon}</h1>
+
+    <div class="status ${badgeClass}">
+      Status: ${normalizedStatus}
+    </div>
+
+    <div class="actions">
+      ${returnBtn}
+    </div>
+  </div>
+</body>
+</html>
+`;
+}
 // =========================
 // INITIATE PAYMENT
 // POST /api/mobile/payments/myfatoorah/initiate
 // =========================
 router.post("/myfatoorah/initiate", async (req, res) => {
   try {
-    if (!MF_TOKEN) {
-      return res.status(500).json({
-        ok: false,
-        error: "MYFATOORAH_TOKEN missing on server",
-      });
-    }
+    ensureToken();
 
     const {
       orderId,
-      totalAmount,
+      orderIds,
       customerName,
       customerEmail,
       customerMobile,
       paymentMethodId,
     } = req.body || {};
 
-    if (!orderId || !totalAmount) {
+    // Support both old single-order and new multi-order mode
+    const normalizedOrderIds = Array.isArray(orderIds) && orderIds.length
+      ? orderIds
+      : orderId
+        ? [orderId]
+        : [];
+
+    if (!normalizedOrderIds.length) {
       return res.status(400).json({
         ok: false,
-        error: "orderId and totalAmount are required",
+        error: "orderIds (or orderId) is required",
       });
     }
 
-    const order = await Order.findById(orderId);
-    if (!order) {
+    const uniqueOrderIds = [...new Set(normalizedOrderIds.map(String))];
+
+    const orders = await Order.find({
+      _id: { $in: uniqueOrderIds },
+    });
+
+    if (orders.length !== uniqueOrderIds.length) {
       return res.status(404).json({
         ok: false,
-        error: "Order not found",
+        error: "One or more orders were not found",
       });
     }
 
-    // safe guards for old documents
-    if (order.checkout?.isFinalized) {
+    let combinedOrdersTotal = 0;
+
+    for (const order of orders) {
+      if (order.checkout?.isFinalized) {
+        return res.status(400).json({
+          ok: false,
+          error: `Order already completed: ${order._id}`,
+        });
+      }
+
+      if (order.payment?.status === "paid") {
+        return res.status(400).json({
+          ok: false,
+          error: `Order already paid: ${order._id}`,
+        });
+      }
+
+      combinedOrdersTotal += Number(order?.totals?.total || 0);
+    }
+
+    if (combinedOrdersTotal <= 0) {
       return res.status(400).json({
         ok: false,
-        error: "Order already completed",
+        error: "Combined order total must be greater than 0",
       });
     }
 
-    if (order.payment?.status === "paid") {
-      return res.status(400).json({
-        ok: false,
-        error: "Order already paid",
-      });
-    }
-
-    const baseUrl = getPublicBaseUrl();
     const methodId = Number(paymentMethodId || 2);
+    const baseUrl = getPublicBaseUrl();
 
-    console.log("🌐 baseUrl =", baseUrl);
-    console.log("🆔 orderId =", orderId);
-    console.log("💰 totalAmount =", totalAmount);
-    console.log("💳 paymentMethodId =", methodId);
-
-    const CallBackUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${orderId}`;
-    const ErrorUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderId=${orderId}`;
-
-    console.log("✅ MF CallBackUrl =", CallBackUrl);
-    console.log("✅ MF ErrorUrl =", ErrorUrl);
+    // Pass all orderIds in callback
+    const orderIdsParam = encodeURIComponent(uniqueOrderIds.join(","));
+    const returnUrl = `${baseUrl}/api/mobile/payments/myfatoorah/return?orderIds=${orderIdsParam}`;
 
     const payload = {
       PaymentMethodId: methodId,
-      InvoiceValue: Number(totalAmount),
+      InvoiceValue: combinedOrdersTotal,
       CustomerName: customerName || "Customer",
       CurrencyIso: "QAR",
       DisplayCurrencyIso: "QAR",
       MobileCountryCode: "+974",
       CustomerMobile: customerMobile || "00000000",
       CustomerEmail: customerEmail || "test@example.com",
-      CallBackUrl,
-      ErrorUrl,
+      CallBackUrl: returnUrl,
+      ErrorUrl: returnUrl,
       Language: "en",
     };
-    console.log("📦 ExecutePayment payload =", JSON.stringify(payload, null, 2));
 
     const r = await axios.post(`${MF_BASE}/v2/ExecutePayment`, payload, {
       headers: mfHeaders(),
       timeout: 25000,
       validateStatus: () => true,
     });
-
-    console.log("💳 ExecutePayment HTTP =", r.status);
-    console.log("💳 ExecutePayment body =", JSON.stringify(r.data, null, 2));
 
     if (r.status < 200 || r.status >= 300) {
       return res.status(502).json({
@@ -190,22 +497,26 @@ router.post("/myfatoorah/initiate", async (req, res) => {
       });
     }
 
-    await Order.findByIdAndUpdate(orderId, {
-      "payment.invoiceId": String(data?.InvoiceId || ""),
-      "payment.method": "myfatoorah",
-      "payment.status": "unpaid",
-    });
+    await Order.updateMany(
+      { _id: { $in: uniqueOrderIds } },
+      {
+        $set: {
+          "payment.invoiceId": String(data?.InvoiceId || ""),
+          "payment.method": "myfatoorah",
+          "payment.status": "unpaid",
+        },
+      }
+    );
 
     return res.json({
       ok: true,
       paymentUrl: data.PaymentURL,
       invoiceId: data.InvoiceId,
+      orderIds: uniqueOrderIds,
+      totalAmount: combinedOrdersTotal,
     });
   } catch (err) {
-    console.error("❌ /myfatoorah/initiate crashed:");
-    console.error("message =", err?.message);
-    console.error("stack =", err?.stack);
-    console.error("response =", JSON.stringify(err?.response?.data || {}, null, 2));
+    console.error("❌ /myfatoorah/initiate crashed:", err?.message);
 
     return res.status(500).json({
       ok: false,
@@ -214,19 +525,13 @@ router.post("/myfatoorah/initiate", async (req, res) => {
     });
   }
 });
-
 // =========================
 // STATUS CHECK (JSON)
 // GET /api/mobile/payments/status?invoiceId=... or ?paymentId=...
 // =========================
 router.get("/status", async (req, res) => {
   try {
-    if (!MF_TOKEN) {
-      return res.status(500).json({
-        ok: false,
-        error: "MYFATOORAH_TOKEN missing",
-      });
-    }
+    ensureToken();
 
     const { invoiceId, paymentId } = req.query || {};
     if (!invoiceId && !paymentId) {
@@ -236,134 +541,33 @@ router.get("/status", async (req, res) => {
       });
     }
 
-    const Key = paymentId ? String(paymentId) : String(invoiceId);
-    const KeyType = paymentId ? "PaymentId" : "InvoiceId";
+    const verification = await getPaymentStatusFromMF({ invoiceId, paymentId });
 
-    console.log("🔎 /status HIT");
-    console.log("🔎 Key =", Key);
-    console.log("🔎 KeyType =", KeyType);
+    let order = await findOrderByPaymentRef({ invoiceId, paymentId });
 
-    const r = await axios.post(
-      `${MF_BASE}/v2/GetPaymentStatus`,
-      { Key, KeyType },
-      {
-        headers: mfHeaders(),
-        timeout: 25000,
-        validateStatus: () => true,
-      }
-    );
-
-    console.log("🔎 MF /status HTTP =", r.status);
-    console.log("🔎 MF /status body =", JSON.stringify(r.data, null, 2));
-
-    const data = r.data?.Data || null;
-    const invoiceStatus = data?.InvoiceStatus || "UNKNOWN";
-    const isPaid = invoiceStatus === "Paid";
-
-    // ✅ DECLARE order BEFORE USING IT
-    let order = null;
-
-    if (paymentId) {
-      order = await Order.findOne({
-        "payment.paymentId": String(paymentId),
+    if (order && verification.isPaid && !order.checkout?.isFinalized) {
+      order = await finalizePaidOrder(order._id, verification, { invoiceId, paymentId });
+    } else if (order) {
+      order = await updateOrderPaymentFields(order._id, verification, {
+        invoiceId,
+        paymentId,
       });
     }
-
-    if (!order && invoiceId) {
-      order = await Order.findOne({
-        "payment.invoiceId": String(invoiceId),
-      });
-    }
-
-    console.log("🔎 matched orderId =", order ? String(order._id) : null);
-
-    // ✅ USE order ONLY AFTER IT HAS BEEN DECLARED AND LOOKED UP
-    if (order && isPaid && !order.checkout?.isFinalized) {
-  await Order.findByIdAndUpdate(order._id, {
-    "payment.status": "paid",
-    "payment.invoiceId": String(data?.InvoiceId || invoiceId || ""),
-    "payment.paymentId": String(
-      data?.InvoiceTransactions?.[0]?.PaymentId || paymentId || ""
-    ),
-    "checkout.isFinalized": true,
-    "checkout.finalizedAt": new Date(),
-  });
-
-  const freshOrder = await Order.findById(order._id);
-  const total = Number(freshOrder?.totals?.total || 0).toFixed(2);
-  const storeName = freshOrder?.pickup?.addressText || "Store";
-
-  await Notification.findOneAndUpdate(
-    { orderId: freshOrder._id },
-    {
-      $set: {
-        orderId: freshOrder._id,
-        message: `🆕 ${storeName} | ${freshOrder.customer.name} (${freshOrder.customer.phone}) | QAR ${total}`,
-        status: "unpicked",
-        driverId: null,
-        updatedAt: new Date(),
-      },
-      $setOnInsert: {
-        createdAt: new Date(),
-      },
-    },
-    {
-      upsert: true,
-      new: true,
-    }
-  );
-
-  // 🖨️ Print once after successful payment verification
-  if (!freshOrder.storePrint?.printed) {
-    try {
-      console.log("🖨️ Triggering store print for order:", String(freshOrder._id));
-
-      const printResult = await printOrderToStore(freshOrder);
-
-      freshOrder.storePrint = {
-        printed: true,
-        printedAt: new Date(),
-        lastError: "",
-      };
-
-      await freshOrder.save();
-
-      console.log("✅ Store ticket printed:", printResult);
-    } catch (printErr) {
-      console.error("❌ Store print failed:", printErr.message);
-
-      freshOrder.storePrint = {
-        printed: false,
-        printedAt: null,
-        lastError: printErr.message || "Print failed",
-      };
-
-      await freshOrder.save();
-    }
-  } else {
-    console.log("ℹ️ Store ticket already printed for order:", String(freshOrder._id));
-  }
-}
-
-    const updatedOrder = order ? await Order.findById(order._id).lean() : null;
 
     return res.status(200).json({
       ok: true,
-      http: r.status,
-      Key,
-      KeyType,
-      status: invoiceStatus,
-      paid: isPaid,
-      orderId: updatedOrder?._id || order?._id || null,
-      finalized: updatedOrder?.checkout?.isFinalized || false,
-      paymentStatusInDb: updatedOrder?.payment?.status || "unpaid",
-      raw: r.data,
+      http: verification.httpStatus,
+      key: verification.key,
+      keyType: verification.keyType,
+      status: verification.invoiceStatus,
+      paid: verification.isPaid,
+      orderId: order?._id || null,
+      finalized: order?.checkout?.isFinalized || false,
+      paymentStatusInDb: order?.payment?.status || "unpaid",
+      raw: verification.raw,
     });
   } catch (err) {
-    console.error("❌ Status check failed");
-    console.error("message =", err?.message);
-    console.error("stack =", err?.stack);
-    console.error("response =", JSON.stringify(err?.response?.data || {}, null, 2));
+    console.error("❌ Status check failed:", err?.message);
 
     return res.status(500).json({
       ok: false,
@@ -372,14 +576,14 @@ router.get("/status", async (req, res) => {
     });
   }
 });
-//============================
+
+// =========================
 // RETURN PAGE (HTML)
 // GET /api/mobile/payments/myfatoorah/return?orderId=...&paymentId=...
-// MyFatoorah redirects here after 3DS
 // =========================
 router.get("/myfatoorah/return", async (req, res) => {
-
-  const orderId = req.query.orderId || "";
+  const singleOrderId = req.query.orderId || "";
+  const orderIdsParam = req.query.orderIds || "";
 
   const paymentId =
     req.query.paymentId ||
@@ -388,414 +592,93 @@ router.get("/myfatoorah/return", async (req, res) => {
     req.query.paymentID ||
     "";
 
+  const orderIds = orderIdsParam
+    ? String(orderIdsParam)
+        .split(",")
+        .map((x) => String(x).trim())
+        .filter(Boolean)
+    : singleOrderId
+      ? [String(singleOrderId).trim()]
+      : [];
+
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+
   try {
+    ensureToken();
 
-    console.log("====================================");
-    console.log("✅ RETURN HIT");
-    console.log("🌐 Full URL =", req.originalUrl);
-    console.log("🌍 Host =", req.headers.host);
-    console.log("📦 Query =", req.query);
-    console.log("🆔 orderId =", orderId);
-    console.log("💳 paymentId =", paymentId);
-    console.log("====================================");
-
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-
-    if (!MF_TOKEN) {
-      console.log("❌ MYFATOORAH_TOKEN missing");
-
+    if (!orderIds.length) {
       return res.status(200).send(
         renderReturnPage({
           title: "Payment completed",
           status: "UNKNOWN",
-          orderId,
-          paymentId,
-          note: "Server token missing (MYFATOORAH_TOKEN)"
+          deepLink: deepLinkReturn({
+            orderId: "",
+            paymentId: paymentId || "",
+            status: "UNKNOWN",
+          }),
         })
       );
     }
 
-    if (!orderId) {
+    let invoiceId = "";
 
-      console.log("⚠️ orderId missing in return URL");
-
-      return res.status(200).send(
-        renderReturnPage({
-          title: "Payment completed",
-          status: "UNKNOWN",
-          orderId: "-",
-          paymentId,
-          note: "Missing orderId in return URL"
-        })
-      );
-    }
-
-    // If paymentId is missing, fallback to invoiceId stored in DB
-    let key = paymentId ? String(paymentId) : "";
-    let keyType = paymentId ? "PaymentId" : "";
-
-    if (!key) {
-
-      console.log("⚠️ paymentId missing, falling back to invoiceId");
-
-      const order = await Order.findById(orderId).lean();
-
-      console.log("🔎 Loaded order from DB =", order ? order._id : "NOT FOUND");
-
-      const invoiceId = order?.payment?.invoiceId
-        ? String(order.payment.invoiceId)
+    if (!paymentId) {
+      const firstOrder = await Order.findById(orderIds[0]).lean();
+      invoiceId = firstOrder?.payment?.invoiceId
+        ? String(firstOrder.payment.invoiceId)
         : "";
+    }
 
-      console.log("📄 invoiceId from DB =", invoiceId);
-
-      if (!invoiceId) {
-
-        console.log("❌ No paymentId and no invoiceId");
-
-        return res.status(200).send(
-          renderReturnPage({
-            title: "Payment processing…",
+    if (!paymentId && !invoiceId) {
+      return res.status(200).send(
+        renderReturnPage({
+          title: "Payment Processing",
+          status: "PENDING",
+          deepLink: deepLinkReturn({
+            orderId: orderIds[0] || "",
+            paymentId: "",
             status: "PENDING",
-            orderId,
-            paymentId: "-",
-            note: "No paymentId in return URL and no invoiceId stored for this order."
-          })
-        );
-      }
-
-      key = invoiceId;
-      keyType = "InvoiceId";
+          }),
+        })
+      );
     }
 
-    console.log("🔑 Using verification key =", key);
-    console.log("🔑 KeyType =", keyType);
-    // Call MyFatoorah GetPaymentStatus
-    const r = await axios.post(
-      `${MF_BASE}/v2/GetPaymentStatus`,
-      { Key: key, KeyType: keyType },
-      { headers: mfHeaders(), timeout: 25000, validateStatus: () => true }
-    );
+    const verification = await getPaymentStatusFromMF({ invoiceId, paymentId });
 
-    const invoiceStatus = r.data?.Data?.InvoiceStatus || "UNKNOWN";
-    const isPaid = invoiceStatus === "Paid";
-
-    console.log("🔎 invoiceStatus =", invoiceStatus);
-    console.log("🔎 isPaid =", isPaid);
-    const invoiceIdFromMF = r.data?.Data?.InvoiceId ? String(r.data.Data.InvoiceId) : "";
-
-    // Update DB
-    const order = await Order.findByIdAndUpdate(
-      orderId,
-      {
-        "payment.status": isPaid ? "paid" : "unpaid",
-        "payment.paymentId": paymentId ? String(paymentId) : "",
-        "payment.invoiceId": invoiceIdFromMF || "",
-        "payment.method": "myfatoorah",
-        "provider.name": "myfatoorah",
-        "provider.invoiceStatus": invoiceStatus,
-        "provider.verifiedAt": new Date(),
-      },
-      { new: true }
-    );
-
-    // Print to store once, only after successful payment
-    if (isPaid && order) {
-      if (!order.storePrint?.printed) {
-        try {
-          const printResult = await printOrderToStore(order);
-
-          order.storePrint = {
-            printed: true,
-            printedAt: new Date(),
-            lastError: "",
-          };
-
-          await order.save();
-          console.log("✅ Store ticket printed:", printResult);
-        } catch (printErr) {
-          console.error("❌ Store print failed:", printErr.message);
-
-          order.storePrint = {
-            printed: false,
-            printedAt: null,
-            lastError: printErr.message || "Print failed",
-          };
-
-          await order.save();
-        }
-      } else {
-        console.log("ℹ️ Store ticket already printed for order:", orderId);
-      }
+    for (const id of orderIds) {
+      await finalizePaidOrder(id, verification, { invoiceId, paymentId });
     }
-    // Render user-friendly page
+
     return res.status(200).send(
       renderReturnPage({
-        title: isPaid
+        title: verification.isPaid
           ? "Payment Successful"
-          : invoiceStatus === "Failed"
+          : verification.invoiceStatus === "Failed"
             ? "Payment Failed"
             : "Payment Completed",
-        status: invoiceStatus,
-        orderId,
-        paymentId: paymentId || "-",
-        deepLink: deepLinkReturn({ orderId, paymentId: paymentId || "", status: invoiceStatus }),
-        note: `Verified via ${keyType}`,
+        status: verification.invoiceStatus,
+        deepLink: deepLinkReturn({
+          orderId: orderIds[0] || "",
+          paymentId: String(verification?.tx?.PaymentId || paymentId || ""),
+          status: verification.invoiceStatus,
+        }),
       })
     );
   } catch (err) {
     console.error("RETURN error:", err?.message);
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
+
     return res.status(200).send(
       renderReturnPage({
         title: "Payment completed",
         status: "UNKNOWN",
-        orderId: orderId || "-",
-        paymentId: paymentId || "-",
-        note: err?.message || "Return crashed",
+        deepLink: deepLinkReturn({
+          orderId: orderIds[0] || "",
+          paymentId: paymentId || "",
+          status: "UNKNOWN",
+        }),
       })
     );
   }
 });
 
-
-router.get("/myfatoorah/verify", async (req, res) => {
-  try {
-    const { orderId } = req.query || {};
-    if (!orderId) return res.status(400).json({ ok: false, error: "orderId required" });
-
-    // 1) Load order and get invoiceId/paymentId
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ ok: false, error: "Order not found" });
-    }
-    if (order.payment?.status === "paid") {
-      return res.status(400).json({
-        ok: false,
-        error: "This order is already paid",
-      });
-    }
-    const invoiceId = order?.payment?.invoiceId || "";
-    const paymentId = order?.payment?.paymentId || "";
-
-    // 2) Call MF GetPaymentStatus
-    const data = await getPaymentStatusFromMF({ invoiceId, paymentId });
-
-    const invoiceStatus = data?.InvoiceStatus || "UNKNOWN";
-    const isPaid = invoiceStatus === "Paid";
-
-    // 3) Take first transaction (if any)
-    const tx = data?.InvoiceTransactions?.[0] || {};
-
-    // 4) Update MongoDB (your block)
-    await Order.findByIdAndUpdate(orderId, {
-      "payment.status": isPaid ? "paid" : "failed",
-      "payment.invoiceId": String(data?.InvoiceId || invoiceId || ""),
-      "payment.paymentId": String(tx?.PaymentId || paymentId || ""),
-
-      "payment.provider.trackId": String(tx?.TrackId || ""),
-      "payment.provider.referenceId": String(tx?.ReferenceId || ""),
-      "payment.provider.transactionId": String(tx?.TransactionId || ""),
-      "payment.provider.authorizationId": String(tx?.AuthorizationId || ""),
-      "payment.provider.gateway": String(tx?.PaymentGateway || ""),
-      "payment.provider.currency": String(tx?.PaidCurrency || tx?.Currency || ""),
-      "payment.provider.amount": Number(tx?.TransationValue || 0),
-
-      "payment.provider.invoiceStatus": String(invoiceStatus || ""),
-      "payment.provider.transactionStatus": String(tx?.TransactionStatus || ""),
-      "payment.provider.verifiedAt": new Date(),
-
-      "payment.provider.card.brand": String(tx?.Card?.Brand || ""),
-      "payment.provider.card.issuer": String(tx?.Card?.Issuer || ""),
-      "payment.provider.card.issuerCountry": String(tx?.Card?.IssuerCountry || ""),
-      "payment.provider.card.fundingMethod": String(tx?.Card?.FundingMethod || ""),
-      "payment.provider.card.maskedNumber": String(tx?.CardNumber || ""),
-      "payment.provider.card.nameOnCard": String(tx?.Card?.NameOnCard || ""),
-    });
-
-    // 5) Respond
-    return res.json({
-      ok: true,
-      orderId,
-      invoiceId: String(data?.InvoiceId || ""),
-      status: isPaid ? "Paid" : invoiceStatus,
-      paid: isPaid,
-    });
-  } catch (err) {
-    console.error("❌ verify failed:", err?.message);
-    return res.status(500).json({ ok: false, error: err?.message || "verify failed" });
-  }
-});
-
-// =========================
-// HTML TEMPLATE
-// =========================
-function renderReturnPage({ title, status, orderId, paymentId, note, deepLink }) {
-  const isPaid = status === "Paid";
-  const isFailed = status === "Failed";
-
-  const badgeClass = isPaid ? "success" : isFailed ? "danger" : "warning";
-  const titleIcon = isPaid ? "✅" : isFailed ? "❌" : "⏳";
-  const subtitle = isPaid
-    ? ""
-    : isFailed
-      ? "Your payment could not be completed."
-      : "Your payment is being processed.";
-
-  const returnBtn = deepLink
-    ? `<a class="btn btn-primary" href="${deepLink}">Return to App</a>`
-    : "";
-
-  return `
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Payment Successful</title>
-
-  <style>
-    :root{
-      --bg1:#fbfcfe;
-      --bg2:#f3f5fa;
-      --text:#1b1b1f;
-      --muted:#7a8190;
-      --primary:#520582;
-      --primary-dark:#3d0461;
-      --success-bg:#eef8f1;
-      --success-text:#1c7a45;
-      --secondary-bg:#eef1f6;
-      --secondary-text:#1f2937;
-    }
-
-    *{
-      box-sizing:border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body{
-      margin:0;
-      padding:0;
-      min-height:100dvh;
-    }
-
-    body{
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
-      color: var(--text);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:20px 16px calc(20px + env(safe-area-inset-bottom));
-    }
-
-    .screen{
-      width:100%;
-      max-width:340px;
-      text-align:center;
-    }
-
-    .title{
-      margin:0;
-      font-size:14px;
-      font-weight:600;
-      line-height:1.35;
-      letter-spacing:-0.01em;
-    }
-
-    .subtitle{
-      margin:6px 0 0;
-      font-size:11px;
-      color:var(--muted);
-      line-height:1.5;
-    }
-
-    .status{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      margin-top:14px;
-      padding:6px 10px;
-      border-radius:999px;
-      background:var(--success-bg);
-      color:var(--success-text);
-      font-size:11px;
-      font-weight:600;
-    }
-
-    .actions{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      margin-top:18px;
-    }
-
-    .btn{
-      display:block;
-      width:100%;
-      padding:9px 12px;
-      border:none;
-      border-radius:12px;
-      text-decoration:none;
-      text-align:center;
-      font-size:11px;
-      font-weight:600;
-      line-height:1.2;
-    }
-
-    .btn-primary{
-      background:var(--primary);
-      color:#fff;
-    }
-
-    .btn-primary:active{
-      background:var(--primary-dark);
-    }
-
-    .btn-secondary{
-      background:var(--secondary-bg);
-      color:var(--secondary-text);
-    }
-
-    .brand{
-      margin-top:14px;
-      font-size:10px;
-      color:#a0a7b4;
-      letter-spacing:.03em;
-    }
-
-    @media (min-width: 481px){
-      .title{ font-size:15px; }
-      .btn{ font-size:12px; }
-      .subtitle{ font-size:12px; }
-      .status{ font-size:12px; }
-    }
-  </style>
-</head>
-<body>
-  <main class="screen">
-    <h1 class="title">Payment Successful ✅</h1>
-    <p class="subtitle">Your payment has been completed successfully.</p>
-
-    <div class="status">
-      <span>Status:</span>
-      <span>Paid</span>
-    </div>
-
-    <div class="actions">
-      <a class="btn btn-primary" href="flamingdelivery://payment-return">Return to App</a>
-      <a class="btn btn-secondary" href="/">Back to Home</a>
-    </div>
-  </main>
-
-  <script>
-    window.addEventListener("load", function () {
-      setTimeout(function () {
-        window.scrollTo(0, 1);
-      }, 120);
-    });
-  </script>
-</body>
-</html>`;
-}
 module.exports = router;
