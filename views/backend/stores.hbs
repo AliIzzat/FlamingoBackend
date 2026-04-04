@@ -32,16 +32,17 @@
     <label>Address</label>
     <input id="storeAddressInput" name="address" style="height: 30px;" />
 
-    <div class="row-line" style="margin-top: 10px; margin-bottom:10px;">
+    <div class="row-line" style="margin-top: 10px; margin-bottom:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
       <label>Logo (upload):</label>
       <input type="file" name="logo" accept="image/*" />
+
       <label>Predefined Logo</label>
-        <select name="seedLogo">
-          <option value="">-- Select logo --</option>
-          <option value="restaurant-2.png">restaurant-2.png</option>
-          <option value="flower-1.png">flower-1.png</option>
-          <option value="grocery-1.png">grocery-1.png</option>
-        </select>
+      <select name="seedLogo" style="height: 30px;">
+        <option value="">-- Select logo --</option>
+        <option value="restaurant-2.png">restaurant-2.png</option>
+        <option value="flower-1.png">flower-1.png</option>
+        <option value="grocery-1.png">grocery-1.png</option>
+      </select>
     </div>
 
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
@@ -145,6 +146,7 @@
       <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Address</th>
       <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Lat</th>
       <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Lng</th>
+      <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Logo</th>
       <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Active</th>
       <th style="text-align:left; border-bottom:1px solid #ddd; padding:4px;">Actions</th>
     </tr>
@@ -188,6 +190,23 @@
         <td style="padding:2px;">
           <input name="lng" value="{{location.coordinates.[0]}}" form="updateForm-{{_id}}"
                  style="width:110px; height:30px;" />
+        </td>
+
+        <td style="padding:2px; min-width:220px;">
+          {{#if logo}}
+            <div style="margin-bottom:6px;">
+              <img src="{{logo}}" alt="{{name}}" style="width:48px; height:48px; object-fit:cover; border-radius:6px; border:1px solid #ccc;">
+            </div>
+          {{/if}}
+
+          <select name="seedLogo" form="updateForm-{{_id}}" style="height:30px; width:210px; margin-bottom:6px;">
+            <option value="">-- Select logo --</option>
+            <option value="restaurant-2.png">restaurant-2.png</option>
+            <option value="flower-1.png">flower-1.png</option>
+            <option value="grocery-1.png">grocery-1.png</option>
+          </select>
+
+          <input type="file" name="logo" accept="image/*" form="updateForm-{{_id}}" style="width:210px;" />
         </td>
 
         <td style="padding:2px;">
@@ -348,4 +367,3 @@
     height: 30px;
   }
 </style>
-
