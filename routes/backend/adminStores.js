@@ -177,7 +177,6 @@ router.post("/create", upload.single("logo"), async (req, res) => {
     if (!cleanType) return res.status(400).send("type is required");
     if (!cleanName) return res.status(400).send("name is required");
 
-    // ✅ validate category is active
     let ok = false;
     try {
       ok = await isCategoryActive(cleanType);
@@ -190,12 +189,20 @@ router.post("/create", upload.single("logo"), async (req, res) => {
     const latNum = toNum(req.body.lat);
     const lngNum = toNum(req.body.lng);
 
+    let logo = "";
+
+    if (req.file) {
+      logo = "/uploads/" + req.file.filename;
+    } else if (req.body.seedLogo && String(req.body.seedLogo).trim()) {
+      logo = "/logos/" + String(req.body.seedLogo).trim();
+    }
+
     const doc = {
       type: cleanType,
       name: cleanName,
       name_ar: trimStr(req.body.name_ar),
       address: trimStr(req.body.address),
-      logo: req.file ? "/uploads/" + req.file.filename : "",
+      logo,
       isActive: toBool(req.body.isActive, true),
     };
 
@@ -205,7 +212,6 @@ router.post("/create", upload.single("logo"), async (req, res) => {
 
     const createdStore = await Store.create(doc);
 
-    // next step
     if (req.body.next === "products") {
       return res.redirect(`/admin/products?storeId=${createdStore._id}`);
     }
@@ -217,7 +223,6 @@ router.post("/create", upload.single("logo"), async (req, res) => {
     return res.status(500).send("Failed to create store: " + (err?.message || err));
   }
 });
-
 /* =========================================================
    POST /admin/stores/update/:id
 ========================================================= */
@@ -228,7 +233,6 @@ router.post("/update/:id", upload.single("logo"), async (req, res) => {
 
     const cleanType = trimStr(req.body.type).toLowerCase();
 
-    // ✅ validate category is active
     let ok = false;
     try {
       ok = await isCategoryActive(cleanType);
@@ -249,7 +253,11 @@ router.post("/update/:id", upload.single("logo"), async (req, res) => {
       isActive: toBool(req.body.isActive, true),
     };
 
-    if (req.file) update.logo = "/uploads/" + req.file.filename;
+    if (req.file) {
+      update.logo = "/uploads/" + req.file.filename;
+    } else if (req.body.seedLogo && String(req.body.seedLogo).trim()) {
+      update.logo = "/logos/" + String(req.body.seedLogo).trim();
+    }
 
     if (Number.isFinite(latNum) && Number.isFinite(lngNum)) {
       update.location = { type: "Point", coordinates: [lngNum, latNum] };
@@ -264,7 +272,6 @@ router.post("/update/:id", upload.single("logo"), async (req, res) => {
     return res.status(500).send("Failed to update store: " + (err?.message || err));
   }
 });
-
 /* =========================================================
    POST /admin/stores/toggle/:id
 ========================================================= */

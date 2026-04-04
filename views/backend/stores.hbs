@@ -34,7 +34,14 @@
 
     <div class="row-line" style="margin-top: 10px; margin-bottom:10px;">
       <label>Logo (upload):</label>
-      <input type="file" name="logo" />
+      <input type="file" name="logo" accept="image/*" />
+      <label>Predefined Logo</label>
+        <select name="seedLogo">
+          <option value="">-- Select logo --</option>
+          <option value="restaurant-2.png">restaurant-2.png</option>
+          <option value="flower-1.png">flower-1.png</option>
+          <option value="grocery-1.png">grocery-1.png</option>
+        </select>
     </div>
 
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
