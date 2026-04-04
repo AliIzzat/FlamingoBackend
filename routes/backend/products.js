@@ -105,6 +105,8 @@ router.post("/products/edit/:id", upload.single("image"), async (req, res) => {
 
     if (req.file) {
       product.image = `/uploads/${req.file.filename}`;
+      console.log("Product.image = ", product.image);
+      console.log("reqfilename : ",req.file.filename);
     }
 
     await product.save();
