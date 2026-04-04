@@ -70,11 +70,9 @@ app.use(express.urlencoded({ extended: true }));
 // Static files (logos / uploads)
 const path = require("path");
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
-// ✅ ADD THIS for seed images
 app.use("/seed", express.static(path.join(__dirname, "public", "seed")));
+app.use("/logos", express.static(path.join(__dirname,"public", "logos")));
 app.use(express.static(path.join(__dirname, "public")));
-app.use("/logos", express.static(path.join(__dirname, "logos")));
-
 // Sessions (needed for admin + web flows; harmless for API)
 if (ENABLE_WEB || ENABLE_ADMIN) {
 app.use(
