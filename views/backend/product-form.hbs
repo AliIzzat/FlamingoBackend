@@ -36,7 +36,14 @@
       </div>
 
       <label>Product Image</label>
-      <input type="file" name="imageFile" accept="image/*">
+      <input type="file" name="image" accept="image/*">
+      <label>Seed Image</label>
+        <select name="seedImage">
+          <option value="">-- Select seed image --</option>
+          <option value="flower-1.png">flower-1.png</option>
+          <option value="flower-8.png">flower-8.png</option>
+          <option value="child-care-1.png">child-care-1.png</option>
+        </select>
 
       {{#if product.image}}
          <img src="{{product.image}}" style="max-width:220px; margin-top:10px; border:1px solid #ddd; border-radius:10px;">

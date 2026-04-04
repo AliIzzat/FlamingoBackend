@@ -203,7 +203,16 @@ router.post("/create", upload.single("image"), async (req, res) => {
     const details = trimStr(req.body.details || req.body.details_en);
     const details_ar = trimStr(req.body.details_ar);
 
-    const image = req.file ? "/uploads/" + req.file.filename : "";
+    let image = "";
+
+      // If admin uploaded a new image
+      if (req.file) {
+        image = "/uploads/" + req.file.filename;
+      }
+      // Otherwise, if admin selected one of your seed images
+      else if (req.body.seedImage && String(req.body.seedImage).trim()) {
+        image = "/seed/" + String(req.body.seedImage).trim();
+      }
 
     const payload = {
       category: store.type,
