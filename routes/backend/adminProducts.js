@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-
+const uploadToCloudinary = require("../../utils/uploadToCloudinary");
 const Category = require("../../models/Category");
 const Store = require("../../models/Store");
 const Product = require("../../models/Product");
@@ -44,7 +44,7 @@ router.get("/", async (req, res) => {
     // Pagination
     const page = Math.max(parseInt(req.query.page || "1", 10), 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit || "20", 10), 1), 200);
-    const skip = (page - 1) * limit;
+  
 
     // Active categories = source of truth
     const activeCategories = await Category.find({ isActive: true })
@@ -76,13 +76,28 @@ if (storeId && mongoose.Types.ObjectId.isValid(storeId)) {
   filter.category = { $in: activeKeys };
 }
 
-    const [totalCount, products] = await Promise.all([
-      Product.countDocuments(filter),
-      Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-    ]);
+    const totalCount = await Product.countDocuments(filter);
 
     const totalPages = Math.max(Math.ceil(totalCount / limit), 1);
     const safePage = Math.min(page, totalPages);
+
+    // ✅ define skip BEFORE using it
+    const skip = (safePage - 1) * limit;
+
+    // ✅ now use skip
+    const products = await Product.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+    // const [totalCount, products] = await Promise.all([
+    //   Product.countDocuments(filter),
+    //   Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    // ]);
+
+    // const totalPages = Math.max(Math.ceil(totalCount / limit), 1);
+    // const safePage = Math.min(page, totalPages);
+    // const skip = (page - 1) * limit;
 
     // Pagination UI window
     const windowSize = 7;
@@ -200,9 +215,9 @@ router.post("/create", upload.single("image"), async (req, res) => {
 
       // If admin uploaded a new image
      if (req.file) {
-        image = req.file.path;
+        const uploaded = await uploadToCloudinary(req.file.buffer, "onego/products");
+        image = uploaded.secure_url;
       }
-      // Otherwise, if admin selected one of your seed images
       else if (req.body.seedImage && String(req.body.seedImage).trim()) {
         image = "/seed/" + String(req.body.seedImage).trim();
       }
@@ -332,19 +347,29 @@ console.log("🧾 distinct isActive:", await Store.distinct("isActive"));
    POST /admin/products/update/:id
 ========================================================= */
 router.post("/:id/image", upload.single("imageFile"), async (req, res) => {
-  const id = req.params.id;
-  let image = "";
+  try {
+    const id = safeObjectId(req.params.id);
+    if (!id) return res.status(400).send("Invalid product id");
+
+    let image = "";
+
     if (req.file) {
-      image = req.file.path; // Cloudinary URL
+      const uploaded = await uploadToCloudinary(req.file.buffer, "onego/products");
+      image = uploaded.secure_url;
     } else if (req.body.seedImage && String(req.body.seedImage).trim()) {
       image = "/seed/" + String(req.body.seedImage).trim();
     }
 
-  await Product.findByIdAndUpdate(id, { image: imgPath });
-  return res.redirect("back");
+    if (image) {
+      await Product.findByIdAndUpdate(id, { image });
+    }
+
+    return res.redirect("back");
+  } catch (e) {
+    console.error("❌ update product image:", e);
+    return res.status(500).send("Failed to update product image");
+  }
 });
-
-
 
 router.post("/update/:id", upload.single("image"), async (req, res) => {
   console.log("🟢 HIT UPDATE ROUTE:", req.originalUrl, "id:", req.params.id);
@@ -390,14 +415,15 @@ router.post("/update/:id", upload.single("image"), async (req, res) => {
    console.log("🟢 store.type =", store.type);
    console.log("🟢 before category =", existing.category, "before snapshot.type =", existing.storeSnapshot?.type);
 
-    const after = await Product.findById(id).select("category storeSnapshot.type").lean();
-    console.log("🟩 after.category =", after.category, "snapshot.type =", after.storeSnapshot?.type);
+    // const after = await Product.findById(id).select("category storeSnapshot.type").lean();
+    // console.log("🟩 after.category =", after.category, "snapshot.type =", after.storeSnapshot?.type);
 
     if (req.file) {
-        update.image = req.file.path;
-      } else if (req.body.seedImage && String(req.body.seedImage).trim()) {
-        update.image = "/seed/" + String(req.body.seedImage).trim();
-      }
+      const uploaded = await uploadToCloudinary(req.file.buffer, "onego/products");
+      update.image = uploaded.secure_url;
+    } else if (req.body.seedImage && String(req.body.seedImage).trim()) {
+      update.image = "/seed/" + String(req.body.seedImage).trim();
+    }
 
     await Product.findByIdAndUpdate(id, { $set: update }, { runValidators: true });
 

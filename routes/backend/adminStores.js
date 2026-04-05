@@ -1,27 +1,16 @@
 // routes/backend/adminStores.js
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
-const path = require("path");
 const mongoose = require("mongoose");
-
+const upload = require("../../middleware/upload");
+const uploadToCloudinary = require("../../utils/uploadToCloudinary");
 const Store = require("../../models/Store");
 const Category = require("../../models/Category");
 
-// If you have this util already, we will use it
 const {
   getActiveCategoryKeys,
   isCategoryActive,
 } = require("../../utils/categoryGuard");
-
-/* ---------------------------
-   Multer upload
----------------------------- */
-logo: req.file
-  ? req.file.path
-  : (req.body.seedLogo && String(req.body.seedLogo).trim()
-      ? "/logos/" + String(req.body.seedLogo).trim()
-      : ""),
 
 /* ---------------------------
    Helpers
@@ -49,25 +38,20 @@ function safeObjectId(id) {
 
 /* =========================================================
    GET /admin/stores
-   - Filters + Pagination + Enforce ACTIVE categories only
 ========================================================= */
 router.get("/", async (req, res) => {
   try {
-    // Read filters (clean)
     let type = trimStr(req.query.type).toLowerCase();
     const storeId = trimStr(req.query.storeId);
     const q = trimStr(req.query.q);
 
-    // Pagination
     const page = Math.max(parseInt(req.query.page || "1", 10), 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit || "20", 10), 1), 200);
 
-    // ✅ Load active categories list for dropdown (objects)
     const categories = await Category.find({ isActive: true })
       .sort({ sortOrder: 1, name_en: 1 })
       .lean();
 
-    // ✅ Active keys source of truth
     let activeKeys = [];
     try {
       activeKeys = await getActiveCategoryKeys();
@@ -75,41 +59,30 @@ router.get("/", async (req, res) => {
       activeKeys = categories.map((c) => c.key);
     }
 
-    // ✅ Default to restaurant if no type provided
     if (!type) type = "restaurant";
 
-    // ✅ If type is not active => show nothing
     const typeIsValid = activeKeys.includes(type);
-
-    // ✅ BASE FILTER: only active category stores
     const filter = { type: { $in: activeKeys } };
 
-    // ✅ Apply type filter strictly
     if (typeIsValid) {
       filter.type = type;
     } else {
-      filter.type = "__none__"; // return nothing
+      filter.type = "__none__";
     }
 
-    // ✅ storeId filter
     if (storeId && mongoose.Types.ObjectId.isValid(storeId)) {
       filter._id = storeId;
     }
 
-    // ✅ search filter
     if (q) {
       filter.name = { $regex: q, $options: "i" };
     }
 
-    // Count first (for pagination)
     const totalCount = await Store.countDocuments(filter);
     const totalPages = Math.max(Math.ceil(totalCount / limit), 1);
     const safePage = Math.min(page, totalPages);
     const skip = (safePage - 1) * limit;
 
-    // ✅ IMPORTANT:
-    // - stores = table data (filtered)
-    // - allStores = dropdown options (filtered by type ONLY)
     const [allStores, stores] = await Promise.all([
       Store.find(typeIsValid ? { type } : { type: "__none__" })
         .sort({ name: 1 })
@@ -117,7 +90,6 @@ router.get("/", async (req, res) => {
       Store.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
     ]);
 
-    // Pagination UI window
     const windowSize = 7;
     const start = Math.max(1, safePage - Math.floor(windowSize / 2));
     const end = Math.min(totalPages, start + windowSize - 1);
@@ -125,29 +97,24 @@ router.get("/", async (req, res) => {
     const pages = [];
     for (let n = start; n <= end; n++) pages.push({ n, isCurrent: n === safePage });
 
-    // ✅ Keep filters in pagination links
     const params = new URLSearchParams();
     if (type) params.set("type", type);
     if (storeId) params.set("storeId", storeId);
     if (q) params.set("q", q);
     params.set("limit", String(limit));
-    const queryBase = params.toString(); // without "page"
+    const queryBase = params.toString();
 
     return res.render("backend/stores", {
       layout: "backend-layout",
       title: "Stores",
       user: req.session.user,
-
       categories,
       stores,
       allStores,
-
       selectedType: type || "",
       selectedStoreId: storeId || "",
       searchQuery: q || "",
-
       currentUrl: req.originalUrl,
-
       page: safePage,
       limit,
       totalCount,
@@ -191,10 +158,11 @@ router.post("/create", upload.single("logo"), async (req, res) => {
     let logo = "";
 
     if (req.file) {
-        logo = req.file.path;
-      } else if (req.body.seedLogo && String(req.body.seedLogo).trim()) {
-        logo = "/logos/" + String(req.body.seedLogo).trim();
-      }
+      const uploaded = await uploadToCloudinary(req.file.buffer, "onego/logos");
+      logo = uploaded.secure_url;
+    } else if (req.body.seedLogo && String(req.body.seedLogo).trim()) {
+      logo = "/logos/" + String(req.body.seedLogo).trim();
+    }
 
     const doc = {
       type: cleanType,
@@ -222,6 +190,7 @@ router.post("/create", upload.single("logo"), async (req, res) => {
     return res.status(500).send("Failed to create store: " + (err?.message || err));
   }
 });
+
 /* =========================================================
    POST /admin/stores/update/:id
 ========================================================= */
@@ -253,7 +222,8 @@ router.post("/update/:id", upload.single("logo"), async (req, res) => {
     };
 
     if (req.file) {
-      update.logo = req.file.path;
+      const uploaded = await uploadToCloudinary(req.file.buffer, "onego/logos");
+      update.logo = uploaded.secure_url;
     } else if (req.body.seedLogo && String(req.body.seedLogo).trim()) {
       update.logo = "/logos/" + String(req.body.seedLogo).trim();
     }
@@ -271,6 +241,7 @@ router.post("/update/:id", upload.single("logo"), async (req, res) => {
     return res.status(500).send("Failed to update store: " + (err?.message || err));
   }
 });
+
 /* =========================================================
    POST /admin/stores/toggle/:id
 ========================================================= */
