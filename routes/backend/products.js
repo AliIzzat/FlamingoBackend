@@ -104,7 +104,7 @@ router.post("/products/edit/:id", upload.single("image"), async (req, res) => {
     product.inStock = inStock === "on";
 
         if (req.file) {
-        product.image = `/uploads/${req.file.filename}`;
+        product.image = req.file.path;
         console.log("Uploaded image:", product.image);
       }
       else if (req.body.seedImage && String(req.body.seedImage).trim()) {

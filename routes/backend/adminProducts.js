@@ -1,19 +1,12 @@
 // routes/backend/adminProducts.js
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
-const path = require("path");
 const mongoose = require("mongoose");
 
 const Category = require("../../models/Category");
 const Store = require("../../models/Store");
 const Product = require("../../models/Product");
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, "public/uploads/"),
-  filename: (_req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
-});
-const upload = multer({ storage });
+const upload = require("../../middleware/upload");
 
 /* ---------------------------
    Helpers
@@ -206,8 +199,8 @@ router.post("/create", upload.single("image"), async (req, res) => {
     let image = "";
 
       // If admin uploaded a new image
-      if (req.file) {
-        image = "/uploads/" + req.file.filename;
+     if (req.file) {
+        image = req.file.path;
       }
       // Otherwise, if admin selected one of your seed images
       else if (req.body.seedImage && String(req.body.seedImage).trim()) {
@@ -340,7 +333,12 @@ console.log("🧾 distinct isActive:", await Store.distinct("isActive"));
 ========================================================= */
 router.post("/:id/image", upload.single("imageFile"), async (req, res) => {
   const id = req.params.id;
-  const imgPath = req.file ? `/uploads/products/${req.file.filename}` : "";
+  let image = "";
+    if (req.file) {
+      image = req.file.path; // Cloudinary URL
+    } else if (req.body.seedImage && String(req.body.seedImage).trim()) {
+      image = "/seed/" + String(req.body.seedImage).trim();
+    }
 
   await Product.findByIdAndUpdate(id, { image: imgPath });
   return res.redirect("back");
@@ -395,7 +393,11 @@ router.post("/update/:id", upload.single("image"), async (req, res) => {
     const after = await Product.findById(id).select("category storeSnapshot.type").lean();
     console.log("🟩 after.category =", after.category, "snapshot.type =", after.storeSnapshot?.type);
 
-    if (req.file) update.image = "/uploads/" + req.file.filename;
+    if (req.file) {
+        update.image = req.file.path;
+      } else if (req.body.seedImage && String(req.body.seedImage).trim()) {
+        update.image = "/seed/" + String(req.body.seedImage).trim();
+      }
 
     await Product.findByIdAndUpdate(id, { $set: update }, { runValidators: true });
 

@@ -17,12 +17,11 @@ const {
 /* ---------------------------
    Multer upload
 ---------------------------- */
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, "public/uploads/"),
-  filename: (_req, file, cb) =>
-    cb(null, Date.now() + path.extname(file.originalname)),
-});
-const upload = multer({ storage });
+logo: req.file
+  ? req.file.path
+  : (req.body.seedLogo && String(req.body.seedLogo).trim()
+      ? "/logos/" + String(req.body.seedLogo).trim()
+      : ""),
 
 /* ---------------------------
    Helpers
@@ -192,10 +191,10 @@ router.post("/create", upload.single("logo"), async (req, res) => {
     let logo = "";
 
     if (req.file) {
-      logo = "/uploads/" + req.file.filename;
-    } else if (req.body.seedLogo && String(req.body.seedLogo).trim()) {
-      logo = "/logos/" + String(req.body.seedLogo).trim();
-    }
+        logo = req.file.path;
+      } else if (req.body.seedLogo && String(req.body.seedLogo).trim()) {
+        logo = "/logos/" + String(req.body.seedLogo).trim();
+      }
 
     const doc = {
       type: cleanType,
@@ -254,7 +253,7 @@ router.post("/update/:id", upload.single("logo"), async (req, res) => {
     };
 
     if (req.file) {
-      update.logo = "/uploads/" + req.file.filename;
+      update.logo = req.file.path;
     } else if (req.body.seedLogo && String(req.body.seedLogo).trim()) {
       update.logo = "/logos/" + String(req.body.seedLogo).trim();
     }
