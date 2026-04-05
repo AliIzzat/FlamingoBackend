@@ -126,26 +126,6 @@ router.get("/meals", async (req, res) => {
   }
 });
 
-
-// routes/api/mobile.js  (or routes/api/mobile/meals.js)
-// router.get("/meals", async (req, res) => {
-//   const limit = Math.min(Number(req.query.limit) || 30, 100);
-//   const offer = String(req.query.offer || "").toLowerCase() === "true";
-
-//   const q = {
-//     isActive: true,
-//     "storeSnapshot.type": "restaurant",
-//   };
-
-//   if (offer) q.offer = true;
-
-//   const meals = await Product.find(q)
-//     .sort({ createdAt: -1 })
-//     .limit(limit)
-//     .lean();
-
-//   return res.json({ ok: true, meals });
-// });
 // -----------------------------
 // GET /api/mobile/offers?limit=30&category=restaurant
 // Offers = Products where offer=true (optionally filter by category)

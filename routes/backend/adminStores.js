@@ -136,6 +136,16 @@ router.get("/", async (req, res) => {
    POST /admin/stores/create
 ========================================================= */
 router.post("/create", upload.single("logo"), async (req, res) => {
+  console.log("----- UPLOAD DEBUG START -----");
+  console.log("route:", req.originalUrl);
+  console.log("file exists:", !!req.file);
+  console.log("file path:", req.file?.path);
+  console.log("file filename:", req.file?.filename);
+  console.log("file mimetype:", req.file?.mimetype);
+  console.log("cloud name:", process.env.CLOUDINARY_CLOUD_NAME);
+  console.log("api key exists:", !!process.env.CLOUDINARY_API_KEY);
+  console.log("api secret exists:", !!process.env.CLOUDINARY_API_SECRET);
+  console.log("----- UPLOAD DEBUG END -----");
   try {
     const cleanType = trimStr(req.body.type).toLowerCase();
     const cleanName = trimStr(req.body.name);
@@ -195,6 +205,16 @@ router.post("/create", upload.single("logo"), async (req, res) => {
    POST /admin/stores/update/:id
 ========================================================= */
 router.post("/update/:id", upload.single("logo"), async (req, res) => {
+  console.log("----- UPLOAD DEBUG START -----");
+  console.log("route:", req.originalUrl);
+  console.log("file exists:", !!req.file);
+  console.log("file path:", req.file?.path);
+  console.log("file filename:", req.file?.filename);
+  console.log("file mimetype:", req.file?.mimetype);
+  console.log("cloud name:", process.env.CLOUDINARY_CLOUD_NAME);
+  console.log("api key exists:", !!process.env.CLOUDINARY_API_KEY);
+  console.log("api secret exists:", !!process.env.CLOUDINARY_API_SECRET);
+  console.log("----- UPLOAD DEBUG END -----");
   try {
     const id = safeObjectId(req.params.id);
     if (!id) return res.status(400).send("Invalid store id");

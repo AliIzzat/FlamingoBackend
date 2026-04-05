@@ -2,19 +2,11 @@ const express = require("express");
 const router = express.Router();
 
 const Food = require("../models/FoodDef");
-// Later you can add:
-// const Product = require("../models/Product");
-// const PharmacyItem = require("../models/PharmacyItem");
-// etc.
 
 function getModelByType(type) {
   // Default to "meal" if not provided
   const t = (type || "meal").toLowerCase();
   if (t === "meal") return Food;
-
-  // Add more types later:
-  // if (t === "flower") return Flower;
-  // if (t === "pharmacy") return PharmacyItem;
 
   return null;
 }

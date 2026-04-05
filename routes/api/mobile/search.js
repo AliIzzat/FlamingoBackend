@@ -81,25 +81,4 @@ router.get("/search", async (req, res) => {
   return res.send("SEARCH ROUTE WORKING");
 });
 
-// router.get("/search", async (req, res) => {
-//   try {
-//     const q = String(req.query.q || "").trim();
-
-//     const filter = q
-//       ? { name: { $regex: q, $options: "i" } }
-//       : {};
-
-//     const products = await Product.find(filter).lean();
-
-//     res.render("frontend/search", {
-//       products,
-//       query: q,
-//       cart: req.session.cart || [],
-//     });
-//   } catch (err) {
-//     console.error("Search page error:", err);
-//     res.status(500).send("Server error");
-//   }
-// });
-
 module.exports = router;
