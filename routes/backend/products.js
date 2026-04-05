@@ -103,11 +103,14 @@ router.post("/products/edit/:id", upload.single("image"), async (req, res) => {
     product.category = category || product.category;
     product.inStock = inStock === "on";
 
-    if (req.file) {
-      product.image = `/uploads/${req.file.filename}`;
-      console.log("Product.image = ", product.image);
-      console.log("reqfilename : ",req.file.filename);
-    }
+        if (req.file) {
+        product.image = `/uploads/${req.file.filename}`;
+        console.log("Uploaded image:", product.image);
+      }
+      else if (req.body.seedImage && String(req.body.seedImage).trim()) {
+        product.image = `/seed/${String(req.body.seedImage).trim()}`;
+        console.log("Seed image:", product.image);
+      }
 
     await product.save();
 

@@ -72,13 +72,26 @@
     <div class="form-group">
       <label>Current Image</label><br>
       {{#if product.image}}
-        <img src="{{product.image}}" alt="{{product.name}}" width="120">
+        <img src="{{product.image}}" alt="{{product.name}}" width="120" style="border:1px solid #ddd; border-radius:8px;">
+        <div style="margin-top:6px; color:#666; font-size:12px;">{{product.image}}</div>
+      {{else}}
+        <div style="color:#999;">No image saved</div>
       {{/if}}
     </div>
 
     <div class="form-group">
-      <label>Replace Image</label>
+      <label>Replace Image (Upload)</label>
       <input type="file" name="image" accept="image/*">
+    </div>
+
+    <div class="form-group">
+      <label>Or Choose Seed Image</label>
+      <select name="seedImage">
+        <option value="">-- Keep current / Select seed image --</option>
+        <option value="flower-1.png">flower-1.png</option>
+        <option value="flower-8.png">flower-8.png</option>
+        <option value="child-care-1.png">child-care-1.png</option>
+      </select>
     </div>
 
     <button type="submit" class="btn btn-success">Update Product</button>
