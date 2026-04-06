@@ -4,6 +4,7 @@ const Product = require("../../models/Product");
 const Store = require("../../models/Store");
 const Category = require("../../models/Category");
 const upload = require("../../middleware/upload"); // if you already use multer
+const uploadToCloudinary = require("../../utils/uploadToCloudinary");
 
 router.get("/", async (req, res) => {
   try {
@@ -102,12 +103,11 @@ router.post("/products/edit/:id", upload.single("image"), async (req, res) => {
     product.storeId = storeId || null;
     product.category = category || product.category;
     product.inStock = inStock === "on";
-
-        if (req.file) {
-        product.image = req.file.path;
-        console.log("Uploaded image:", product.image);
-      }
-      else if (req.body.seedImage && String(req.body.seedImage).trim()) {
+      if (req.file) {
+        const uploaded = await uploadToCloudinary(req.file.buffer, "onego/products");
+        product.image = uploaded.secure_url;
+        console.log("Uploaded image (Cloudinary):", product.image);
+      } else if (req.body.seedImage && String(req.body.seedImage).trim()) {
         product.image = `/seed/${String(req.body.seedImage).trim()}`;
         console.log("Seed image:", product.image);
       }
