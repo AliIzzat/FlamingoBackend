@@ -4,18 +4,84 @@ const router = express.Router();
 const User = require("../../models/User");
 
 // GET: show login form
-router.get("/login", (req, res) => {
-  res.render("frontend/login", {
-    layout: false,
-    error: null,
-  });
+// router.get("/login", (req, res) => {
+//   res.render("frontend/login", {
+//     layout: false,
+//     error: null,
+//   });
+// });
+
+router.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  // 🔒 SAFE LOGGING (dev only, no password)
+  if (process.env.NODE_ENV === "development") {
+    console.log("POST /login attempt:", {
+      username: req.body.username,
+    });
+  }
+
+  try {
+    const user = await User.findOne({ username, password }); // (later: use bcrypt)
+
+    if (!user) {
+      return res.render("frontend/login", {
+        layout: false,
+        error: "❌ Invalid username or password",
+      });
+    }
+
+    req.session.userId = user._id;
+    req.session.userRole = user.role;
+    req.session.user = {
+      _id: user._id,
+      name: user.name || user.username,
+      role: user.role,
+    };
+
+    console.log("🟩 Session after login (before save):", {
+      userId: String(req.session.userId),
+      userRole: req.session.userRole,
+      user: req.session.user,
+    });
+
+    return req.session.save((err) => {
+      if (err) {
+        console.error("❌ Session save error:", err);
+        return res.status(500).send("Session error");
+      }
+
+      console.log("🟩 Session saved OK");
+      console.log("🟢 Logged in as:", user.username, "role:", user.role);
+
+      if (user.role === "admin" || user.role === "support") {
+        return res.redirect("/admin");
+      }
+      if (user.role === "driver" || user.role === "delivery") {
+        return res.render("frontend/login", {
+          layout: false,
+          error: "Drivers must login using the mobile app.",
+        });
+      }
+
+      return res.redirect("/");
+    });
+  } catch (err) {
+    console.error("❌ Login error:", err);
+    return res.status(500).send("Server error during login");
+  }
 });
+
 
 // POST: handle login
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
-  console.log("✅ POST /login body:", { username, password });
+ if (process.env.NODE_ENV === "development") {
+  console.log("POST /login attempt:", {
+    username: req.body.username,
+  });
+}
 
   try {
     const user = await User.findOne({ username, password }); // (later: use bcrypt)
