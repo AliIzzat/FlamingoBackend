@@ -7,14 +7,25 @@ const MealModel = require("../../models/Meals");
 router.get("/", async (req, res) => {
   try {
     res.set("Cache-Control", "no-store");
-    const meals = await MealModel.find()
+
+    const { limit = 30, offer } = req.query;
+
+    const q = {};
+    if (offer === "true") q.offer = true;
+
+    const meals = await MealModel.find(q)
       .sort({ createdAt: -1 })
+      .limit(Number(limit))
       .lean();
 
-    return res.json(meals);
+    return res.json({
+      ok: true,
+      meals,
+    });
   } catch (err) {
     console.error("❌ GET /api/meals error:", err);
     return res.status(500).json({
+      ok: false,
       error: "Server error",
       message: err.message,
     });
