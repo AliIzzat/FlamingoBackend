@@ -180,16 +180,16 @@ router.get("/create", async (req, res) => {
 ========================================================= */
 
 router.post("/create", upload.single("image"), async (req, res) => {
-  console.log("----- UPLOAD DEBUG START -----");
-  console.log("route:", req.originalUrl);
-  console.log("file exists:", !!req.file);
-  console.log("file path:", req.file?.path);
-  console.log("file filename:", req.file?.filename);
-  console.log("file mimetype:", req.file?.mimetype);
-  console.log("cloud name:", process.env.CLOUDINARY_CLOUD_NAME);
-  console.log("api key exists:", !!process.env.CLOUDINARY_API_KEY);
-  console.log("api secret exists:", !!process.env.CLOUDINARY_API_SECRET);
-  console.log("----- UPLOAD DEBUG END -----");
+  // console.log("----- UPLOAD DEBUG START -----");
+  // console.log("route:", req.originalUrl);
+  // console.log("file exists:", !!req.file);
+  // console.log("file path:", req.file?.path);
+  // console.log("file filename:", req.file?.filename);
+  // console.log("file mimetype:", req.file?.mimetype);
+  // console.log("cloud name:", process.env.CLOUDINARY_CLOUD_NAME);
+  // console.log("api key exists:", !!process.env.CLOUDINARY_API_KEY);
+  // console.log("api secret exists:", !!process.env.CLOUDINARY_API_SECRET);
+  // console.log("----- UPLOAD DEBUG END -----");
   try {
     const storeId = safeObjectId(req.body.storeId);
     if (!storeId) return res.status(400).send("Invalid storeId");
@@ -349,16 +349,16 @@ console.log("🧾 distinct isActive:", await Store.distinct("isActive"));
    POST /admin/products/update/:id
 ========================================================= */
 router.post("/:id/image", upload.single("imageFile"), async (req, res) => {
-  console.log("----- UPLOAD DEBUG START -----");
-  console.log("route:", req.originalUrl);
-  console.log("file exists:", !!req.file);
-  console.log("file path:", req.file?.path);
-  console.log("file filename:", req.file?.filename);
-  console.log("file mimetype:", req.file?.mimetype);
-  console.log("cloud name:", process.env.CLOUDINARY_CLOUD_NAME);
-  console.log("api key exists:", !!process.env.CLOUDINARY_API_KEY);
-  console.log("api secret exists:", !!process.env.CLOUDINARY_API_SECRET);
-  console.log("----- UPLOAD DEBUG END -----");
+  // console.log("----- UPLOAD DEBUG START -----");
+  // console.log("route:", req.originalUrl);
+  // console.log("file exists:", !!req.file);
+  // console.log("file path:", req.file?.path);
+  // console.log("file filename:", req.file?.filename);
+  // console.log("file mimetype:", req.file?.mimetype);
+  // console.log("cloud name:", process.env.CLOUDINARY_CLOUD_NAME);
+  // console.log("api key exists:", !!process.env.CLOUDINARY_API_KEY);
+  // console.log("api secret exists:", !!process.env.CLOUDINARY_API_SECRET);
+  // console.log("----- UPLOAD DEBUG END -----");
   try {
     const id = safeObjectId(req.params.id);
     if (!id) return res.status(400).send("Invalid product id");
@@ -384,17 +384,17 @@ router.post("/:id/image", upload.single("imageFile"), async (req, res) => {
 });
 
 router.post("/update/:id", upload.single("image"), async (req, res) => {
-  console.log("----- UPLOAD DEBUG START -----");
-  console.log("route:", req.originalUrl);
-  console.log("file exists:", !!req.file);
-  console.log("file path:", req.file?.path);
-  console.log("file filename:", req.file?.filename);
-  console.log("file mimetype:", req.file?.mimetype);
-  console.log("cloud name:", process.env.CLOUDINARY_CLOUD_NAME);
-  console.log("api key exists:", !!process.env.CLOUDINARY_API_KEY);
-  console.log("api secret exists:", !!process.env.CLOUDINARY_API_SECRET);
-  console.log("----- UPLOAD DEBUG END -----");
-  console.log("🟢 HIT UPDATE ROUTE:", req.originalUrl, "id:", req.params.id);
+  // console.log("----- UPLOAD DEBUG START -----");
+  // console.log("route:", req.originalUrl);
+  // console.log("file exists:", !!req.file);
+  // console.log("file path:", req.file?.path);
+  // console.log("file filename:", req.file?.filename);
+  // console.log("file mimetype:", req.file?.mimetype);
+  // console.log("cloud name:", process.env.CLOUDINARY_CLOUD_NAME);
+  // console.log("api key exists:", !!process.env.CLOUDINARY_API_KEY);
+  // console.log("api secret exists:", !!process.env.CLOUDINARY_API_SECRET);
+  // console.log("----- UPLOAD DEBUG END -----");
+  // console.log("🟢 HIT UPDATE ROUTE:", req.originalUrl, "id:", req.params.id);
   try {
     const id = safeObjectId(req.params.id);
     if (!id) return res.status(400).send("Invalid product id");
