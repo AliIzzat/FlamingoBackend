@@ -6,6 +6,7 @@ const Store = require("../../models/Store");
 
 router.get("/", async (req, res) => {
   try {
+    res.set("Cache-Control", "no-store");
     const stores = await Store.find().sort({ createdAt: -1 }).lean();
     return res.json(stores);
   } catch (err) {

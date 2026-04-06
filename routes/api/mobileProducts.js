@@ -6,6 +6,7 @@ const Product = require("../../models/Product"); // your Product model
 
 router.get("/", async (req, res) => {
   try {
+    res.set("Cache-Control", "no-store");
     const { storeId, limit = 200, offer } = req.query;
 
     const q = {};

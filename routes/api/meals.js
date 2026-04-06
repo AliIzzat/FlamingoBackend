@@ -6,6 +6,7 @@ const MealModel = require("../../models/Meals");
 
 router.get("/", async (req, res) => {
   try {
+    res.set("Cache-Control", "no-store");
     const meals = await MealModel.find()
       .sort({ createdAt: -1 })
       .lean();
