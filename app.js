@@ -189,7 +189,7 @@ if (ENABLE_ADMIN) {
   const adminOrdersRoutes = require("./routes/backend/adminOrders");
   const reportsRouter = require("./routes/backend/reports");
 
-  app.use("/auth", authRoutes);
+  app.use("/", authRoutes);
   app.use("/delivery", deliveryRoutes);
 
   app.use("/admin/stores", adminStores);
