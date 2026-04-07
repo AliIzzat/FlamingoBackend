@@ -486,22 +486,37 @@ router.post("/toggle/:id", async (req, res) => {
 ========================================================= */
 router.post("/delete/:id", async (req, res) => {
   try {
-    const id = safeObjectId(req.params.id);
-    if (!id) return res.status(400).send("Invalid product id");
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).send("Product not found");
+    }
 
-    const p = await Product.findById(id).lean();
-    if (!p) return res.status(404).send("Product not found");
-
-    await Product.findByIdAndDelete(id);
-
-    const returnTo =
-      trimStr(req.body.returnTo) || `/admin/products?storeId=${p.storeId.toString()}`;
-    return res.redirect(returnTo);
-  } catch (e) {
-    console.error("❌ delete product:", e);
-    return res.status(500).send("Failed to delete product: " + (e?.message || e));
+    await Product.findByIdAndDelete(req.params.id);
+    return res.redirect("/admin/products");
+  } catch (err) {
+    console.error("❌ DELETE product error:", err);
+    return res.status(500).send("Server error while deleting product");
   }
 });
+
+// router.post("/delete/:id", async (req, res) => {
+//   try {
+//     const id = safeObjectId(req.params.id);
+//     if (!id) return res.status(400).send("Invalid product id");
+
+//     const p = await Product.findById(id).lean();
+//     if (!p) return res.status(404).send("Product not found");
+
+//     await Product.findByIdAndDelete(id);
+
+//     const returnTo =
+//       trimStr(req.body.returnTo) || `/admin/products?storeId=${p.storeId.toString()}`;
+//     return res.redirect(returnTo);
+//   } catch (e) {
+//     console.error("❌ delete product:", e);
+//     return res.status(500).send("Failed to delete product: " + (e?.message || e));
+//   }
+// });
 
 module.exports = router;
 
