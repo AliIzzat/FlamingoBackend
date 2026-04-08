@@ -1,3 +1,4 @@
+console.log("🔥 SAVE ROUTE HIT");
 const express = require("express");
 const router = express.Router();
 const CarouselSlide = require("../../models/CarouselSlide");
@@ -54,6 +55,9 @@ router.get("/edit/:id", async (req, res) => {
 // POST /admin/carousel/save
 router.post("/save", upload.single("media"), async (req, res) => {
   try {
+    console.log("🔥 SAVE ROUTE HIT");
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
     const {
       id,
       type,
