@@ -7,7 +7,8 @@
   <div class="admin-card">
     <h2>{{#if editSlide}}Edit Slide{{else}}Add New Slide{{/if}}</h2>
 
-    <form action="/admin/carousel/save" method="POST" class="admin-form">
+    {{!-- <form action="/admin/carousel/save" method="POST" class="admin-form"> --}}
+    <form action="/admin/carousel/save" method="POST" enctype="multipart/form-data"></form>
       {{#if editSlide}}
         <input type="hidden" name="id" value="{{editSlide._id}}" />
       {{/if}}
@@ -21,6 +22,22 @@
       </div>
 
       <div class="form-row">
+        <label>Upload Media (Image / Video)</label>
+        <input type="file" name="media" class="input" accept="image/*,video/*" />
+      </div>
+
+      <div class="form-row">
+        <label>Or Media URL (optional)</label>
+        <input
+          type="text"
+          name="mediaUrl"
+          class="input"
+          placeholder="https://..."
+          value="{{editSlide.mediaUrl}}"
+        />
+      </div>
+
+      {{!-- <div class="form-row">
         <label>Media URL</label>
         <input
           type="text"
@@ -30,7 +47,7 @@
           value="{{editSlide.mediaUrl}}"
           required
         />
-      </div>
+      </div> --}}
 
       <div class="form-row two-cols">
         <div>
