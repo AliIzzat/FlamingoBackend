@@ -55,14 +55,6 @@ router.get("/edit/:id", async (req, res) => {
 // POST /admin/carousel/save
 router.post("/save", upload.single("media"), async (req, res) => {
   try {
-    console.log("🔥 SAVE ROUTE HIT");
-    console.log("BODY KEYS:", Object.keys(req.body || {}));
-    console.log("BODY mediaUrl:", req.body?.mediaUrl);
-    console.log("BODY title:", req.body?.title);
-    console.log("FILE EXISTS:", !!req.file);
-    console.log("FILE NAME:", req.file?.originalname);
-    console.log("FILE MIME:", req.file?.mimetype);
-    console.log("FILE SIZE:", req.file?.size);
     const {
       id,
       type,
@@ -84,26 +76,6 @@ router.post("/save", upload.single("media"), async (req, res) => {
     } else if (mediaUrl && String(mediaUrl).trim()) {
       finalMediaUrl = String(mediaUrl).trim();
     }
-    const payload = {
-      type: String(type || "image").trim(),
-      mediaUrl: finalMediaUrl,
-      title: String(title || "").trim(),
-      titleAr: String(titleAr || "").trim(),
-      description: String(description || "").trim(),
-      buttonText: String(buttonText || "").trim(),
-      actionType: String(actionType || "none").trim(),
-      actionValue: String(actionValue || "").trim(),
-      isActive: req.body.isActive === "on",
-      sortOrder: Number(sortOrder || 0),
-    };
-
-    if (!payload.mediaUrl) {
-      return res.status(400).send("Media file or Media URL is required");
-    }
-
-    console.log("FINAL MEDIA URL:", finalMediaUrl);
-    console.log("PAYLOAD:", payload);
-
 
     if (id) {
       const existing = await CarouselSlide.findById(id);
@@ -111,8 +83,48 @@ router.post("/save", upload.single("media"), async (req, res) => {
         return res.status(404).send("Slide not found");
       }
 
+      // Keep existing media if user did not upload a new file
+      // and did not enter a new URL
+      if (!finalMediaUrl) {
+        finalMediaUrl = existing.mediaUrl || "";
+      }
+
+      const payload = {
+        type: String(type || existing.type || "image").trim(),
+        mediaUrl: finalMediaUrl,
+        title: String(title || "").trim(),
+        titleAr: String(titleAr || "").trim(),
+        description: String(description || "").trim(),
+        buttonText: String(buttonText || "").trim(),
+        actionType: String(actionType || "none").trim(),
+        actionValue: String(actionValue || "").trim(),
+        isActive: req.body.isActive === "on",
+        sortOrder: Number(sortOrder || 0),
+      };
+
+      if (!payload.mediaUrl) {
+        return res.status(400).send("Media file or Media URL is required");
+      }
+
       await CarouselSlide.findByIdAndUpdate(id, payload, { new: true });
     } else {
+      const payload = {
+        type: String(type || "image").trim(),
+        mediaUrl: finalMediaUrl,
+        title: String(title || "").trim(),
+        titleAr: String(titleAr || "").trim(),
+        description: String(description || "").trim(),
+        buttonText: String(buttonText || "").trim(),
+        actionType: String(actionType || "none").trim(),
+        actionValue: String(actionValue || "").trim(),
+        isActive: req.body.isActive === "on",
+        sortOrder: Number(sortOrder || 0),
+      };
+
+      if (!payload.mediaUrl) {
+        return res.status(400).send("Media file or Media URL is required");
+      }
+
       await CarouselSlide.create(payload);
     }
 
