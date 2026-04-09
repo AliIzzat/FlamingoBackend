@@ -16,6 +16,112 @@
   <div class="admin-card">
     <h2>{{#if editSlide}}Edit Slide{{else}}Add New Slide{{/if}}</h2>
 
+   <form id="slideForm" action="/admin/carousel/save" method="POST" enctype="multipart/form-data">
+  {{#if editSlide}}
+    <input type="hidden" name="id" value="{{editSlide._id}}" />
+  {{/if}}
+
+  <div class="form-row">
+    <label>Media Type</label>
+    <select name="type" class="input">
+      <option value="image" {{#if (eq editSlide.type "image")}}selected{{/if}}>Image</option>
+      <option value="video" {{#if (eq editSlide.type "video")}}selected{{/if}}>Video</option>
+    </select>
+  </div>
+
+  <div class="form-row">
+    <label>Upload Media (Image / Video)</label>
+    <input type="file" name="media" class="input" accept="image/*,video/*" />
+  </div>
+
+  <div class="form-row">
+    <label>Or Media URL (optional)</label>
+    <input
+      type="text"
+      name="mediaUrl"
+      class="input"
+      placeholder="https://..."
+      value="{{editSlide.mediaUrl}}"
+    />
+  </div>
+
+  {{#if editSlide}}
+    <input type="hidden" name="existingMediaUrl" value="{{editSlide.mediaUrl}}">
+  {{/if}}
+
+  <div class="form-row two-cols">
+    <div>
+      <label>Title (English)</label>
+      <input type="text" name="title" class="input" value="{{editSlide.title}}" />
+    </div>
+
+    <div>
+      <label>Title (Arabic)</label>
+      <input type="text" name="titleAr" class="input" value="{{editSlide.titleAr}}" />
+    </div>
+  </div>
+
+  <div class="form-row">
+    <label>Description</label>
+    <textarea name="description" class="input textarea">{{editSlide.description}}</textarea>
+  </div>
+
+  <div class="form-row two-cols">
+    <div>
+      <label>Button Text</label>
+      <input type="text" name="buttonText" class="input" value="{{editSlide.buttonText}}" />
+    </div>
+
+    <div>
+      <label>Sort Order</label>
+      <input type="number" name="sortOrder" class="input" value="{{editSlide.sortOrder}}" />
+    </div>
+  </div>
+
+  <div class="form-row two-cols">
+    <div>
+      <label>Action Type</label>
+      <select name="actionType" class="input">
+        <option value="none" {{#if (eq editSlide.actionType "none")}}selected{{/if}}>None</option>
+        <option value="link" {{#if (eq editSlide.actionType "link")}}selected{{/if}}>External Link</option>
+        <option value="navigate" {{#if (eq editSlide.actionType "navigate")}}selected{{/if}}>Navigate</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Action Value</label>
+      <input type="text" name="actionValue" class="input" value="{{editSlide.actionValue}}" />
+    </div>
+  </div>
+
+  <div class="form-row switch-row">
+    <label>Active</label>
+    <input
+      type="checkbox"
+      name="isActive"
+      {{#if editSlide}}
+        {{#if editSlide.isActive}}checked{{/if}}
+      {{else}}
+        checked
+      {{/if}}
+    />
+  </div>
+
+  <div class="form-actions">
+    <button id="saveSlideBtn" type="submit" class="btn-primary">
+      {{#if editSlide}}💾 Update Slide{{else}}➕ Save Slide{{/if}}
+    </button>
+
+    {{#if editSlide}}
+      <a href="/admin/carousel" class="btn-secondary">Cancel Edit</a>
+    {{/if}}
+  </div>
+</form>
+
+
+
+
+{{!-- 
     <form action="/admin/carousel/save" method="POST" enctype="multipart/form-data">
       {{#if editSlide}}
         <input type="hidden" name="id" value="{{editSlide._id}}" />
@@ -44,7 +150,9 @@
           value="{{editSlide.mediaUrl}}"
         />
       </div>
-
+      {{#if editSlide}}
+       <input type="hidden" name="existingMediaUrl" value="{{editSlide.mediaUrl}}">
+      {{/if}}
       <div class="form-row two-cols">
         <div>
           <label>Title (English)</label>
@@ -104,7 +212,7 @@
       </div>
 
       <div class="form-actions">
-        <button type="submit" class="btn-primary">
+        <button type="submit" class="btn-primary" disabled>
           {{#if editSlide}}💾 Update Slide{{else}}➕ Save Slide{{/if}}
         </button>
 
@@ -112,7 +220,52 @@
           <a href="/admin/carousel" class="btn-secondary">Cancel Edit</a>
         {{/if}}
       </div>
-    </form>
+    </form> --}}
+
+    <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const saveBtn = document.getElementById("saveSlideBtn");
+    const form = document.getElementById("slideForm");
+
+    if (!saveBtn || !form) {
+      console.log("Save button or form not found");
+      return;
+    }
+
+    const typeInput = form.querySelector('[name="type"]');
+    const mediaUrlInput = form.querySelector('[name="mediaUrl"]');
+    const mediaFileInput = form.querySelector('[name="media"]');
+    const existingMediaInput = form.querySelector('[name="existingMediaUrl"]');
+
+    function validateSlideForm() {
+      const typeValue = typeInput ? typeInput.value.trim() : "";
+      const mediaUrlValue = mediaUrlInput ? mediaUrlInput.value.trim() : "";
+      const existingMediaValue = existingMediaInput ? existingMediaInput.value.trim() : "";
+      const hasFile = !!(mediaFileInput && mediaFileInput.files && mediaFileInput.files.length > 0);
+
+      const hasMedia = hasFile || !!mediaUrlValue || !!existingMediaValue;
+      const isValid = !!typeValue && hasMedia;
+
+      saveBtn.disabled = !isValid;
+    }
+
+    if (typeInput) {
+      typeInput.addEventListener("change", validateSlideForm);
+      typeInput.addEventListener("input", validateSlideForm);
+    }
+
+    if (mediaUrlInput) {
+      mediaUrlInput.addEventListener("change", validateSlideForm);
+      mediaUrlInput.addEventListener("input", validateSlideForm);
+    }
+
+    if (mediaFileInput) {
+      mediaFileInput.addEventListener("change", validateSlideForm);
+    }
+
+    validateSlideForm();
+  });
+</script>
   </div>
 
   <div class="admin-card">
@@ -160,6 +313,7 @@
     {{/if}}
   </div>
 </div>
+
 
 <style>
 .admin-container {
@@ -324,5 +478,11 @@
   width: 100%;
   background: #f31ae8;
   color: #fff;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 </style>

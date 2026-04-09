@@ -1,4 +1,3 @@
-
 const express = require("express");
 const router = express.Router();
 const CarouselSlide = require("../../models/CarouselSlide");
@@ -55,11 +54,6 @@ router.get("/edit/:id", async (req, res) => {
 // POST /admin/carousel/save
 router.post("/save", upload.single("media"), async (req, res) => {
   try {
-    console.log("🔥 SAVE ROUTE HIT");
-    console.log("BODY id:", req.body?.id);
-    console.log("BODY mediaUrl:", req.body?.mediaUrl);
-    console.log("FILE EXISTS:", !!req.file);
-
     const {
       id,
       type,
@@ -75,22 +69,27 @@ router.post("/save", upload.single("media"), async (req, res) => {
 
     let finalMediaUrl = "";
 
+    // 1) New uploaded file wins
     if (req.file) {
-      const uploaded = await uploadToCloudinary(req.file.buffer, "onego/carousel");
+      const uploaded = await uploadToCloudinary(
+        req.file.buffer,
+        "onego/carousel"
+      );
       finalMediaUrl = uploaded.secure_url;
-    } else if (mediaUrl && String(mediaUrl).trim()) {
+    }
+    // 2) Otherwise use typed URL if present
+    else if (mediaUrl && String(mediaUrl).trim()) {
       finalMediaUrl = String(mediaUrl).trim();
     }
 
     if (id) {
       const existing = await CarouselSlide.findById(id);
-      console.log("EXISTING SLIDE:", existing ? existing._id : null);
-      console.log("EXISTING mediaUrl:", existing?.mediaUrl);
 
       if (!existing) {
         return res.status(404).send("Slide not found");
       }
 
+      // 3) If editing and no new file/url provided, keep old media
       if (!finalMediaUrl) {
         finalMediaUrl = existing.mediaUrl || "";
       }
