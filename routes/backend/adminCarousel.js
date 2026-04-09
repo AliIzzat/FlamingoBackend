@@ -55,6 +55,11 @@ router.get("/edit/:id", async (req, res) => {
 // POST /admin/carousel/save
 router.post("/save", upload.single("media"), async (req, res) => {
   try {
+    console.log("🔥 SAVE ROUTE HIT");
+    console.log("BODY id:", req.body?.id);
+    console.log("BODY mediaUrl:", req.body?.mediaUrl);
+    console.log("FILE EXISTS:", !!req.file);
+
     const {
       id,
       type,
@@ -79,12 +84,13 @@ router.post("/save", upload.single("media"), async (req, res) => {
 
     if (id) {
       const existing = await CarouselSlide.findById(id);
+      console.log("EXISTING SLIDE:", existing ? existing._id : null);
+      console.log("EXISTING mediaUrl:", existing?.mediaUrl);
+
       if (!existing) {
         return res.status(404).send("Slide not found");
       }
 
-      // Keep existing media if user did not upload a new file
-      // and did not enter a new URL
       if (!finalMediaUrl) {
         finalMediaUrl = existing.mediaUrl || "";
       }
