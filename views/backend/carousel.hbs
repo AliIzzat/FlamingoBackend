@@ -7,8 +7,7 @@
   <div class="admin-card">
     <h2>{{#if editSlide}}Edit Slide{{else}}Add New Slide{{/if}}</h2>
 
-    {{!-- <form action="/admin/carousel/save" method="POST" class="admin-form"> --}}
-    <form action="/admin/carousel/save" method="POST" enctype="multipart/form-data"></form>
+    <form action="/admin/carousel/save" method="POST" enctype="multipart/form-data">
       {{#if editSlide}}
         <input type="hidden" name="id" value="{{editSlide._id}}" />
       {{/if}}
@@ -36,18 +35,6 @@
           value="{{editSlide.mediaUrl}}"
         />
       </div>
-
-      {{!-- <div class="form-row">
-        <label>Media URL</label>
-        <input
-          type="text"
-          name="mediaUrl"
-          class="input"
-          placeholder="https://..."
-          value="{{editSlide.mediaUrl}}"
-          required
-        />
-      </div> --}}
 
       <div class="form-row two-cols">
         <div>

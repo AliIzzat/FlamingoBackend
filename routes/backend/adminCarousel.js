@@ -1,4 +1,4 @@
-console.log("🔥 SAVE ROUTE HIT");
+
 const express = require("express");
 const router = express.Router();
 const CarouselSlide = require("../../models/CarouselSlide");
