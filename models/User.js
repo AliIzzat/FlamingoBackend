@@ -31,6 +31,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    
+    location: {
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null },
+      address: { type: String, default: "" },
+      shortAddress: { type: String, default: "" },
+    },
 
     role: {
       type: String,
