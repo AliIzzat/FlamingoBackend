@@ -294,6 +294,7 @@ if (firstStoreId) {
     }
     // lookup customer or create new one
   let customerDoc = await Customer.findOne({ phone: customer.phone });
+  console.log("existing customerDoc:", customerDoc);
       if (!customerDoc) {
         customerDoc = await Customer.create({
           name: customer.name || "",
@@ -304,6 +305,7 @@ if (firstStoreId) {
             lng: customer.location?.lng ?? null,
           },
         });
+        console.log("created customerDoc:", customerDoc);
       } else {
         customerDoc.name = customer.name || customerDoc.name || "";
         customerDoc.addressText = customer.addressText;
@@ -313,6 +315,7 @@ if (firstStoreId) {
         };
 
         await customerDoc.save();
+        console.log("updated customerDoc:", customerDoc);
       }
     // 7) Create order (matches your OrderSchema)
     let orderId = null;
