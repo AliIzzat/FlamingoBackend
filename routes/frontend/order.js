@@ -349,8 +349,7 @@ if (firstStoreId) {
           deliveredAt: null,
         },
       });
-     console.log("created order:", order._id);
-   // ✅ Create/Upsert notification for admin (unpicked)
+     console.log("created order:", order._id);   // ✅ Create/Upsert notification for admin (unpicked)
       const now = new Date();
       await Notification.findOneAndUpdate(
     { orderId: order._id },

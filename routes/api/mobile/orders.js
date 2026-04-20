@@ -6,7 +6,7 @@ const router = express.Router();
 const Order = require("../../../models/Order");
 // const Notification = require("../../../models/Notification");
 const Store = require("../../../models/Store");
-
+const Customer = require("../../../models/Customer");
 // -------------------------
 // Helpers
 // -------------------------
@@ -88,37 +88,37 @@ router.post("/create", async (req, res) => {
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
     const recentOrders = await Order.find({
-      "customer.phone": String(customer.phone).trim(),
+     "customerSnapshot.phone": String(customer.phone).trim(),
       createdAt: { $gte: tenMinutesAgo },
-    }).lean();
+      }).lean();
 
-    const duplicate = recentOrders.find((o) => {
-      const existingFingerprint = JSON.stringify({
-        phone: String(o.customer?.phone || "").trim(),
-        items: [...(o.items || [])]
-          .map((it) => ({
-            id: String(it.productId || ""),
-            storeId: String(it.storeId || ""),
-            qty: Number(it.qty || 1),
-            price: Number(it.price_snapshot || 0),
-            type: String(it.category || "product"),
-          }))
-          .sort((a, b) =>
-            `${a.storeId}:${a.id}:${a.type}`.localeCompare(
-              `${b.storeId}:${b.id}:${b.type}`
-            )
-          ),
+      const duplicate = recentOrders.find((o) => {
+        const existingFingerprint = JSON.stringify({
+          phone: String(o.customerSnapshot?.phone || "").trim(),
+          items: [...(o.items || [])]
+            .map((it) => ({
+              id: String(it.productId || ""),
+              storeId: String(it.storeId || ""),
+              qty: Number(it.qty || 1),
+              price: Number(it.price_snapshot || 0),
+              type: String(it.category || "product"),
+            }))
+            .sort((a, b) =>
+              `${a.storeId}:${a.id}:${a.type}`.localeCompare(
+                `${b.storeId}:${b.id}:${b.type}`
+              )
+            ),
+        });
+
+        return (
+          existingFingerprint === newFingerprint &&
+          (
+            o.payment?.status === "paid" ||
+            o.checkout?.isFinalized === true ||
+            o.delivery?.status === "Pending"
+          )
+        );
       });
-
-      return (
-        existingFingerprint === newFingerprint &&
-        (
-          o.payment?.status === "paid" ||
-          o.checkout?.isFinalized === true ||
-          o.delivery?.status === "Pending"
-        )
-      );
-    });
 
     if (duplicate) {
       console.log("⛔ Duplicate order blocked:", duplicate._id);
@@ -185,6 +185,33 @@ router.post("/create", async (req, res) => {
 
     console.log("🏪 store groups count =", itemsByStore.size);
 
+    let customerDoc = await Customer.findOne({
+     phone: String(customer.phone).trim(),
+      });
+
+      if (!customerDoc) {
+        customerDoc = await Customer.create({
+          name: String(customer.name || "").trim(),
+          phone: String(customer.phone).trim(),
+          addressText: String(customer.addressText || "").trim(),
+          location: {
+            lat: customerLat,
+            lng: customerLng,
+          },
+        });
+      } else {
+        customerDoc.name = String(customer.name || customerDoc.name || "").trim();
+        customerDoc.addressText = String(customer.addressText || "").trim();
+        customerDoc.location = {
+          lat: customerLat,
+          lng: customerLng,
+        };
+        await customerDoc.save();
+      }
+
+    console.log("✅ customerDoc:", customerDoc._id);
+
+
     const createdOrders = [];
 
     for (const [storeIdStr, storeItems] of itemsByStore.entries()) {
@@ -222,13 +249,15 @@ router.post("/create", async (req, res) => {
       const subtotal = calcSubtotalFromItems(storeItems);
 
       const orderDoc = await Order.create({
-        customer: {
-          name: String(customer.name).trim(),
-          phone: String(customer.phone).trim(),
-          addressText: String(customer.addressText).trim(),
+        customerId: customerDoc._id,
+
+        customerSnapshot: {
+          name: String(customerDoc.name || "").trim(),
+          phone: String(customerDoc.phone).trim(),
+          addressText: String(customerDoc.addressText).trim(),
           location: {
-            lat: customerLat,
-            lng: customerLng,
+            lat: customerDoc.location?.lat ?? null,
+            lng: customerDoc.location?.lng ?? null,
           },
         },
 
