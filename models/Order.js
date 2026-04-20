@@ -26,15 +26,30 @@ const OrderItemSchema = new mongoose.Schema(
 
 const OrderSchema = new mongoose.Schema(
   {
-    customer: {
-      name: { type: String, required: true },
-      phone: { type: String, required: true, index: true },
-      addressText: { type: String, required: true },
-      location: {
-        lat: { type: Number, default: null },
-        lng: { type: Number, default: null },
-      },
-    },
+    customerId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Customer',
+  required: true,
+},
+
+customerSnapshot: {
+  name: { type: String, default: '' },
+  phone: { type: String, required: true },
+  addressText: { type: String, required: true },
+  location: {
+    lat: { type: Number, default: null },
+    lng: { type: Number, default: null },
+  },
+},
+    // customer: {
+    //   name: { type: String, required: true },
+    //   phone: { type: String, required: true, index: true },
+    //   addressText: { type: String, required: true },
+    //   location: {
+    //     lat: { type: Number, default: null },
+    //     lng: { type: Number, default: null },
+    //   },
+    // },
 
     pickup: {
       storeId: {

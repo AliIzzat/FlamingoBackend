@@ -185,7 +185,7 @@ async function createOrUpdateNotification(order) {
     {
       $set: {
         orderId: order._id,
-        message: `🆕 ${storeName} | ${order.customer.name} (${order.customer.phone}) | QAR ${total}`,
+        message: `🆕 ${storeName} | ${order.customerSnapshot.name} (${order.customerSnapshot.phone}) | QAR ${total}`,
         status: "unpicked",
         driverId: null,
         updatedAt: new Date(),

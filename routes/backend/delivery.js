@@ -20,8 +20,8 @@ const ROLE = "driver";
 function attachCoordinateAliases(orders) {
   (orders || []).forEach((order) => {
     // Customer location
-    const cLoc = order.customer?.location;
-    if (cLoc && typeof cLoc.lat === "number" && typeof cLoc.lng === "number") {
+    const cLoc = order.customerSnapshot?.location;
+    if (Number.isFinite(cLoc?.lat) && Number.isFinite(cLoc?.lng)) {
       order.customerLat = cLoc.lat;
       order.customerLng = cLoc.lng;
     }

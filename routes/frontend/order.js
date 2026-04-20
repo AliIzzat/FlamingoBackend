@@ -11,6 +11,7 @@ const MYFATOORAH_TOKEN = process.env.MYFATOORAH_TOKEN;
 const MF_PAYMENT_METHOD_ID = Number(process.env.MF_PAYMENT_METHOD_ID || 2); 
 const APP_BASE_URL = process.env.APP_BASE_URL || 'http://192.168.1.26:4000';
 const { DELIVERY_FEE } = require("../../config/pricing");
+const Customer = require('../../models/Customer');
 
 // Helper to avoid NaN
 function getSafeNumber(val, fallback = 0) {
@@ -291,27 +292,58 @@ if (firstStoreId) {
         message: "Payment gateway not configured (MYFATOORAH_TOKEN missing).",
       });
     }
+    // lookup customer or create new one
+  let customerDoc = await Customer.findOne({ phone: customer.phone });
+      if (!customerDoc) {
+        customerDoc = await Customer.create({
+          name: customer.name || "",
+          phone: customer.phone,
+          addressText: customer.addressText,
+          location: {
+            lat: customer.location?.lat ?? null,
+            lng: customer.location?.lng ?? null,
+          },
+        });
+      } else {
+        customerDoc.name = customer.name || customerDoc.name || "";
+        customerDoc.addressText = customer.addressText;
+        customerDoc.location = {
+          lat: customer.location?.lat ?? null,
+          lng: customer.location?.lng ?? null,
+        };
+
+        await customerDoc.save();
+      }
     // 7) Create order (matches your OrderSchema)
     let orderId = null;
-    const order = await Order.create({
-      customer,
-      pickup, // ✅ remove if you did NOT add pickup to OrderSchema
-      items: normalizedItems,
-      totals: { subtotal, deliveryFee, total },
-      payment: {
-        method: "myfatoorah",
-        status: "unpaid",
-        invoiceId: "",
-        paymentId: "",
-      },
-      delivery: {
-        status: "Pending",
-        assignedDriverId: null,
-        claimedAt: null,
-        pickedUpAt: null,
-        deliveredAt: null,
-      },
-    });
+      const order = await Order.create({
+        customerId: customerDoc._id,
+        customerSnapshot: {
+          name: customerDoc.name || "",
+          phone: customerDoc.phone,
+          addressText: customerDoc.addressText,
+          location: {
+            lat: customerDoc.location?.lat ?? null,
+            lng: customerDoc.location?.lng ?? null,
+          },
+        },
+        pickup,
+        items: normalizedItems,
+        totals: { subtotal, deliveryFee, total },
+        payment: {
+          method: "myfatoorah",
+          status: "unpaid",
+          invoiceId: "",
+          paymentId: "",
+        },
+        delivery: {
+          status: "Pending",
+          assignedDriverId: null,
+          claimedAt: null,
+          pickedUpAt: null,
+          deliveredAt: null,
+        },
+      });
 
    // ✅ Create/Upsert notification for admin (unpicked)
       const now = new Date();
