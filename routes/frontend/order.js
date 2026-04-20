@@ -179,6 +179,8 @@ function renderPaymentPage({ status, orderId, paymentId, appBaseUrl, debugJson }
 ------------------------------*/
 router.post("/mobile-checkout", async (req, res) => {
   try {
+    console.log("Reached /mobile-checkout");
+    console.log("Request body:", req.body);
     const {
       customerName,
       customerEmail,
@@ -263,7 +265,7 @@ if (storeIds.length > 1) {
         lng: Number.isFinite(lngNum) ? lngNum : null,
       },
     };
-
+    console.log("customer payload:", customer);
 // 4) Pickup snapshot from first storeId (Store.location.coordinates = [lng, lat])
 //const firstStoreId = normalizedItems?.[0]?.storeId || null;
 const rawStoreId = normalizedItems?.[0]?.storeId || null;
@@ -347,7 +349,7 @@ if (firstStoreId) {
           deliveredAt: null,
         },
       });
-
+     console.log("created order:", order._id);
    // ✅ Create/Upsert notification for admin (unpicked)
       const now = new Date();
       await Notification.findOneAndUpdate(
