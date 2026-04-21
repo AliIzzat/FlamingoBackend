@@ -1,3 +1,19 @@
+// routes/api/customer.js
+const express = require("express");
+const router = express.Router();
+const jwt = require("jsonwebtoken");
+const User = require("../../models/User");
+
+function signToken(user) {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is missing in .env");
+  }
+  return jwt.sign(
+    { userId: String(user._id), role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+}
 router.post("/save-address", async (req, res) => {
   try {
     const {
@@ -55,3 +71,4 @@ router.post("/save-address", async (req, res) => {
     });
   }
 });
+module.exports = router;
