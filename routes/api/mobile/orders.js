@@ -320,4 +320,10 @@ router.post("/create", async (req, res) => {
     });
   }
 });
+
+router.get("/ping", (req, res) => {
+  console.log("✅ /api/mobile/orders/ping HIT");
+  res.json({ ok: true, route: "/api/mobile/orders/ping" });
+});
+
 module.exports = router;

@@ -5,17 +5,44 @@ const CustomerSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      default: '',
+      default: "",
       trim: true,
     },
     phone: {
       type: String,
       required: true,
       index: true,
+      trim: true,
     },
     addressText: {
       type: String,
-      required: true,
+      default: "",
+      trim: true,
+    },
+    streetNumber: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    zone: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    building: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    floor: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    aptNo: {
+      type: String,
+      default: "",
+      trim: true,
     },
     location: {
       lat: { type: Number, default: null },
