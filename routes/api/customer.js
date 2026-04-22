@@ -17,6 +17,10 @@ function signToken(user) {
 }
 router.post("/save-address", async (req, res) => {
   try {
+
+    console.log("🔥 /api/customer/save-address hit");
+    console.log("🔥 req.body =", req.body);
+    
     const {
       name,
       phone,
@@ -60,6 +64,7 @@ router.post("/save-address", async (req, res) => {
       }
     );
 
+    console.log("🔥 saved customer =", customer);
     res.json({
       success: true,
       customer,
