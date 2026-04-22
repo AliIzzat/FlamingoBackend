@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const User = require("../../models/User");
+const Customer = require("../../models/Customer");
 
 function signToken(user) {
   if (!process.env.JWT_SECRET) {
