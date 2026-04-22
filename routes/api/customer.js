@@ -23,7 +23,7 @@ router.post("/save-address", async (req, res) => {
 
     const {
       name,
-      phone,
+    //  phone,
       addressText,
       streetNumber,
       zone,
@@ -34,15 +34,15 @@ router.post("/save-address", async (req, res) => {
       lng,
     } = req.body;
 
-    if (!phone || !phone.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Phone is required",
-      });
-    }
+    // if (!phone || !phone.trim()) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Phone is required",
+    //   });
+    // }
 
     const customer = await Customer.findOneAndUpdate(
-      { phone: phone.trim() },
+    //   { phone: phone.trim() },
       {
         $set: {
           name: name?.trim() || "",
