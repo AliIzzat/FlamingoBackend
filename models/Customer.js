@@ -3,39 +3,9 @@ const mongoose = require('mongoose');
 
 const CustomerSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      default: "",
-      trim: true,
-    },
     addressText: {
       type: String,
       required: true,
-      trim: true,
-    },
-    streetNumber: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-    zone: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-    building: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-    floor: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-    aptNo: {
-      type: String,
-      default: "",
       trim: true,
     },
     location: {
