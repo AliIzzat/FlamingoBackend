@@ -33,48 +33,41 @@ router.post("/save-address", async (req, res) => {
       lat,
       lng,
     } = req.body;
-
-    // if (!phone || !phone.trim()) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Phone is required",
-    //   });
-    // }
-
     const customer = await Customer.findOneAndUpdate(
-    //   { phone: phone.trim() },
-      {
-        $set: {
-          name: name?.trim() || "",
-          addressText: addressText?.trim() || "",
-          streetNumber: streetNumber?.trim() || "",
-          zone: zone?.trim() || "",
-          building: building?.trim() || "",
-          floor: floor?.trim() || "",
-          aptNo: aptNo?.trim() || "",
+       { name: "Test User" },   // filter
+    {  
+     $set: {
+          name: "Test User",
+          addressText: "Street 12, Zone Lusail",
+          streetNumber: "12",
+          zone: "Lusail",
+          building: "8",
+          floor: "2",
+          aptNo: "5",
           location: {
-            lat: lat ?? null,
-            lng: lng ?? null,
+            lat: 25.4,
+            lng: 51.5,
           },
         },
       },
       {
         new: true,
-        upsert: true, // 🔥 create if not exists
+        upsert: true,
       }
-    );
-
+    ); 
+    
     console.log("🔥 saved customer =", customer);
     res.json({
       success: true,
       customer,
     });
   } catch (error) {
-    console.error("save-address error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to save address",
-    });
-  }
+  console.error("save-address error:", error);
+  res.status(500).json({
+    success: false,
+    message: error.message,
+    stack: error.stack,
+  });
+}
 });
 module.exports = router;
