@@ -17,13 +17,11 @@ function signToken(user) {
 }
 router.post("/save-address", async (req, res) => {
   try {
-
     console.log("🔥 /api/customer/save-address hit");
     console.log("🔥 req.body =", req.body);
 
     const {
       name,
-    //  phone,
       addressText,
       streetNumber,
       zone,
@@ -33,41 +31,43 @@ router.post("/save-address", async (req, res) => {
       lat,
       lng,
     } = req.body;
+
     const customer = await Customer.findOneAndUpdate(
-       { name: "Test User" },   // filter
-    {  
-     $set: {
-          name: "Test User",
-          addressText: "Street 12, Zone Lusail",
-          streetNumber: "12",
-          zone: "Lusail",
-          building: "8",
-          floor: "2",
-          aptNo: "5",
+      { name: name?.trim() || "Guest" },
+      {
+        $set: {
+          name: name?.trim() || "Guest",
+          addressText: addressText?.trim() || "",
+          streetNumber: streetNumber?.trim() || "",
+          zone: zone?.trim() || "",
+          building: building?.trim() || "",
+          floor: floor?.trim() || "",
+          aptNo: aptNo?.trim() || "",
           location: {
-            lat: 25.4,
-            lng: 51.5,
+            lat: lat ?? null,
+            lng: lng ?? null,
           },
         },
       },
       {
         new: true,
         upsert: true,
+        runValidators: true,
       }
-    ); 
-    
+    );
+
     console.log("🔥 saved customer =", customer);
+
     res.json({
       success: true,
       customer,
     });
   } catch (error) {
-  console.error("save-address error:", error);
-  res.status(500).json({
-    success: false,
-    message: error.message,
-    stack: error.stack,
-  });
-}
+    console.error("save-address error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 });
 module.exports = router;
