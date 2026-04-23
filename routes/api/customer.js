@@ -1,26 +1,138 @@
-// routes/api/customer.js
 const express = require("express");
 const router = express.Router();
-const jwt = require("jsonwebtoken");
-const User = require("../../models/User");
 const Customer = require("../../models/Customer");
+const Otp = require("../../models/Otp");
 
-function signToken(user) {
-  if (!process.env.JWT_SECRET) {
-    throw new Error("JWT_SECRET is missing in .env");
-  }
-  return jwt.sign(
-    { userId: String(user._id), role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
+function normalizePhone(phone) {
+  return String(phone || "").replace(/\s+/g, "").trim();
 }
+
+function generateOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+// 1) Send OTP
+router.post("/send-otp", async (req, res) => {
+  try {
+    const phone = normalizePhone(req.body.phone);
+
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone is required",
+      });
+    }
+
+    const code = generateOtp();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    await Otp.findOneAndUpdate(
+      { phone },
+      {
+        $set: {
+          phone,
+          code,
+          expiresAt,
+        },
+      },
+      {
+        new: true,
+        upsert: true,
+      }
+    );
+
+    console.log(`📱 OTP for ${phone}: ${code}`);
+
+    res.json({
+      success: true,
+      message: "OTP sent",
+      otp: code, // remove this later in production
+    });
+  } catch (error) {
+    console.error("send-otp error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// 2) Verify OTP and create customer if needed
+router.post("/verify-otp", async (req, res) => {
+  try {
+    const phone = normalizePhone(req.body.phone);
+    const otp = String(req.body.otp || "").trim();
+
+    if (!phone || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone and OTP are required",
+      });
+    }
+
+    const otpDoc = await Otp.findOne({ phone, code: otp });
+
+    if (!otpDoc) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
+
+    if (otpDoc.expiresAt < new Date()) {
+      await Otp.deleteOne({ _id: otpDoc._id });
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired",
+      });
+    }
+
+    const customer = await Customer.findOneAndUpdate(
+      { phone },
+      {
+        $set: {
+          phone,
+          isVerified: true,
+        },
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+      }
+    );
+
+    await Otp.deleteOne({ _id: otpDoc._id });
+
+    res.json({
+      success: true,
+      message: "OTP verified",
+      customer,
+    });
+  } catch (error) {
+    console.error("verify-otp error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// 3) Save/update address for that same customer
 router.post("/save-address", async (req, res) => {
   try {
     console.log("🔥 HIT /save-address");
     console.log("🔥 BODY =", req.body);
 
+    const phone = normalizePhone(req.body.phone);
     const { addressText, lat, lng } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone is required",
+      });
+    }
 
     if (!addressText || !addressText.trim()) {
       return res.status(400).json({
@@ -29,13 +141,31 @@ router.post("/save-address", async (req, res) => {
       });
     }
 
-    const customer = await Customer.create({
-      addressText: addressText.trim(),
-      location: {
-        lat: lat ?? null,
-        lng: lng ?? null,
+    const customer = await Customer.findOneAndUpdate(
+      { phone },
+      {
+        $set: {
+          phone,
+          addressText: addressText.trim(),
+          location: {
+            lat: lat ?? null,
+            lng: lng ?? null,
+          },
+        },
       },
-    });
+      {
+        new: true,
+        upsert: false,
+        runValidators: true,
+      }
+    );
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found. Verify OTP first.",
+      });
+    }
 
     console.log("✅ SAVED =", customer);
 
@@ -51,4 +181,52 @@ router.post("/save-address", async (req, res) => {
     });
   }
 });
+
 module.exports = router;
+
+
+
+
+// // routes/api/customer.js
+// const express = require("express");
+// const router = express.Router();
+// const Customer = require("../../models/Customer");
+// const Otp = require("../../models/Otp");
+
+// router.post("/save-address", async (req, res) => {
+//   try {
+//     console.log("🔥 HIT /save-address");
+//     console.log("🔥 BODY =", req.body);
+
+//     const { addressText, lat, lng } = req.body;
+    
+//     if (!addressText || !addressText.trim()) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Address is required",
+//       });
+//     }
+
+//     const customer = await Customer.create({
+//       addressText: addressText.trim(),
+//       location: {
+//         lat: lat ?? null,
+//         lng: lng ?? null,
+//       },
+//     });
+
+//     console.log("✅ SAVED =", customer);
+
+//     res.json({
+//       success: true,
+//       customer,
+//     });
+//   } catch (error) {
+//     console.error("❌ ERROR:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// });
+// module.exports = router;
