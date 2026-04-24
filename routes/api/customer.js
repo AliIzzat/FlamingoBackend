@@ -208,11 +208,17 @@ router.post("/add-address", async (req, res) => {
     } = req.body;
 
     if (!phone) {
-      return res.status(400).json({ success: false, message: "Phone is required" });
+      return res.status(400).json({
+        success: false,
+        message: "Phone is required",
+      });
     }
 
     if (!addressText || !addressText.trim()) {
-      return res.status(400).json({ success: false, message: "Address is required" });
+      return res.status(400).json({
+        success: false,
+        message: "Address is required",
+      });
     }
 
     const newAddress = {
@@ -230,19 +236,24 @@ router.post("/add-address", async (req, res) => {
       isDefault: !!isDefault,
     };
 
-    if (isDefault) {
-    await Customer.updateOne(
+    // Ensure customer exists and addresses array exists
+    await Customer.findOneAndUpdate(
       { phone },
       {
-        $set: {
+        $setOnInsert: {
+          phone,
+          isVerified: false,
           addresses: [],
         },
       },
       {
         upsert: true,
+        new: true,
       }
     );
 
+    // If new address is default, reset old default flags
+    if (isDefault) {
       await Customer.updateOne(
         { phone, addresses: { $exists: true, $ne: [] } },
         {
@@ -253,30 +264,30 @@ router.post("/add-address", async (req, res) => {
       );
     }
 
-    const customer = await Customer.findOne({ phone });
-
-    // if customer exists but no addresses → initialize it
-    if (customer && !customer.addresses) {
-      customer.addresses = [];
-      await customer.save();
-    }
-
-    if (isDefault && customer?.addresses?.length) {
-      await Customer.updateOne(
-        { phone },
-        { $set: { "addresses.$[].isDefault": false } }
-      );
-    }
-
+    // Add new address
     const updatedCustomer = await Customer.findOneAndUpdate(
       { phone },
       {
-        $push: { addresses: newAddress },
+        $push: {
+          addresses: newAddress,
+        },
       },
       {
         new: true,
-        upsert: true,
+        runValidators: true,
       }
     );
 
+    res.json({
+      success: true,
+      customer: updatedCustomer,
+    });
+  } catch (error) {
+    console.error("add-address error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 module.exports = router;
