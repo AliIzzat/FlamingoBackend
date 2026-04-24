@@ -118,79 +118,6 @@ router.post("/verify-otp", async (req, res) => {
   }
 });
 
-// 3) Save/update address for that same customer
-// router.post("/save-address", async (req, res) => {
-//   try {
-//     console.log("🔥 HIT /save-address");
-//     console.log("🔥 BODY =", req.body);
-
-//     const {
-//       phone,
-//       addressText,
-//       lat,
-//       lng,
-//       streetNumber,
-//       route,
-//       zone,
-//       city,
-//       country,
-//     } = req.body;
-
-//     if (!phone) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Phone is required",
-//       });
-//     }
-
-//     if (!addressText || !addressText.trim()) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Address is required",
-//       });
-//     }
-
-//     const customer = await Customer.findOneAndUpdate(
-//       { phone },
-//       {
-//         $set: {
-//           phone,
-//           addressText: addressText.trim(),
-//           location: {
-//             lat,
-//             lng,
-//           },
-
-//           // 🔥 NEW DATA
-//           streetNumber,
-//           route,
-//           zone,
-//           city,
-//           country,
-//         },
-//       },
-//       {
-//         new: true,
-//         upsert: true,
-//         runValidators: true,
-//       }
-//     );
-
-//     console.log("✅ SAVED =", customer);
-
-//     res.json({
-//       success: true,
-//       customer,
-//     });
-//   } catch (error) {
-//     console.error("❌ ERROR:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: error.message,
-//     });
-//   }
-// });
-
 router.post("/add-address", async (req, res) => {
   try {
     const {
@@ -207,6 +134,7 @@ router.post("/add-address", async (req, res) => {
       isDefault,
     } = req.body;
 
+    // ✅ Validation
     if (!phone) {
       return res.status(400).json({
         success: false,
@@ -221,6 +149,20 @@ router.post("/add-address", async (req, res) => {
       });
     }
 
+    // ✅ 🔥 ADD DUPLICATE CHECK HERE
+    const existingCustomer = await Customer.findOne({
+      phone,
+      "addresses.addressText": addressText.trim(),
+    });
+
+    if (existingCustomer) {
+      return res.status(409).json({
+        success: false,
+        message: "This address already exists",
+      });
+    }
+
+    // ✅ Now create address
     const newAddress = {
       label: label || "Home",
       addressText: addressText.trim(),
@@ -236,7 +178,7 @@ router.post("/add-address", async (req, res) => {
       isDefault: !!isDefault,
     };
 
-    // Ensure customer exists and addresses array exists
+    // Ensure customer exists
     await Customer.findOneAndUpdate(
       { phone },
       {
@@ -252,7 +194,7 @@ router.post("/add-address", async (req, res) => {
       }
     );
 
-    // If new address is default, reset old default flags
+    // Reset default if needed
     if (isDefault) {
       await Customer.updateOne(
         { phone, addresses: { $exists: true, $ne: [] } },
@@ -264,7 +206,7 @@ router.post("/add-address", async (req, res) => {
       );
     }
 
-    // Add new address
+    // Add address
     const updatedCustomer = await Customer.findOneAndUpdate(
       { phone },
       {
