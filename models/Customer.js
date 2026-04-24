@@ -23,7 +23,27 @@ const CustomerSchema = new mongoose.Schema(
       lat: { type: Number, default: null },
       lng: { type: Number, default: null },
     },
-  },
+    streetNumber: { 
+      type: String, 
+      default: "",
+     },
+    route: { 
+      type: String, 
+      default: "",
+     },
+    zone: { 
+      type: String, 
+      default: "",
+     },
+    city: { 
+      type: String, 
+      default: "",
+     },
+    country: { 
+      type: String, 
+      default: "",
+     },
+    },
   { timestamps: true }
 );
 
