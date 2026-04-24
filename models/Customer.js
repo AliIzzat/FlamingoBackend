@@ -14,14 +14,24 @@ const CustomerSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    addressText: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-    location: {
-      lat: { type: Number, default: null },
-      lng: { type: Number, default: null },
+    addresses: {
+      type: [
+        {
+          label: { type: String, default: "Home" },
+          addressText: { type: String, required: true },
+          location: {
+            lat: Number,
+            lng: Number,
+          },
+          streetNumber: String,
+          route: String,
+          zone: String,
+          city: String,
+          country: String,
+          isDefault: { type: Boolean, default: false },
+        },
+      ],
+      default: [],
     },
     streetNumber: { 
       type: String, 

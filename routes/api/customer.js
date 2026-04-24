@@ -119,92 +119,22 @@ router.post("/verify-otp", async (req, res) => {
 });
 
 // 3) Save/update address for that same customer
-router.post("/save-address", async (req, res) => {
-  try {
-    console.log("🔥 HIT /save-address");
-    console.log("🔥 BODY =", req.body);
-
-    const {
-      phone,
-      addressText,
-      lat,
-      lng,
-      streetNumber,
-      route,
-      zone,
-      city,
-      country,
-    } = req.body;
-
-    if (!phone) {
-      return res.status(400).json({
-        success: false,
-        message: "Phone is required",
-      });
-    }
-
-    if (!addressText || !addressText.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Address is required",
-      });
-    }
-
-    const customer = await Customer.findOneAndUpdate(
-      { phone },
-      {
-        $set: {
-          phone,
-          addressText,
-          location: {
-            lat,
-            lng,
-          },
-
-          // 🔥 NEW DATA
-          streetNumber,
-          route,
-          zone,
-          city,
-          country,
-        },
-      },
-      {
-        new: true,
-        upsert: false,
-      }
-    );
-
-    if (!customer) {
-      return res.status(404).json({
-        success: false,
-        message: "Customer not found. Verify OTP first.",
-      });
-    }
-
-    console.log("✅ SAVED =", customer);
-
-    res.json({
-      success: true,
-      customer,
-    });
-  } catch (error) {
-    console.error("❌ ERROR:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
-
-
 // router.post("/save-address", async (req, res) => {
 //   try {
 //     console.log("🔥 HIT /save-address");
 //     console.log("🔥 BODY =", req.body);
 
-//     const phone = normalizePhone(req.body.phone);
-//     const { addressText, lat, lng } = req.body;
+//     const {
+//       phone,
+//       addressText,
+//       lat,
+//       lng,
+//       streetNumber,
+//       route,
+//       zone,
+//       city,
+//       country,
+//     } = req.body;
 
 //     if (!phone) {
 //       return res.status(400).json({
@@ -227,25 +157,25 @@ router.post("/save-address", async (req, res) => {
 //           phone,
 //           addressText: addressText.trim(),
 //           location: {
-//             lat: lat ?? null,
-//             lng: lng ?? null,
+//             lat,
+//             lng,
 //           },
+
+//           // 🔥 NEW DATA
+//           streetNumber,
+//           route,
+//           zone,
+//           city,
+//           country,
 //         },
 //       },
 //       {
 //         new: true,
-//         upsert: false,
+//         upsert: true,
 //         runValidators: true,
 //       }
 //     );
 
-//     if (!customer) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Customer not found. Verify OTP first.",
-//       });
-//     }
-
 //     console.log("✅ SAVED =", customer);
 
 //     res.json({
@@ -260,52 +190,93 @@ router.post("/save-address", async (req, res) => {
 //     });
 //   }
 // });
+
+router.post("/add-address", async (req, res) => {
+  try {
+    const {
+      phone,
+      label,
+      addressText,
+      lat,
+      lng,
+      streetNumber,
+      route,
+      zone,
+      city,
+      country,
+      isDefault,
+    } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({ success: false, message: "Phone is required" });
+    }
+
+    if (!addressText || !addressText.trim()) {
+      return res.status(400).json({ success: false, message: "Address is required" });
+    }
+
+    const newAddress = {
+      label: label || "Home",
+      addressText: addressText.trim(),
+      location: {
+        lat: lat ?? null,
+        lng: lng ?? null,
+      },
+      streetNumber: streetNumber || "",
+      route: route || "",
+      zone: zone || "",
+      city: city || "",
+      country: country || "",
+      isDefault: !!isDefault,
+    };
+
+    if (isDefault) {
+    await Customer.updateOne(
+      { phone },
+      {
+        $set: {
+          addresses: [],
+        },
+      },
+      {
+        upsert: true,
+      }
+    );
+
+      await Customer.updateOne(
+        { phone, addresses: { $exists: true, $ne: [] } },
+        {
+          $set: {
+            "addresses.$[].isDefault": false,
+          },
+        }
+      );
+    }
+
+    const customer = await Customer.findOne({ phone });
+
+    // if customer exists but no addresses → initialize it
+    if (customer && !customer.addresses) {
+      customer.addresses = [];
+      await customer.save();
+    }
+
+    if (isDefault && customer?.addresses?.length) {
+      await Customer.updateOne(
+        { phone },
+        { $set: { "addresses.$[].isDefault": false } }
+      );
+    }
+
+    const updatedCustomer = await Customer.findOneAndUpdate(
+      { phone },
+      {
+        $push: { addresses: newAddress },
+      },
+      {
+        new: true,
+        upsert: true,
+      }
+    );
 
 module.exports = router;
-
-
-
-
-// // routes/api/customer.js
-// const express = require("express");
-// const router = express.Router();
-// const Customer = require("../../models/Customer");
-// const Otp = require("../../models/Otp");
-
-// router.post("/save-address", async (req, res) => {
-//   try {
-//     console.log("🔥 HIT /save-address");
-//     console.log("🔥 BODY =", req.body);
-
-//     const { addressText, lat, lng } = req.body;
-    
-//     if (!addressText || !addressText.trim()) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Address is required",
-//       });
-//     }
-
-//     const customer = await Customer.create({
-//       addressText: addressText.trim(),
-//       location: {
-//         lat: lat ?? null,
-//         lng: lng ?? null,
-//       },
-//     });
-
-//     console.log("✅ SAVED =", customer);
-
-//     res.json({
-//       success: true,
-//       customer,
-//     });
-//   } catch (error) {
-//     console.error("❌ ERROR:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: error.message,
-//     });
-//   }
-// });
-// module.exports = router;
