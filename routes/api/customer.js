@@ -232,4 +232,37 @@ router.post("/add-address", async (req, res) => {
     });
   }
 });
+
+router.get("/addresses/:phone", async (req, res) => {
+  try {
+    const phone = String(req.params.phone || "").trim();
+
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone is required",
+      });
+    }
+
+    const customer = await Customer.findOne({ phone });
+
+    if (!customer) {
+      return res.json({
+        success: true,
+        addresses: [],
+      });
+    }
+
+    res.json({
+      success: true,
+      addresses: customer.addresses || [],
+    });
+  } catch (error) {
+    console.error("get-addresses error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 module.exports = router;
