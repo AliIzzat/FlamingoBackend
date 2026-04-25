@@ -321,9 +321,34 @@ router.post("/create", async (req, res) => {
   }
 });
 
-router.get("/ping", (req, res) => {
-  console.log("✅ /api/mobile/orders/ping HIT");
-  res.json({ ok: true, route: "/api/mobile/orders/ping" });
+// router.get("/ping", (req, res) => {
+//   console.log("✅ /api/mobile/orders/ping HIT");
+//   res.json({ ok: true, route: "/api/mobile/orders/ping" });
+// });
+
+router.get("/:orderId", async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      order,
+      estimatedDeliveryTime: order.estimatedDeliveryTime ?? null,
+    });
+  } catch (error) {
+    console.error("get order error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 });
 
 module.exports = router;

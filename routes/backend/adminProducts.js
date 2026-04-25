@@ -349,16 +349,6 @@ console.log("🧾 distinct isActive:", await Store.distinct("isActive"));
    POST /admin/products/update/:id
 ========================================================= */
 router.post("/:id/image", upload.single("imageFile"), async (req, res) => {
-  // console.log("----- UPLOAD DEBUG START -----");
-  // console.log("route:", req.originalUrl);
-  // console.log("file exists:", !!req.file);
-  // console.log("file path:", req.file?.path);
-  // console.log("file filename:", req.file?.filename);
-  // console.log("file mimetype:", req.file?.mimetype);
-  // console.log("cloud name:", process.env.CLOUDINARY_CLOUD_NAME);
-  // console.log("api key exists:", !!process.env.CLOUDINARY_API_KEY);
-  // console.log("api secret exists:", !!process.env.CLOUDINARY_API_SECRET);
-  // console.log("----- UPLOAD DEBUG END -----");
   try {
     const id = safeObjectId(req.params.id);
     if (!id) return res.status(400).send("Invalid product id");
@@ -384,17 +374,7 @@ router.post("/:id/image", upload.single("imageFile"), async (req, res) => {
 });
 
 router.post("/update/:id", upload.single("image"), async (req, res) => {
-  // console.log("----- UPLOAD DEBUG START -----");
-  // console.log("route:", req.originalUrl);
-  // console.log("file exists:", !!req.file);
-  // console.log("file path:", req.file?.path);
-  // console.log("file filename:", req.file?.filename);
-  // console.log("file mimetype:", req.file?.mimetype);
-  // console.log("cloud name:", process.env.CLOUDINARY_CLOUD_NAME);
-  // console.log("api key exists:", !!process.env.CLOUDINARY_API_KEY);
-  // console.log("api secret exists:", !!process.env.CLOUDINARY_API_SECRET);
-  // console.log("----- UPLOAD DEBUG END -----");
-  // console.log("🟢 HIT UPDATE ROUTE:", req.originalUrl, "id:", req.params.id);
+ 
   try {
     const id = safeObjectId(req.params.id);
     if (!id) return res.status(400).send("Invalid product id");
@@ -436,9 +416,6 @@ router.post("/update/:id", upload.single("image"), async (req, res) => {
 
    console.log("🟢 store.type =", store.type);
    console.log("🟢 before category =", existing.category, "before snapshot.type =", existing.storeSnapshot?.type);
-
-    // const after = await Product.findById(id).select("category storeSnapshot.type").lean();
-    // console.log("🟩 after.category =", after.category, "snapshot.type =", after.storeSnapshot?.type);
 
     if (req.file) {
       const uploaded = await uploadToCloudinary(req.file.buffer, "onego/products");
@@ -498,25 +475,6 @@ router.post("/delete/:id", async (req, res) => {
     return res.status(500).send("Server error while deleting product");
   }
 });
-
-// router.post("/delete/:id", async (req, res) => {
-//   try {
-//     const id = safeObjectId(req.params.id);
-//     if (!id) return res.status(400).send("Invalid product id");
-
-//     const p = await Product.findById(id).lean();
-//     if (!p) return res.status(404).send("Product not found");
-
-//     await Product.findByIdAndDelete(id);
-
-//     const returnTo =
-//       trimStr(req.body.returnTo) || `/admin/products?storeId=${p.storeId.toString()}`;
-//     return res.redirect(returnTo);
-//   } catch (e) {
-//     console.error("❌ delete product:", e);
-//     return res.status(500).send("Failed to delete product: " + (e?.message || e));
-//   }
-// });
 
 module.exports = router;
 
