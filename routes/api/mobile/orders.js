@@ -257,8 +257,8 @@ router.post("/create", async (req, res) => {
       storeName = storeDoc.name || "Store";
 
       // GeoJSON format: [lng, lat]
-      const sLng = toNumOrNull(storeDoc?.location?.coordinates?.[0]);
-      const sLat = toNumOrNull(storeDoc?.location?.coordinates?.[1]);
+      const sLng = toNumOrNull(storeDoc?.location?.coordinates?.[1]);
+      const sLat = toNumOrNull(storeDoc?.location?.coordinates?.[0]);
 
       if (sLat != null && sLng != null) {
         pickupLocation = { lat: sLat, lng: sLng };
