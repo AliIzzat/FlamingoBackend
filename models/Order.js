@@ -133,6 +133,12 @@ customerSnapshot: {
       deliveredAt: { type: Date, default: null },
     },
 
+    driverLiveLocation: {
+    lat: { type: Number, default: null },
+    lng: { type: Number, default: null },
+    updatedAt: { type: Date, default: null },
+    },
+
     dispute: {
       status: {
         type: String,

@@ -54,11 +54,15 @@ function fingerprintOrder({ cartItems = [], phone = "" }) {
   });
 }
 
+//------------------------------------------
+
+// -------------------------
 // -------------------------
 // CREATE ORDER
 // POST /api/mobile/orders/create
 // Splits cart into separate orders per store
 // -------------------------
+
 router.post("/create", async (req, res) => {
   console.log("📦 ORDER CREATE HIT:", JSON.stringify(req.body, null, 2));
 
@@ -66,6 +70,20 @@ router.post("/create", async (req, res) => {
      console.log("🔥 ORDER CREATE HIT");
     console.log("🔥 FULL BODY =", req.body);
     const { cartItems, customer } = req.body || {};
+
+    //----------------------------------------------
+            const snapshotToSave = {
+          name: String(customer?.name || "").trim(),
+          phone: String(customer?.phone || "").trim(),
+          addressText: String(customer?.addressText || "").trim(),
+          location: {
+            lat: customer?.location?.lat ?? null,
+            lng: customer?.location?.lng ?? null,
+          },
+        };
+
+      console.log("CUSTOMER SNAPSHOT TO SAVE =", snapshotToSave);
+    //---------------------------------------------------------  
 
       console.log("ORDER BODY CUSTOMER =", req.body.customer);
       console.log("CUSTOMER NAME =", req.body.customer?.name);
@@ -256,15 +274,7 @@ router.post("/create", async (req, res) => {
       const orderDoc = await Order.create({
         customerId: customerDoc._id,
 
-        customerSnapshot: {
-        name: String(customerDoc.name || customer?.name || "").trim(),
-        phone: String(customerDoc.phone || customer?.phone || "").trim(),
-        addressText: String(customerDoc.addressText || customer?.addressText || "").trim(),
-        location: {
-          lat: customerDoc.location?.lat ?? customer?.location?.lat ?? null,
-          lng: customerDoc.location?.lng ?? customer?.location?.lng ?? null,
-        },
-      },
+        customerSnapshot: snapshotToSave,
 
         pickup: {
           storeId: pickupStoreId,
@@ -344,6 +354,99 @@ router.get("/:orderId", async (req, res) => {
     });
   } catch (error) {
     console.error("get order error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+router.post("/driver-location", async (req, res) => {
+  try {
+    const { orderId, lat, lng } = req.body;
+
+    if (!orderId || lat == null || lng == null) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      orderId,
+      {
+        $set: {
+          driverLiveLocation: {
+            lat,
+            lng,
+            updatedAt: new Date(),
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    console.log("🚚 Driver live location updated:", orderId, lat, lng);
+
+    return res.json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    console.error("❌ Driver location update error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+router.post("/update-eta", async (req, res) => {
+  try {
+    const { orderId, etaMinutes } = req.body;
+
+    console.log("⏱ ETA update request:", req.body);
+
+    if (!orderId || etaMinutes == null) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing orderId or etaMinutes",
+      });
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      orderId,
+      {
+        $set: {
+          estimatedDeliveryTime: etaMinutes,
+        },
+      },
+      { new: true }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    console.log("⏱ ETA updated:", orderId, etaMinutes);
+
+    res.json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    console.error("ETA update error:", error);
     res.status(500).json({
       success: false,
       message: error.message,

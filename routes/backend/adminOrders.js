@@ -21,7 +21,6 @@ function buildFilter(filterKey) {
         "delivery.assignedDriverId": null,
       };
 
-
     case "Claimed":
       return {
         "delivery.status": "Claimed",
@@ -77,9 +76,24 @@ router.get(
   async (req, res) => {
     try {
       const filter = String(req.query.filter || "unpicked").trim();
+      const q = String(req.query.q || "").trim();
+
       const query = buildFilter(filter);
 
-      // Drivers list (for dropdown)
+      if (q) {
+        query.$or = [
+          { "customerSnapshot.name": { $regex: q, $options: "i" } },
+          { "customerSnapshot.phone": { $regex: q, $options: "i" } },
+          { "customerSnapshot.addressText": { $regex: q, $options: "i" } },
+          { "pickup.addressText": { $regex: q, $options: "i" } },
+          { "delivery.status": { $regex: q, $options: "i" } },
+        ];
+
+        if (mongoose.Types.ObjectId.isValid(q)) {
+          query.$or.push({ _id: new mongoose.Types.ObjectId(q) });
+        }
+      }
+
       const drivers = await User.find({ role: "driver" })
         .select("name username role")
         .sort({ name: 1, username: 1 })
@@ -90,33 +104,31 @@ router.get(
         .populate("delivery.assignedDriverId", "name username role")
         .sort({ createdAt: -1 })
         .lean();
-       const now = Date.now();
 
-          orders.forEach((o) => {
-            // Driver display name
-            const d = o.delivery?.assignedDriverId;
-            o.driverName = d ? (d.name || d.username || String(d._id)) : "—";
+      const now = Date.now();
 
-            // Age (time since created)
-            const created = o.createdAt ? new Date(o.createdAt).getTime() : now;
-            const diffMs = Math.max(0, now - created);
+      orders.forEach((o) => {
+        const d = o.delivery?.assignedDriverId;
+        o.driverName = d ? d.name || d.username || String(d._id) : "—";
 
-            const mins = Math.floor(diffMs / 60000);
-            const hrs = Math.floor(mins / 60);
-            const days = Math.floor(hrs / 24);
+        const created = o.createdAt ? new Date(o.createdAt).getTime() : now;
+        const diffMs = Math.max(0, now - created);
 
-            if (days > 0) o.createdSince = `${days}d ${hrs % 24}h`;
-            else if (hrs > 0) o.createdSince = `${hrs}h ${mins % 60}m`;
-            else o.createdSince = `${mins}m`;
-          });
+        const mins = Math.floor(diffMs / 60000);
+        const hrs = Math.floor(mins / 60);
+        const days = Math.floor(hrs / 24);
 
+        if (days > 0) o.createdSince = `${days}d ${hrs % 24}h`;
+        else if (hrs > 0) o.createdSince = `${hrs}h ${mins % 60}m`;
+        else o.createdSince = `${mins}m`;
+      });
 
       return res.render("backend/admin-orders-unpicked", {
         title: "Orders",
         user: req.session.user || null,
-
         orders,
         drivers,
+        q,
 
         activeFilter: filter,
         filters: ["unpicked", "Claimed", "PickedUp", "Delivered", "Cancelled"],
@@ -127,7 +139,157 @@ router.get(
     }
   }
 );
+router.get(
+  "/reports/daily-revenue",
+  requireLogin,
+  requireRole(ADMIN_ROLES),
+  async (req, res) => {
+    try {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
 
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+
+      const paidOrders = await Order.find({
+        createdAt: { $gte: start, $lte: end },
+        "payment.status": "paid",
+      }).lean();
+
+      const totalRevenue = paidOrders.reduce(
+        (sum, order) => sum + Number(order.totals?.total || 0),
+        0
+      );
+
+      const totalOrders = paidOrders.length;
+
+      const averageOrderValue =
+        totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+      res.render("backend/daily-revenue", {
+        title: "Daily Revenue",
+        user: req.session.user || null,
+        totalRevenue,
+        totalOrders,
+        averageOrderValue,
+        paidOrders,
+      });
+    } catch (err) {
+      console.error("Daily revenue error:", err);
+      res.status(500).send("Server Error");
+    }
+  }
+);
+
+router.get(
+  "/reports/delivery-analytics",
+  requireLogin,
+  requireRole(ADMIN_ROLES),
+  async (req, res) => {
+    try {
+      const orders = await Order.find({})
+        .populate("delivery.assignedDriverId", "name username")
+        .sort({ createdAt: -1 })
+        .lean();
+
+      const totalOrders = orders.length;
+      const pending = orders.filter(o => o.delivery?.status === "Pending").length;
+      const claimed = orders.filter(o => o.delivery?.status === "Claimed").length;
+      const pickedUp = orders.filter(o => o.delivery?.status === "PickedUp").length;
+      const delivered = orders.filter(o => o.delivery?.status === "Delivered").length;
+      const cancelled = orders.filter(o => o.delivery?.status === "Cancelled").length;
+
+      const deliveredOrders = orders.filter(
+        o => o.delivery?.deliveredAt && o.delivery?.claimedAt
+      );
+
+      const avgDeliveryMinutes =
+        deliveredOrders.length > 0
+          ? deliveredOrders.reduce((sum, o) => {
+              const start = new Date(o.delivery.claimedAt).getTime();
+              const end = new Date(o.delivery.deliveredAt).getTime();
+              return sum + Math.max(0, end - start) / 60000;
+            }, 0) / deliveredOrders.length
+          : 0;
+
+      const driverMap = {};
+
+      orders.forEach((o) => {
+        const driver = o.delivery?.assignedDriverId;
+        const driverKey = driver?._id ? String(driver._id) : "unassigned";
+        const driverName = driver
+          ? driver.name || driver.username || String(driver._id)
+          : "Unassigned";
+
+        if (!driverMap[driverKey]) {
+          driverMap[driverKey] = {
+            driverName,
+            total: 0,
+            delivered: 0,
+            cancelled: 0,
+            pending: 0,
+          };
+        }
+
+        driverMap[driverKey].total += 1;
+
+        if (o.delivery?.status === "Delivered") driverMap[driverKey].delivered += 1;
+        if (o.delivery?.status === "Cancelled") driverMap[driverKey].cancelled += 1;
+        if (o.delivery?.status === "Pending") driverMap[driverKey].pending += 1;
+      });
+
+      const driverStats = Object.values(driverMap);
+
+      res.render("backend/delivery-analytics", {
+        title: "Delivery Analytics",
+        user: req.session.user || null,
+        totalOrders,
+        pending,
+        claimed,
+        pickedUp,
+        delivered,
+        cancelled,
+        avgDeliveryMinutes: avgDeliveryMinutes.toFixed(1),
+        driverStats,
+      });
+    } catch (err) {
+      console.error("Delivery analytics error:", err);
+      res.status(500).send("Server Error");
+    }
+  }
+);
+
+router.get(
+  "/reports/failed-payments",
+  requireLogin,
+  requireRole(ADMIN_ROLES),
+  async (req, res) => {
+    try {
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+
+      const failedOrders = await Order.find({
+        $or: [
+          { "payment.status": "failed" },
+          {
+            "payment.status": "unpaid",
+            createdAt: { $lte: thirtyMinutesAgo },
+          },
+        ],
+      })
+        .sort({ createdAt: -1 })
+        .lean();
+
+      res.render("backend/failed-payments", {
+        title: "Failed Payment Alerts",
+        user: req.session.user || null,
+        failedOrders,
+      });
+    } catch (err) {
+      console.error("Failed payments report error:", err);
+      res.status(500).send("Server Error");
+    }
+  }
+);
 /* ============================================================
    POST /admin/orders/:id/assign-driver
    - sets delivery.status = Claimed

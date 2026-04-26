@@ -180,16 +180,7 @@ router.get("/create", async (req, res) => {
 ========================================================= */
 
 router.post("/create", upload.single("image"), async (req, res) => {
-  // console.log("----- UPLOAD DEBUG START -----");
-  // console.log("route:", req.originalUrl);
-  // console.log("file exists:", !!req.file);
-  // console.log("file path:", req.file?.path);
-  // console.log("file filename:", req.file?.filename);
-  // console.log("file mimetype:", req.file?.mimetype);
-  // console.log("cloud name:", process.env.CLOUDINARY_CLOUD_NAME);
-  // console.log("api key exists:", !!process.env.CLOUDINARY_API_KEY);
-  // console.log("api secret exists:", !!process.env.CLOUDINARY_API_SECRET);
-  // console.log("----- UPLOAD DEBUG END -----");
+  
   try {
     const storeId = safeObjectId(req.body.storeId);
     if (!storeId) return res.status(400).send("Invalid storeId");

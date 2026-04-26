@@ -24,7 +24,14 @@
     <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">🥗</span>Nutrition</a>
     <a class="admin-btn admin-btn-secondary" href="/admin/products/category/electronics">
     <span style="font-size: 20px; margin-right: 6px;font-weight:bolder">💻</span>Electronics</a>
-  
+    <a class="admin-btn admin-btn-revenue" href="/admin/reports/daily-revenue">
+    <span style="font-size: 18px; margin-right: 6px;font-weight:bolder">💰</span>Daily Revenue</a>
+    <a class="admin-btn admin-btn-analytic" href="/admin/reports/delivery-analytics">
+    <span style="font-size: 18px; margin-right: 6px;font-weight:bolder">🚚</span>Delivery Analytics</a>  
+    <a class="admin-btn admin-btn-failed" href="/admin/reports/failed-payments">
+    <span style="font-size: 18px; margin-right: 6px;font-weight:bolder">⚠️</span>Failed Payments</a>  
+
+
 </div>
  <hr class="custom-hr"> 
   <nav class="nav">
@@ -64,6 +71,7 @@
       </a>
   </div>
 </div>
+
 <hr class="custom-hr">
     {{#if (eq user.role "admin")}}
       <hr />
@@ -105,6 +113,9 @@
 .admin-btn-brown{background: #b79706;}
 .admin-btn-violet{background: #7F00FF;}
 .admin-btn:hover{ filter:brightness(0.95); }
+.admin-btn-revenue{ background:#ff0707; }
+.admin-btn-analytic{ background:#96c0ed; }
+.admin-btn-failed{ background:#c3bc04; }
 
 .admin-actions{
   display: flex;

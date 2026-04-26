@@ -1,0 +1,37 @@
+<link rel="stylesheet" href="/css/admin.css">
+
+<h1>⚠️ Failed Payment Alerts</h1>
+
+<a href="/admin/dashboard" class="DashBtn">← Return to Dashboard</a>
+
+{{#if failedOrders.length}}
+  <table style="width:100%; border-collapse:collapse; background:#fff; margin-top:20px;">
+    <thead>
+      <tr style="background:#f9fafb;">
+        <th style="padding:10px; border:1px solid #ddd;">Order ID</th>
+        <th style="padding:10px; border:1px solid #ddd;">Customer</th>
+        <th style="padding:10px; border:1px solid #ddd;">Phone</th>
+        <th style="padding:10px; border:1px solid #ddd;">Total</th>
+        <th style="padding:10px; border:1px solid #ddd;">Payment</th>
+        <th style="padding:10px; border:1px solid #ddd;">Created</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {{#each failedOrders}}
+        <tr>
+          <td style="padding:10px; border:1px solid #ddd;">{{_id}}</td>
+          <td style="padding:10px; border:1px solid #ddd;">{{customerSnapshot.name}}</td>
+          <td style="padding:10px; border:1px solid #ddd;">{{customerSnapshot.phone}}</td>
+          <td style="padding:10px; border:1px solid #ddd;">QAR {{totals.total}}</td>
+          <td style="padding:10px; border:1px solid #ddd;">{{payment.status}}</td>
+          <td style="padding:10px; border:1px solid #ddd;">{{createdAt}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+{{else}}
+  <div style="margin-top:20px; padding:16px; background:#fff; border:1px solid #ddd; border-radius:10px;">
+    No failed or stale unpaid payments found.
+  </div>
+{{/if}}

@@ -8,7 +8,8 @@
 <div style="display:flex; gap:10px; margin: 10px 0 14px; flex-wrap:wrap;">
   {{#each filters}}
     <a
-      href="/admin/orders?filter={{this}}"
+      {{!-- href="/admin/orders?filter={{this}}" --}}
+      href="/admin/orders?filter={{this}}&q={{../q}}"
       style="
         padding:8px 12px;
         border-radius:999px;
@@ -21,6 +22,34 @@
     </a>
   {{/each}}
 </div>
+
+</div>
+
+<form method="GET" action="/admin/orders" style="margin: 12px 0 16px; display:flex; gap:8px; flex-wrap:wrap;">
+  <input type="hidden" name="filter" value="{{activeFilter}}" />
+
+  <input
+    type="text"
+    name="q"
+    value="{{q}}"
+    placeholder="Search order ID, customer, phone, address, status..."
+    style="padding:10px; width:420px; max-width:100%; border:1px solid #ddd; border-radius:8px;"
+  />
+
+  <button
+    type="submit"
+    style="padding:10px 16px; border:0; border-radius:8px; background:#111827; color:#fff; cursor:pointer;"
+  >
+    Search
+  </button>
+
+  <a
+    href="/admin/orders?filter={{activeFilter}}"
+    style="padding:10px 16px; border:1px solid #ddd; border-radius:8px; text-decoration:none;"
+  >
+    Clear
+  </a>
+</form>
 
 {{#if orders.length}}
   <table style="width:100%; border-collapse:collapse; background:#fff;">
@@ -47,9 +76,9 @@
           </td>
 
           <td style="padding:10px; border:1px solid #e5e7eb;">
-            <div style="font-weight:600;">{{customer.name}}</div>
-            <div style="font-size:12px; color:#6b7280;">{{customer.phone}}</div>
-            <div style="font-size:12px; color:#6b7280;">{{customer.addressText}}</div>
+            <div style="font-weight:600;">{{customerSnapshot.name}}</div>
+            <div style="font-size:12px; color:#6b7280;">{{customerSnapshot.phone}}</div>
+            <div style="font-size:12px; color:#6b7280;">{{customerSnapshot.addressText}}</div>
           </td>
 
           <td style="padding:10px; border:1px solid #e5e7eb;">

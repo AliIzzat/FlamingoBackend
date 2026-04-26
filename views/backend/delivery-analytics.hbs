@@ -1,0 +1,68 @@
+<link rel="stylesheet" href="/css/admin.css">
+
+<h1>🚚 Delivery Analytics</h1>
+
+<a href="/admin/dashboard" class="DashBtn">← Return to Dashboard</a>
+
+<div style="display:flex; gap:16px; flex-wrap:wrap; margin:20px 0;">
+  <div style="background:#fff; padding:18px; border-radius:12px; border:1px solid #ddd; min-width:180px;">
+    <h3>Total Orders</h3>
+    <p style="font-size:26px; font-weight:800;">{{totalOrders}}</p>
+  </div>
+
+  <div style="background:#fff; padding:18px; border-radius:12px; border:1px solid #ddd; min-width:180px;">
+    <h3>Pending</h3>
+    <p style="font-size:26px; font-weight:800;">{{pending}}</p>
+  </div>
+
+  <div style="background:#fff; padding:18px; border-radius:12px; border:1px solid #ddd; min-width:180px;">
+    <h3>Claimed</h3>
+    <p style="font-size:26px; font-weight:800;">{{claimed}}</p>
+  </div>
+
+  <div style="background:#fff; padding:18px; border-radius:12px; border:1px solid #ddd; min-width:180px;">
+    <h3>Picked Up</h3>
+    <p style="font-size:26px; font-weight:800;">{{pickedUp}}</p>
+  </div>
+
+  <div style="background:#fff; padding:18px; border-radius:12px; border:1px solid #ddd; min-width:180px;">
+    <h3>Delivered</h3>
+    <p style="font-size:26px; font-weight:800;">{{delivered}}</p>
+  </div>
+
+  <div style="background:#fff; padding:18px; border-radius:12px; border:1px solid #ddd; min-width:180px;">
+    <h3>Cancelled</h3>
+    <p style="font-size:26px; font-weight:800;">{{cancelled}}</p>
+  </div>
+
+  <div style="background:#fff; padding:18px; border-radius:12px; border:1px solid #ddd; min-width:220px;">
+    <h3>Avg Delivery Time</h3>
+    <p style="font-size:26px; font-weight:800;">{{avgDeliveryMinutes}} min</p>
+  </div>
+</div>
+
+<h2>Driver Performance</h2>
+
+<table style="width:100%; border-collapse:collapse; background:#fff;">
+  <thead>
+    <tr style="background:#f9fafb;">
+      <th style="padding:10px; border:1px solid #ddd;">Driver</th>
+      <th style="padding:10px; border:1px solid #ddd;">Total</th>
+      <th style="padding:10px; border:1px solid #ddd;">Delivered</th>
+      <th style="padding:10px; border:1px solid #ddd;">Cancelled</th>
+      <th style="padding:10px; border:1px solid #ddd;">Pending</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {{#each driverStats}}
+      <tr>
+        <td style="padding:10px; border:1px solid #ddd;">{{driverName}}</td>
+        <td style="padding:10px; border:1px solid #ddd;">{{total}}</td>
+        <td style="padding:10px; border:1px solid #ddd;">{{delivered}}</td>
+        <td style="padding:10px; border:1px solid #ddd;">{{cancelled}}</td>
+        <td style="padding:10px; border:1px solid #ddd;">{{pending}}</td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>
