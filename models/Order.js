@@ -41,16 +41,6 @@ customerSnapshot: {
     lng: { type: Number, default: null },
   },
 },
-    // customer: {
-    //   name: { type: String, required: true },
-    //   phone: { type: String, required: true, index: true },
-    //   addressText: { type: String, required: true },
-    //   location: {
-    //     lat: { type: Number, default: null },
-    //     lng: { type: Number, default: null },
-    //   },
-    // },
-
     pickup: {
       storeId: {
         type: mongoose.Schema.Types.ObjectId,

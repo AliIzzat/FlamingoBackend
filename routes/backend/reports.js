@@ -71,9 +71,9 @@ router.get("/driver-meals", async (req, res) => {
             ? new Date(order.createdAt).toLocaleString("en-GB")
             : "",
           driverName,
-          customerName: customerSnapshot?.name || "",
-          customerMobile: customerSnapshot?.phone || "",
-          customerAddress: customerSnapshot?.addressText || "",
+          customerName: order.customerSnapshot?.name || "",
+          customerMobile: order.customerSnapshot?.phone || "",
+          customerAddress: order.customerSnapshot?.addressText || "",
           mealName: item.name_snapshot || "",
           quantity,
           price,

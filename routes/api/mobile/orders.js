@@ -63,9 +63,14 @@ router.post("/create", async (req, res) => {
   console.log("📦 ORDER CREATE HIT:", JSON.stringify(req.body, null, 2));
 
   try {
+     console.log("🔥 ORDER CREATE HIT");
+    console.log("🔥 FULL BODY =", req.body);
     const { cartItems, customer } = req.body || {};
 
-    if (!customer?.name || !customer?.phone || !customer?.addressText) {
+      console.log("ORDER BODY CUSTOMER =", req.body.customer);
+      console.log("CUSTOMER NAME =", req.body.customer?.name);
+
+    if (!customer?.phone || !customer?.addressText) {
       return res.status(400).json({
         ok: false,
         error: "Missing customer fields",
@@ -252,14 +257,14 @@ router.post("/create", async (req, res) => {
         customerId: customerDoc._id,
 
         customerSnapshot: {
-          name: String(customerDoc.name || "").trim(),
-          phone: String(customerDoc.phone).trim(),
-          addressText: String(customerDoc.addressText).trim(),
-          location: {
-            lat: customerDoc.location?.lat ?? null,
-            lng: customerDoc.location?.lng ?? null,
-          },
+        name: String(customerDoc.name || customer?.name || "").trim(),
+        phone: String(customerDoc.phone || customer?.phone || "").trim(),
+        addressText: String(customerDoc.addressText || customer?.addressText || "").trim(),
+        location: {
+          lat: customerDoc.location?.lat ?? customer?.location?.lat ?? null,
+          lng: customerDoc.location?.lng ?? customer?.location?.lng ?? null,
         },
+      },
 
         pickup: {
           storeId: pickupStoreId,
@@ -320,11 +325,6 @@ router.post("/create", async (req, res) => {
     });
   }
 });
-
-// router.get("/ping", (req, res) => {
-//   console.log("✅ /api/mobile/orders/ping HIT");
-//   res.json({ ok: true, route: "/api/mobile/orders/ping" });
-// });
 
 router.get("/:orderId", async (req, res) => {
   try {
