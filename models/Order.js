@@ -132,6 +132,10 @@ customerSnapshot: {
       pickedUpAt: { type: Date, default: null },
       deliveredAt: { type: Date, default: null },
     },
+    estimatedDeliveryTime: {
+      type: Number,
+      default: null,
+    },
 
     driverLiveLocation: {
     lat: { type: Number, default: null },

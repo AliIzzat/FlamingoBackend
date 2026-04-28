@@ -257,17 +257,22 @@ router.post("/create", async (req, res) => {
       storeName = storeDoc.name || "Store";
 
       // GeoJSON format: [lng, lat]
-      const sLng = toNumOrNull(storeDoc?.location?.coordinates?.[1]);
-      const sLat = toNumOrNull(storeDoc?.location?.coordinates?.[0]);
+            const coords = storeDoc?.location?.coordinates || [];
+            const sLng = toNumOrNull(coords[0]);
+            const sLat = toNumOrNull(coords[1]);
+            console.log("🏪 STORE COORD RAW =", coords);
+            console.log("🏪 PARSED STORE LAT/LNG =", { sLat, sLng });
+            if (sLat != null && sLng != null) {
+              pickupLocation = {
+                lat: sLat,
+                lng: sLng,
+              };
+            } else {
+              console.log("⚠️ Store exists but has no valid coordinates:", storeIdStr);
+            }
+            console.log("📍 PICKUP LOCATION TO SAVE =", pickupLocation);
 
-      if (sLat != null && sLng != null) {
-        pickupLocation = { lat: sLat, lng: sLng };
-      } else {
-        console.log("⚠️ Store exists but has no valid coordinates:", storeIdStr);
-      }
-
-      pickupAddressText =
-        storeDoc.address || storeDoc.addressText || storeDoc.name || "";
+      pickupAddressText = storeDoc.address || storeDoc.addressText || storeDoc.name || "";
 
       const subtotal = calcSubtotalFromItems(storeItems);
 
