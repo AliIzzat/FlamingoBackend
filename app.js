@@ -163,6 +163,7 @@ app.use("/api/mobile", mobileApi);
 app.use("/api/meals", mealsRouter);
 app.use("/api/stores", storesRouter);
 app.use("/api/customer", customerApiRouter);
+app.use("/api/mobile/customers", customerApiRouter);
 app.use("/api/driver", driverApi);
 app.use("/api/customer/disputes", customerDisputes);
 app.use("/api/mobile/products", mobileProducts);

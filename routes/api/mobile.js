@@ -94,11 +94,6 @@ router.get("/categories", async (_req, res) => {
   }
 });
 
-// -----------------------------
-// GET /api/mobile/meals?category=restaurant&offer=true&limit=30&storeId=...
-// meals are Products where category="restaurant"
-// -----------------------------
-
 // GET /api/mobile/meals?limit=30
 // GET /api/mobile/meals?offer=true&limit=30
 router.get("/meals", async (req, res) => {

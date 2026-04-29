@@ -7,9 +7,7 @@ function requireLogin(req, res, next) {
 }
 
 // ✅ Role-based guard: require one of the given roles
-// Usage:
-//   requireRole("admin")
-//   requireRole(["admin", "support"])
+
 function requireRole(roles) {
   const allowed = Array.isArray(roles) ? roles : [roles];
 

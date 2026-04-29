@@ -265,4 +265,37 @@ router.get("/addresses/:phone", async (req, res) => {
     });
   }
 });
+
+router.get("/by-phone/:phone", async (req, res) => {
+  try {
+    const phone = String(req.params.phone || "").trim();
+
+    const customer = await Customer.findOne({ phone }).lean();
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      });
+    }
+
+    const defaultAddress =
+      customer.addresses?.find((a) => a.isDefault) ||
+      customer.addresses?.[0] ||
+      null;
+
+    res.json({
+      success: true,
+      customer,
+      defaultAddress,
+    });
+  } catch (error) {
+    console.error("get customer by phone error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 module.exports = router;

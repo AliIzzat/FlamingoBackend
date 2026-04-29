@@ -55,9 +55,6 @@ function fingerprintOrder({ cartItems = [], phone = "" }) {
 }
 
 //------------------------------------------
-
-// -------------------------
-// -------------------------
 // CREATE ORDER
 // POST /api/mobile/orders/create
 // Splits cart into separate orders per store
