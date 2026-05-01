@@ -338,6 +338,75 @@ router.post("/create", async (req, res) => {
   }
 });
 
+router.get("/:orderId/tracking", async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    if (
+      !order.customerSnapshot?.location?.lat ||
+      !order.customerSnapshot?.location?.lng ||
+      !order.pickup?.location?.lat ||
+      !order.pickup?.location?.lng
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Order location data incomplete",
+      });
+    }
+
+
+    res.json({
+      success: true,
+      orderStatus: order.status || "Pending",
+      estimatedDeliveryTime: order.estimatedDeliveryTime , //|| 30
+
+      
+      customerLocation: {
+        lat: order.customerSnapshot?.location?.lat ,  // || 25.397
+        lng: order.customerSnapshot?.location?.lng ,  // || 51.424
+      },
+
+      storeLocation: {
+          lat: order.pickup.location.lat,
+          lng: order.pickup.location.lng,
+        },
+     // storeLocation: {
+     //   lat: order.pickup?.location?.lat ,  //|| 25.395
+     //   lng: order.pickup?.location?.lng ,  //|| 51.421
+    //  },
+
+      driverLocation: order.driverLocation
+         ? {
+      lat: order.driverLiveLocation.lat,
+      lng: order.driverLiveLocation.lng,
+        }
+       : null,
+      
+
+      // driverLocation: {
+      //   lat: 25.396,
+      //   lng: 51.422,
+     // },
+    });
+  } catch (error) {
+    console.error("tracking route error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+
+
 router.get("/:orderId", async (req, res) => {
   try {
     const order = await Order.findById(req.params.orderId);
@@ -362,6 +431,8 @@ router.get("/:orderId", async (req, res) => {
     });
   }
 });
+
+
 
 router.post("/driver-location", async (req, res) => {
   try {

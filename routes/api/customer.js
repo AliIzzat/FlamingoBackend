@@ -123,6 +123,7 @@ router.post("/add-address", async (req, res) => {
     const {
       phone,
       label,
+      building,
       addressText,
       lat,
       lng,
@@ -165,6 +166,7 @@ router.post("/add-address", async (req, res) => {
     // ✅ Now create address
     const newAddress = {
       label: label || "Home",
+      building: building || "Not specified",
       addressText: addressText.trim(),
       location: {
         lat: lat ?? null,

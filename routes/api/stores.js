@@ -33,5 +33,28 @@ router.get("/names/:type", async (req, res) => {
   }
 });
 
+router.get("/:id", async (req, res) => {
+  try {
+    const store = await Store.findById(req.params.id).lean();
+
+    if (!store) {
+      return res.status(404).json({
+        ok: false,
+        error: "Store not found",
+      });
+    }
+
+    res.json({
+      ok: true,
+      store,
+    });
+  } catch (error) {
+    console.log("❌ store detail error:", error);
+    res.status(500).json({
+      ok: false,
+      error: "Server error",
+    });
+  }
+});
 
 module.exports = router;
