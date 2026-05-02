@@ -140,46 +140,103 @@ router.post("/create", async (req, res) => {
         );
       });
 
+
   const DUPLICATE_WINDOW_MINUTES = 10;
-    const since = new Date(Date.now() - DUPLICATE_WINDOW_MINUTES * 60 * 1000);
+const since = new Date(Date.now() - DUPLICATE_WINDOW_MINUTES * 60 * 1000);
 
-    const normalizedItems = cartItems
-      .map((item) => ({
-        productId: String(item.productId || item.id || item._id),
-        quantity: Number(item.quantity || 1),
-      }))
-      .sort((a, b) => a.productId.localeCompare(b.productId));
+const normalizeItems = (items = []) =>
+  items
+    .map((item) => ({
+      productId: String(item.productId || item.id || item._id || ""),
+      storeId: String(item.storeId || ""),
+      quantity: Number(item.quantity || item.qty || 1),
+      price: Number(item.price || item.price_snapshot || 0),
+      type: String(item.category || item.type || "product"),
+    }))
+    .sort((a, b) =>
+      `${a.storeId}:${a.productId}:${a.type}`.localeCompare(
+        `${b.storeId}:${b.productId}:${b.type}`
+      )
+    );
 
-    const duplicate = await Order.findOne({
-      "customer.phone": customer.phone,
-      "customer.addressText": customer.addressText,
-      totalAmount: Number(totalAmount),
-      createdAt: { $gte: since },
-      status: { $in: ["Pending", "Paid", "Confirmed"] },
-    }).lean();
+const newItemsFingerprint = JSON.stringify(normalizeItems(cartItems));
 
-    if (duplicate) {
-      const duplicateItems = (duplicate.cartItems || [])
-        .map((item) => ({
-          productId: String(item.productId || item.id || item._id),
-          quantity: Number(item.quantity || 1),
-        }))
-        .sort((a, b) => a.productId.localeCompare(b.productId));
+const recentOrders = await Order.find({
+  $or: [
+    { "customer.phone": customer.phone },
+    { "customerSnapshot.phone": customer.phone },
+  ],
+  $or: [
+    { "customer.addressText": customer.addressText },
+    { "customerSnapshot.addressText": customer.addressText },
+  ],
+  totalAmount: Number(totalAmount),
+  createdAt: { $gte: since },
+}).lean();
 
-      const sameItems =
-        JSON.stringify(normalizedItems) === JSON.stringify(duplicateItems);
+const duplicateOrder = recentOrders.find((order) => {
+  const existingItems = order.cartItems || order.items || [];
+  const existingItemsFingerprint = JSON.stringify(normalizeItems(existingItems));
 
-      if (sameItems) {
-        console.log("⛔ Duplicate order blocked:", duplicate._id);
+  const isActiveOrPaid =
+    order.payment?.status === "paid" ||
+    order.checkout?.isFinalized === true ||
+    ["Pending", "Paid", "Confirmed"].includes(order.status) ||
+    order.delivery?.status === "Pending";
 
-        return res.status(409).json({
-          ok: false,
-          error:
-            "A similar recent order already exists for this customer and address.",
-          existingOrderId: duplicate._id,
-        });
-      }
-    }
+  return existingItemsFingerprint === newItemsFingerprint && isActiveOrPaid;
+});
+
+if (duplicateOrder) {
+  console.log("⛔ Duplicate order blocked:", duplicateOrder._id);
+
+  return res.status(409).json({
+    ok: false,
+    error: "A similar recent order already exists for this customer and address.",
+    existingOrderId: duplicateOrder._id,
+  });
+}
+
+  // const DUPLICATE_WINDOW_MINUTES = 10;
+  //   const since = new Date(Date.now() - DUPLICATE_WINDOW_MINUTES * 60 * 1000);
+
+  //   const normalizedItems = cartItems
+  //     .map((item) => ({
+  //       productId: String(item.productId || item.id || item._id),
+  //       quantity: Number(item.quantity || 1),
+  //     }))
+  //     .sort((a, b) => a.productId.localeCompare(b.productId));
+
+  //   const duplicate = await Order.findOne({
+  //     "customer.phone": customer.phone,
+  //     "customer.addressText": customer.addressText,
+  //     totalAmount: Number(totalAmount),
+  //     createdAt: { $gte: since },
+  //     status: { $in: ["Pending", "Paid", "Confirmed"] },
+  //   }).lean();
+
+  //   if (duplicate) {
+  //     const duplicateItems = (duplicate.cartItems || [])
+  //       .map((item) => ({
+  //         productId: String(item.productId || item.id || item._id),
+  //         quantity: Number(item.quantity || 1),
+  //       }))
+  //       .sort((a, b) => a.productId.localeCompare(b.productId));
+
+  //     const sameItems =
+  //       JSON.stringify(normalizedItems) === JSON.stringify(duplicateItems);
+
+  //     if (sameItems) {
+  //       console.log("⛔ Duplicate order blocked:", duplicate._id);
+
+  //       return res.status(409).json({
+  //         ok: false,
+  //         error:
+  //           "A similar recent order already exists for this customer and address.",
+  //         existingOrderId: duplicate._id,
+  //       });
+  //     }
+  //   }
 
   
 
