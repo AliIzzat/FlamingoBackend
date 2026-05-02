@@ -107,41 +107,7 @@ router.post("/create", async (req, res) => {
 
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
-    const recentOrders = await Order.find({
-     "customerSnapshot.phone": String(customer.phone).trim(),
-      createdAt: { $gte: tenMinutesAgo },
-      }).lean();
-
-      const duplicate = recentOrders.find((o) => {
-        const existingFingerprint = JSON.stringify({
-          phone: String(o.customerSnapshot?.phone || "").trim(),
-          items: [...(o.items || [])]
-            .map((it) => ({
-              id: String(it.productId || ""),
-              storeId: String(it.storeId || ""),
-              qty: Number(it.qty || 1),
-              price: Number(it.price_snapshot || 0),
-              type: String(it.category || "product"),
-            }))
-            .sort((a, b) =>
-              `${a.storeId}:${a.id}:${a.type}`.localeCompare(
-                `${b.storeId}:${b.id}:${b.type}`
-              )
-            ),
-        });
-
-        return (
-          existingFingerprint === newFingerprint &&
-          (
-            o.payment?.status === "paid" ||
-            o.checkout?.isFinalized === true ||
-            o.delivery?.status === "Pending"
-          )
-        );
-      });
-
-
-  const DUPLICATE_WINDOW_MINUTES = 10;
+const DUPLICATE_WINDOW_MINUTES = 10;
 const since = new Date(Date.now() - DUPLICATE_WINDOW_MINUTES * 60 * 1000);
 
 const normalizeItems = (items = []) =>
