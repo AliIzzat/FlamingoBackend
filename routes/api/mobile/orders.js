@@ -61,6 +61,8 @@ function fingerprintOrder({ cartItems = [], phone = "" }) {
 // -------------------------
 
 router.post("/create", async (req, res) => {
+  const { cartItems = [], customer = {} } = req.body;
+  const totalAmount = Number(req.body.totalAmount || req.body.total || 0);
   console.log("📦 ORDER CREATE HIT:", JSON.stringify(req.body, null, 2));
 
   try {
