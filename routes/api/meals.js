@@ -22,10 +22,18 @@ router.get("/", async (req, res) => {
       .limit(Number(limit))
       .lean();
 
-    return res.json({
-      ok: true,
-      meals,
-    });
+    const formattedMeals = meals.map((m) => ({
+        ...m,
+        storeId: m.storeId || m.storeSnapshot?._id || "",
+        storeName: m.storeSnapshot?.name || "Store",
+        storeNameAr: m.storeSnapshot?.name_ar || "",
+        storeLogo: m.storeSnapshot?.logo || "",
+      }));
+
+      return res.json({
+        ok: true,
+        meals: formattedMeals,
+      });
   } catch (err) {
     console.error("❌ GET /api/meals error:", err);
     return res.status(500).json({

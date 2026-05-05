@@ -165,49 +165,6 @@ if (duplicateOrder) {
   });
 }
 
-  // const DUPLICATE_WINDOW_MINUTES = 10;
-  //   const since = new Date(Date.now() - DUPLICATE_WINDOW_MINUTES * 60 * 1000);
-
-  //   const normalizedItems = cartItems
-  //     .map((item) => ({
-  //       productId: String(item.productId || item.id || item._id),
-  //       quantity: Number(item.quantity || 1),
-  //     }))
-  //     .sort((a, b) => a.productId.localeCompare(b.productId));
-
-  //   const duplicate = await Order.findOne({
-  //     "customer.phone": customer.phone,
-  //     "customer.addressText": customer.addressText,
-  //     totalAmount: Number(totalAmount),
-  //     createdAt: { $gte: since },
-  //     status: { $in: ["Pending", "Paid", "Confirmed"] },
-  //   }).lean();
-
-  //   if (duplicate) {
-  //     const duplicateItems = (duplicate.cartItems || [])
-  //       .map((item) => ({
-  //         productId: String(item.productId || item.id || item._id),
-  //         quantity: Number(item.quantity || 1),
-  //       }))
-  //       .sort((a, b) => a.productId.localeCompare(b.productId));
-
-  //     const sameItems =
-  //       JSON.stringify(normalizedItems) === JSON.stringify(duplicateItems);
-
-  //     if (sameItems) {
-  //       console.log("⛔ Duplicate order blocked:", duplicate._id);
-
-  //       return res.status(409).json({
-  //         ok: false,
-  //         error:
-  //           "A similar recent order already exists for this customer and address.",
-  //         existingOrderId: duplicate._id,
-  //       });
-  //     }
-  //   }
-
-  
-
     // Customer GPS
     const customerLat = toNumOrNull(customer?.location?.lat);
     const customerLng = toNumOrNull(customer?.location?.lng);
@@ -436,23 +393,13 @@ router.get("/:orderId/tracking", async (req, res) => {
           lat: order.pickup.location.lat,
           lng: order.pickup.location.lng,
         },
-     // storeLocation: {
-     //   lat: order.pickup?.location?.lat ,  //|| 25.395
-     //   lng: order.pickup?.location?.lng ,  //|| 51.421
-    //  },
-
+ 
       driverLocation: order.driverLocation
          ? {
       lat: order.driverLiveLocation.lat,
       lng: order.driverLiveLocation.lng,
         }
        : null,
-      
-
-      // driverLocation: {
-      //   lat: 25.396,
-      //   lng: 51.422,
-     // },
     });
   } catch (error) {
     console.error("tracking route error:", error);
@@ -463,8 +410,6 @@ router.get("/:orderId/tracking", async (req, res) => {
     });
   }
 });
-
-
 
 router.get("/:orderId", async (req, res) => {
   try {
@@ -490,8 +435,6 @@ router.get("/:orderId", async (req, res) => {
     });
   }
 });
-
-
 
 router.post("/driver-location", async (req, res) => {
   try {
