@@ -44,7 +44,16 @@ function getPublicBaseUrl() {
 }
 
 function deepLinkReturn({ orderId, paymentId, status }) {
-  return `${APP_SCHEME}://payment-return?orderId=${encodeURIComponent(
+  const normalizedStatus = String(status || "").toLowerCase();
+
+  const route =
+    normalizedStatus === "paid"
+      ? "payment-success"
+      : normalizedStatus === "failed"
+      ? "payment-failed"
+      : "payment-failed";
+
+  return `${APP_SCHEME}://${route}?orderId=${encodeURIComponent(
     orderId || ""
   )}&paymentId=${encodeURIComponent(paymentId || "")}&status=${encodeURIComponent(
     status || ""
